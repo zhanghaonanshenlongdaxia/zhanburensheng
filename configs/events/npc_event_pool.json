@@ -1,0 +1,85 @@
+{
+  "events": [
+    {
+      "id": "villager_gossip",
+      "name": "村民议论",
+      "weight": 8,
+      "conditions": [
+        {
+          "type": "any_of",
+          "conditions": [
+            {
+              "type": "stat_compare",
+              "target_id": "village_attention",
+              "operator": ">=",
+              "value": 4
+            },
+            {
+              "type": "stat_compare",
+              "target_id": "suspicion",
+              "operator": ">=",
+              "value": 8
+            }
+          ]
+        }
+      ],
+      "result_text": "村口有人在议论你最近似乎精神好了些，目光里带着几分探究。",
+      "effects": ["gain_suspicion_small"]
+    },
+    {
+      "id": "jia_probe",
+      "name": "贾三坡上门探口风",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "stat_compare",
+              "target_id": "suspicion",
+              "operator": ">=",
+              "value": 5
+            },
+            {
+              "type": "not",
+              "condition": {
+                "type": "flag_compare",
+                "target_id": "met_collector",
+                "operator": "==",
+                "value": true
+              }
+            }
+          ]
+        }
+      ],
+      "result_text": "贾三坡晃到门口，嬉皮笑脸地打探你今天出去做了什么。",
+      "effects": ["gain_attention_small"]
+	},
+	{
+	  "id": "villager_acceptance",
+	  "name": "村人态度稍缓",
+	  "weight": 5,
+	  "conditions": [
+	    {
+	      "type": "all_of",
+	      "conditions": [
+	        {
+	          "type": "flag_compare",
+	          "target_id": "earned_villager_trust",
+	          "operator": "==",
+	          "value": true
+	        },
+	        {
+	          "type": "stat_compare",
+	          "target_id": "suspicion",
+	          "operator": "<=",
+	          "value": 10
+	        }
+	      ]
+	    }
+	  ],
+	  "result_text": "村里人看你近来肯卖力干活，神情总算没先前那样提防了。",
+	  "effects": ["lose_suspicion_small"]
+    }
+  ]
+}

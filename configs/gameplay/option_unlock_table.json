@@ -1,0 +1,56 @@
+{
+  "options": [
+    {
+      "id": "hunt_rabbit",
+      "unlocked": true
+    },
+    {
+      "id": "gather_herb",
+      "unlocked": true
+    },
+    {
+      "id": "find_tool",
+      "unlocked": true
+    },
+    {
+      "id": "search_cache",
+      "unlocked": true
+    },
+    {
+      "id": "deep_hunt",
+      "unlocked": true
+    },
+    {
+      "id": "rest_home",
+      "unlocked": true
+    },
+    {
+      "id": "cook_meat",
+      "unlocked": true
+    },
+    {
+      "id": "sell_herb",
+      "unlocked": true
+    },
+    {
+      "id": "buy_food",
+      "unlocked": true
+    },
+    {
+      "id": "use_herb",
+      "unlocked": true
+    },
+    {
+      "id": "help_villager",
+      "unlocked": true
+    },
+    {
+      "id": "run_errand",
+      "unlocked": true
+    },
+    {
+      "id": "graveyard_follow_clue",
+      "unlocked": false
+    }
+  ]
+}

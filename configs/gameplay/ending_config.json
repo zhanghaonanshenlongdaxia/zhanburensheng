@@ -1,0 +1,142 @@
+{
+  "endings": [
+    {
+      "id": "death_health_zero",
+      "type": "fail",
+      "conditions": [
+        {
+          "type": "stat_compare",
+          "target_id": "health",
+          "operator": "<=",
+          "value": 0
+        }
+      ],
+      "title": "病倒而亡",
+      "description": "你的身子终究没撑住，在寒气和虚弱中倒下了。"
+    },
+    {
+      "id": "suspicion_overflow",
+      "type": "fail",
+      "conditions": [
+        {
+          "type": "stat_compare",
+          "target_id": "suspicion",
+          "operator": ">=",
+          "value": 20
+        }
+      ],
+      "title": "身份暴露",
+      "description": "你最近的变化太过明显，终于引来更凶险的目光。"
+	},
+	{
+	  "id": "debt_crushed",
+	  "type": "fail",
+	  "conditions": [
+	    {
+	      "type": "day_compare",
+	      "target_id": "current_day",
+	      "operator": ">",
+	      "value": 10
+	    },
+	    {
+	      "type": "debt_compare",
+	      "target_id": "current",
+	      "operator": ">",
+	      "value": 0
+	    }
+	  ],
+	  "title": "债逼上门",
+	  "description": "你终究没能在期限前摆脱债务，逼债的人找上门来，退路也被堵死。"
+    },
+    {
+      "id": "stash_route_success",
+      "type": "success",
+      "conditions": [
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": "<=",
+          "value": 0
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "repaid_debt_once",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "found_hidden_stash",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "title": "险路换来翻身钱",
+      "description": "你押着风险一路追到坟地旧藏，终于靠那袋翻出来的钱扛过了最难的一关。"
+    },
+    {
+      "id": "steady_route_success",
+      "type": "success",
+      "conditions": [
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": "<=",
+          "value": 0
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "repaid_debt_once",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "unlocked_errand_route",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "found_hidden_stash",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "title": "靠稳当日子熬过催债",
+      "description": "你没有赌那种翻盘的险财，而是靠着一点点跑腿和辛苦钱，硬生生把债顶了过去。"
+    },
+    {
+      "id": "debt_repaid_success",
+      "type": "success",
+      "conditions": [
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": "<=",
+          "value": 0
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "repaid_debt_once",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "found_hidden_stash",
+          "operator": "==",
+          "value": false
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "unlocked_errand_route",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "title": "暂渡难关",
+      "description": "你总算凑够了钱，把压在头顶的债先还了下去。日子仍难，但至少争到了一口喘息。"
+    }
+  ]
+}

@@ -1,0 +1,340 @@
+{
+  "effects": [
+    {
+      "id": "gain_meat_small",
+      "type": "item_delta",
+      "target_id": "meat",
+      "value": 1
+    },
+    {
+      "id": "gain_meat_medium",
+      "type": "item_delta",
+      "target_id": "meat",
+      "value": 2
+    },
+    {
+      "id": "lose_meat_small",
+      "type": "item_delta",
+      "target_id": "meat",
+      "value": -1
+    },
+    {
+      "id": "gain_herb_small",
+      "type": "item_delta",
+      "target_id": "herb",
+      "value": 2
+    },
+    {
+      "id": "lose_herb_small",
+      "type": "item_delta",
+      "target_id": "herb",
+      "value": -1
+    },
+    {
+      "id": "gain_money_small",
+      "type": "item_delta",
+      "target_id": "money",
+      "value": 5
+    },
+    {
+      "id": "lose_money_small",
+      "type": "item_delta",
+      "target_id": "money",
+      "value": -3
+    },
+    {
+      "id": "gain_food_small",
+      "type": "item_delta",
+      "target_id": "food",
+      "value": 1
+    },
+    {
+      "id": "gain_money_medium",
+      "type": "item_delta",
+      "target_id": "money",
+      "value": 8
+    },
+    {
+      "id": "gain_money_tiny",
+      "type": "item_delta",
+      "target_id": "money",
+      "value": 2
+    },
+    {
+      "id": "lose_stamina_small",
+      "type": "stat_delta",
+      "target_id": "stamina",
+      "value": -8
+    },
+    {
+      "id": "lose_stamina_medium",
+      "type": "stat_delta",
+      "target_id": "stamina",
+      "value": -15
+    },
+    {
+      "id": "gain_stamina_small",
+      "type": "stat_delta",
+      "target_id": "stamina",
+      "value": 10
+    },
+    {
+      "id": "gain_health_small",
+      "type": "stat_delta",
+      "target_id": "health",
+      "value": 6
+    },
+    {
+      "id": "lose_health_small",
+      "type": "stat_delta",
+      "target_id": "health",
+      "value": -6
+    },
+    {
+      "id": "gain_suspicion_small",
+      "type": "stat_delta",
+      "target_id": "suspicion",
+      "value": 5
+    },
+    {
+      "id": "lose_suspicion_small",
+      "type": "stat_delta",
+      "target_id": "suspicion",
+      "value": -3
+    },
+    {
+      "id": "gain_attention_small",
+      "type": "stat_delta",
+      "target_id": "village_attention",
+      "value": 4
+    },
+    {
+      "id": "lose_food_daily",
+      "type": "item_delta",
+      "target_id": "food",
+      "value": -1
+    },
+    {
+      "id": "lose_health_starving",
+      "type": "stat_delta",
+      "target_id": "health",
+      "value": -10
+    },
+    {
+      "id": "gain_suspicion_starving",
+      "type": "stat_delta",
+      "target_id": "suspicion",
+      "value": 3
+    },
+    {
+      "id": "lose_money_repay_small",
+      "type": "item_delta",
+      "target_id": "money",
+      "value": -5
+    },
+    {
+      "id": "reduce_debt_small",
+      "type": "debt_delta",
+      "target_id": "current",
+      "value": -5
+    },
+    {
+      "id": "increase_debt_interest",
+      "type": "debt_delta",
+      "target_id": "current",
+      "value": 1
+    },
+    {
+      "id": "mark_met_collector",
+      "type": "set_flag",
+      "target_id": "met_collector",
+      "value": true
+    },
+    {
+      "id": "mark_repaid_debt_once",
+      "type": "set_flag",
+      "target_id": "repaid_debt_once",
+      "value": true
+    },
+    {
+      "id": "mark_saw_graveyard_cache",
+      "type": "set_flag",
+      "target_id": "saw_graveyard_cache",
+      "value": true
+    },
+    {
+      "id": "clear_met_collector",
+      "type": "clear_flag",
+      "target_id": "met_collector",
+      "value": false
+    },
+    {
+      "id": "gain_attention_medium",
+      "type": "stat_delta",
+      "target_id": "village_attention",
+      "value": 7
+    },
+    {
+      "id": "unlock_graveyard_follow_clue",
+      "type": "unlock_option",
+      "target_id": "graveyard_follow_clue",
+      "value": true
+	},
+	{
+	  "id": "mark_found_hidden_stash",
+	  "type": "set_flag",
+	  "target_id": "found_hidden_stash",
+	  "value": true
+    },
+	{
+	  "id": "mark_earned_villager_trust",
+	  "type": "set_flag",
+	  "target_id": "earned_villager_trust",
+	  "value": true
+	},
+	{
+	  "id": "unlock_errand_route",
+	  "type": "set_flag",
+	  "target_id": "unlocked_errand_route",
+	  "value": true
+    },
+    {
+      "id": "gain_bitter_leaf",
+      "type": "item_delta",
+      "target_id": "bitter_leaf",
+      "value": 1
+    },
+    {
+      "id": "gain_dry_tuber",
+      "type": "item_delta",
+      "target_id": "dry_tuber",
+      "value": 1
+    },
+    {
+      "id": "gain_rabbit_pelt",
+      "type": "item_delta",
+      "target_id": "rabbit_pelt",
+      "value": 1
+    },
+    {
+      "id": "gain_rusty_copper_piece",
+      "type": "item_delta",
+      "target_id": "rusty_copper_piece",
+      "value": 1
+    },
+    {
+      "id": "gain_bloodroot",
+      "type": "item_delta",
+      "target_id": "bloodroot",
+      "value": 1
+    },
+    {
+      "id": "gain_clear_moss",
+      "type": "item_delta",
+      "target_id": "clear_moss",
+      "value": 1
+    },
+    {
+      "id": "gain_boar_tusk",
+      "type": "item_delta",
+      "target_id": "boar_tusk",
+      "value": 1
+    },
+    {
+      "id": "gain_old_coin_string",
+      "type": "item_delta",
+      "target_id": "old_coin_string",
+      "value": 1
+    },
+    {
+      "id": "gain_mountain_ginseng",
+      "type": "item_delta",
+      "target_id": "mountain_ginseng",
+      "value": 1
+    },
+    {
+      "id": "gain_snake_gall",
+      "type": "item_delta",
+      "target_id": "snake_gall",
+      "value": 1
+    },
+    {
+      "id": "gain_broken_jade_button",
+      "type": "item_delta",
+      "target_id": "broken_jade_button",
+      "value": 1
+    },
+    {
+      "id": "gain_old_hunter_knife",
+      "type": "item_delta",
+      "target_id": "old_hunter_knife",
+      "value": 1
+    },
+    {
+      "id": "gain_purple_lingzhi",
+      "type": "item_delta",
+      "target_id": "purple_lingzhi",
+      "value": 1
+    },
+    {
+      "id": "gain_wolf_pelt_complete",
+      "type": "item_delta",
+      "target_id": "wolf_pelt_complete",
+      "value": 1
+    },
+    {
+      "id": "gain_silver_hairpin_bent",
+      "type": "item_delta",
+      "target_id": "silver_hairpin_bent",
+      "value": 1
+    },
+    {
+      "id": "gain_remnant_bow_manual",
+      "type": "item_delta",
+      "target_id": "remnant_bow_manual",
+      "value": 1
+    },
+    {
+      "id": "gain_hundred_year_ginseng",
+      "type": "item_delta",
+      "target_id": "hundred_year_ginseng",
+      "value": 1
+    },
+    {
+      "id": "gain_tiger_bone",
+      "type": "item_delta",
+      "target_id": "tiger_bone",
+      "value": 1
+    },
+    {
+      "id": "gain_soldier_hidden_seal",
+      "type": "item_delta",
+      "target_id": "soldier_hidden_seal",
+      "value": 1
+    },
+    {
+      "id": "gain_black_iron_shortblade",
+      "type": "item_delta",
+      "target_id": "black_iron_shortblade",
+      "value": 1
+    },
+    {
+      "id": "gain_blood_reishi",
+      "type": "item_delta",
+      "target_id": "blood_reishi",
+      "value": 1
+    },
+    {
+      "id": "gain_tiger_king_pelt",
+      "type": "item_delta",
+      "target_id": "tiger_king_pelt",
+      "value": 1
+    },
+    {
+      "id": "gain_ancient_bone_token",
+      "type": "item_delta",
+      "target_id": "ancient_bone_token",
+      "value": 1
+    }
+  ]
+}

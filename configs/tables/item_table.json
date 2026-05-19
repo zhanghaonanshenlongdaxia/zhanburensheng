@@ -1,0 +1,314 @@
+{
+  "rarities": [
+    {
+      "id": "common",
+      "name": "普通",
+      "rank": 1,
+      "color_name": "白",
+      "color": "#E8E1D2"
+    },
+    {
+      "id": "fine",
+      "name": "优质",
+      "rank": 2,
+      "color_name": "绿",
+      "color": "#7BCB79"
+    },
+    {
+      "id": "rare",
+      "name": "稀有",
+      "rank": 3,
+      "color_name": "蓝",
+      "color": "#6FADEB"
+    },
+    {
+      "id": "precious",
+      "name": "珍贵",
+      "rank": 4,
+      "color_name": "紫",
+      "color": "#B783E6"
+    },
+    {
+      "id": "legendary",
+      "name": "传说",
+      "rank": 5,
+      "color_name": "金",
+      "color": "#F0C15A"
+    },
+    {
+      "id": "mythic",
+      "name": "神话",
+      "rank": 6,
+      "color_name": "红",
+      "color": "#E25A4F"
+    }
+  ],
+  "items": [
+    {
+      "id": "food",
+      "name": "粮食",
+      "default": 3,
+      "min": 0,
+      "group": "resource",
+      "rarity": "common",
+      "sell_value": 1
+    },
+    {
+      "id": "money",
+      "name": "铜钱",
+      "default": 0,
+      "min": 0,
+      "group": "resource",
+      "rarity": "common",
+      "sell_value": 1
+    },
+    {
+      "id": "herb",
+      "name": "药草",
+      "default": 0,
+      "min": 0,
+      "group": "resource",
+      "rarity": "common",
+      "sell_value": 2
+    },
+    {
+      "id": "meat",
+      "name": "肉",
+      "default": 0,
+      "min": 0,
+      "group": "resource",
+      "rarity": "common",
+      "sell_value": 3
+    },
+    {
+      "id": "bitter_leaf",
+      "name": "苦叶草",
+      "default": 0,
+      "min": 0,
+      "group": "herb",
+      "rarity": "common",
+      "sell_value": 2,
+      "description": "常见止血草，药性弱但容易辨认。"
+    },
+    {
+      "id": "dry_tuber",
+      "name": "山薯根",
+      "default": 0,
+      "min": 0,
+      "group": "food",
+      "rarity": "common",
+      "sell_value": 2,
+      "description": "能充饥，味涩，乱世里也算粮。"
+    },
+    {
+      "id": "rabbit_pelt",
+      "name": "野兔皮",
+      "default": 0,
+      "min": 0,
+      "group": "animal",
+      "rarity": "common",
+      "sell_value": 3,
+      "description": "完整度普通的小皮子，可换几文钱。"
+    },
+    {
+      "id": "rusty_copper_piece",
+      "name": "锈铜片",
+      "default": 0,
+      "min": 0,
+      "group": "old_object",
+      "rarity": "common",
+      "sell_value": 2,
+      "description": "不像钱，倒还能按铜料卖。"
+    },
+    {
+      "id": "bloodroot",
+      "name": "赤根草",
+      "default": 0,
+      "min": 0,
+      "group": "herb",
+      "rarity": "fine",
+      "sell_value": 6,
+      "description": "根须泛红，能治外伤，也容易被郎中收走。"
+    },
+    {
+      "id": "clear_moss",
+      "name": "清露苔",
+      "default": 0,
+      "min": 0,
+      "group": "herb",
+      "rarity": "fine",
+      "sell_value": 7,
+      "description": "多长在溪边阴石上，可退热。"
+    },
+    {
+      "id": "boar_tusk",
+      "name": "野猪獠牙",
+      "default": 0,
+      "min": 0,
+      "group": "animal",
+      "rarity": "fine",
+      "sell_value": 8,
+      "description": "可做饰物或工具柄，完整的更值钱。"
+    },
+    {
+      "id": "old_coin_string",
+      "name": "旧钱串",
+      "default": 0,
+      "min": 0,
+      "group": "old_object",
+      "rarity": "fine",
+      "sell_value": 8,
+      "description": "锈蚀不轻，但能看出是旧朝钱。"
+    },
+    {
+      "id": "mountain_ginseng",
+      "name": "小山参",
+      "default": 0,
+      "min": 0,
+      "group": "herb",
+      "rarity": "rare",
+      "sell_value": 18,
+      "description": "年份不深，但已远胜寻常草药。"
+    },
+    {
+      "id": "snake_gall",
+      "name": "蛇胆",
+      "default": 0,
+      "min": 0,
+      "group": "animal",
+      "rarity": "rare",
+      "sell_value": 16,
+      "description": "腥苦难闻，懂药的人会出价。"
+    },
+    {
+      "id": "broken_jade_button",
+      "name": "残玉扣",
+      "default": 0,
+      "min": 0,
+      "group": "old_object",
+      "rarity": "rare",
+      "sell_value": 22,
+      "description": "只剩半片，仍能看出原本不是村里物件。"
+    },
+    {
+      "id": "old_hunter_knife",
+      "name": "旧猎刀",
+      "default": 0,
+      "min": 0,
+      "group": "tool",
+      "rarity": "rare",
+      "sell_value": 20,
+      "description": "刃口有缺，修一修还能防身。"
+    },
+    {
+      "id": "purple_lingzhi",
+      "name": "紫芝",
+      "default": 0,
+      "min": 0,
+      "group": "herb",
+      "rarity": "precious",
+      "sell_value": 55,
+      "description": "崖壁阴处偶生，药铺会压价，但一定想要。"
+    },
+    {
+      "id": "wolf_pelt_complete",
+      "name": "完整狼皮",
+      "default": 0,
+      "min": 0,
+      "group": "animal",
+      "rarity": "precious",
+      "sell_value": 48,
+      "description": "保暖、防风，拿到镇上更好卖。"
+    },
+    {
+      "id": "silver_hairpin_bent",
+      "name": "弯折银簪",
+      "default": 0,
+      "min": 0,
+      "group": "old_object",
+      "rarity": "precious",
+      "sell_value": 60,
+      "description": "像是逃难人遗下的首饰，卖掉会惹人多问。"
+    },
+    {
+      "id": "remnant_bow_manual",
+      "name": "残缺弓谱",
+      "default": 0,
+      "min": 0,
+      "group": "manual",
+      "rarity": "precious",
+      "sell_value": 45,
+      "description": "缺页很多，但仍记着几种设伏和拉弓法。"
+    },
+    {
+      "id": "hundred_year_ginseng",
+      "name": "百年山参",
+      "default": 0,
+      "min": 0,
+      "group": "herb",
+      "rarity": "legendary",
+      "sell_value": 180,
+      "description": "足以让镇上药铺翻脸争抢的救命药。"
+    },
+    {
+      "id": "tiger_bone",
+      "name": "山君骨",
+      "default": 0,
+      "min": 0,
+      "group": "animal",
+      "rarity": "legendary",
+      "sell_value": 160,
+      "description": "猎户口中的硬货，来路必须藏好。"
+    },
+    {
+      "id": "soldier_hidden_seal",
+      "name": "逃兵私印",
+      "default": 0,
+      "min": 0,
+      "group": "old_object",
+      "rarity": "legendary",
+      "sell_value": 140,
+      "description": "可能牵出一条逃兵藏物线，也可能招祸。"
+    },
+    {
+      "id": "black_iron_shortblade",
+      "name": "黑铁短刃",
+      "default": 0,
+      "min": 0,
+      "group": "weapon",
+      "rarity": "legendary",
+      "sell_value": 150,
+      "description": "不像民间铁匠能打出的东西。"
+    },
+    {
+      "id": "blood_reishi",
+      "name": "血芝",
+      "default": 0,
+      "min": 0,
+      "group": "herb",
+      "rarity": "mythic",
+      "sell_value": 360,
+      "description": "传说能吊命的赤色灵药，真假难辨但足够致命。"
+    },
+    {
+      "id": "tiger_king_pelt",
+      "name": "山君王皮",
+      "default": 0,
+      "min": 0,
+      "group": "animal",
+      "rarity": "mythic",
+      "sell_value": 420,
+      "description": "能让猎户闭嘴，也能让里正立刻盯上你。"
+    },
+    {
+      "id": "ancient_bone_token",
+      "name": "古骨令",
+      "default": 0,
+      "min": 0,
+      "group": "relic",
+      "rarity": "mythic",
+      "sell_value": 500,
+      "description": "非金非玉，刻着没人认得的旧纹。"
+    }
+  ]
+}

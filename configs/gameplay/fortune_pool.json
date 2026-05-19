@@ -1,0 +1,337 @@
+{
+  "options": [
+    {
+      "id": "hunt_rabbit",
+      "title": "小黑山东侧找野兔",
+      "omen_title": "震木临山",
+      "omen_text": "东坡草动，短耳白影掠过乱石。",
+      "omen_place": "小黑山东侧",
+      "omen_gain": "少量肉食",
+      "omen_warning": "脚印断续，空返之象",
+      "location_id": "mountain",
+      "reward_desc": "肉x1-2",
+      "risk_desc": "低风险，可能空手而归",
+      "base_weight": 10,
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "weather_tag_compare",
+              "target_id": "weather",
+              "operator": "==",
+              "value": "clear"
+            }
+          ],
+          "delta": 4
+        }
+      ]
+    },
+    {
+      "id": "gather_herb",
+      "title": "村外荒地采草药",
+      "omen_title": "青囊入土",
+      "omen_text": "荒草压霜，土腥中藏一线生机。",
+      "omen_place": "村外荒地",
+      "omen_gain": "药草数株",
+      "omen_warning": "收益平稳，却救不了急债",
+      "location_id": "field",
+      "reward_desc": "药草x1-3",
+      "risk_desc": "低风险，收益稳定",
+      "base_weight": 10
+    },
+    {
+      "id": "find_tool",
+      "title": "河边寻找废弃农具",
+      "omen_title": "坎水浮铁",
+      "omen_text": "水声浑浊，碎石间有旧物未沉。",
+      "omen_place": "河滩浅水",
+      "omen_gain": "可换钱的旧物",
+      "omen_warning": "湿寒入骨，归来须避风",
+      "location_id": "river",
+      "reward_desc": "铜钱x3-8",
+      "risk_desc": "中风险，可能受寒",
+      "base_weight": 8,
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "weather_tag_compare",
+              "target_id": "weather",
+              "operator": "==",
+              "value": "wet"
+            }
+          ],
+          "delta": 3
+        }
+      ]
+    },
+    {
+      "id": "search_cache",
+      "title": "荒坟附近翻找旧物",
+      "omen_title": "阴土藏财",
+      "omen_text": "荒坟背风处，旧钱压在乱草之下。",
+      "omen_place": "荒坟边缘",
+      "omen_gain": "一小包旧钱",
+      "omen_warning": "阴地留痕，易惹人疑",
+      "location_id": "graveyard",
+      "reward_desc": "铜钱x5-12",
+      "risk_desc": "中风险，可能提升怀疑值",
+      "base_weight": 6,
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "weather_tag_compare",
+              "target_id": "weather",
+              "operator": "==",
+              "value": "snow"
+            }
+          ],
+          "delta": 2
+        }
+      ]
+    },
+    {
+      "id": "deep_hunt",
+      "title": "林地深处追踪野鸡",
+      "omen_title": "离羽入林",
+      "omen_text": "密林深处有羽声惊起，血气随风而散。",
+      "omen_place": "林地深处",
+      "omen_gain": "更多肉食",
+      "omen_warning": "枝石暗伏，伤身之象",
+      "location_id": "forest",
+      "reward_desc": "肉x2，铜钱x2",
+      "risk_desc": "高风险，可能受伤",
+      "base_weight": 4
+    },
+    {
+      "id": "rest_home",
+      "title": "留在家中歇息避风头",
+      "omen_title": "闭门养息",
+      "omen_text": "炉灰未冷，破屋也能挡住一夜恶风。",
+      "omen_place": "自家土屋",
+      "omen_gain": "体力回转，少些注目",
+      "omen_warning": "今日无进，债期不等人",
+      "location_id": "field",
+      "reward_desc": "恢复体力，略微降低怀疑",
+      "risk_desc": "无直接收益，耽误一天机会",
+      "base_weight": 7,
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "stat_compare",
+              "target_id": "stamina",
+              "operator": "<=",
+              "value": 20
+            }
+          ],
+          "delta": 6
+        }
+      ]
+    },
+    {
+      "id": "cook_meat",
+      "title": "把肉熬成热汤充饥",
+      "omen_title": "鼎火化肉",
+      "omen_text": "锅中热气压住饥寒，肉香却不可外泄。",
+      "omen_place": "灶前暗火",
+      "omen_gain": "粮食与饱腹",
+      "omen_warning": "库存见少，肉味易露",
+      "location_id": "field",
+      "reward_desc": "肉转成粮食，稳住生存",
+      "risk_desc": "几乎无风险，但会消耗库存",
+      "base_weight": 8,
+      "conditions": [
+        {
+          "type": "item_compare",
+          "target_id": "meat",
+          "operator": ">=",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "sell_herb",
+      "title": "把药草卖给行脚郎中",
+      "omen_title": "草木换金",
+      "omen_text": "干草有药香，路过的郎中会多看一眼。",
+      "omen_place": "村路边",
+      "omen_gain": "几枚铜钱",
+      "omen_warning": "药去伤留，后日难医",
+      "location_id": "field",
+      "reward_desc": "药草换成铜钱",
+      "risk_desc": "低风险，但会失去恢复手段",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "item_compare",
+          "target_id": "herb",
+          "operator": ">=",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "buy_food",
+      "title": "拿铜钱换些粗粮",
+      "omen_title": "兑金入仓",
+      "omen_text": "钱声落袋，粗粮入瓮，腹中可安一时。",
+      "omen_place": "村口货担",
+      "omen_gain": "粗粮补给",
+      "omen_warning": "钱袋变轻，还债更紧",
+      "location_id": "field",
+      "reward_desc": "铜钱转成粮食",
+      "risk_desc": "低风险，但会消耗现金",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "item_compare",
+          "target_id": "money",
+          "operator": ">=",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "use_herb",
+      "title": "拿药草给自己敷伤",
+      "omen_title": "青痕敷骨",
+      "omen_text": "苦汁入伤口，旧痛能被暂时压下。",
+      "omen_place": "屋内暗处",
+      "omen_gain": "少量健康",
+      "omen_warning": "草药耗尽，再伤难支",
+      "location_id": "field",
+      "reward_desc": "药草换少量健康",
+      "risk_desc": "无直接收益，消耗药草",
+      "base_weight": 6,
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "herb",
+              "operator": ">=",
+              "value": 1
+            },
+            {
+              "type": "stat_compare",
+              "target_id": "health",
+              "operator": "<=",
+              "value": 24
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "help_villager",
+      "title": "替村口人家搭把手",
+      "omen_title": "比邻借力",
+      "omen_text": "柴门半开，有人缺一双能干的手。",
+      "omen_place": "村口人家",
+      "omen_gain": "零钱与人情",
+      "omen_warning": "人情薄，不可显得太能",
+      "location_id": "field",
+      "reward_desc": "少量铜钱，可能换来信任",
+      "risk_desc": "低风险，收益不高",
+      "base_weight": 8,
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "not",
+              "condition": {
+                "type": "flag_compare",
+                "target_id": "earned_villager_trust",
+                "operator": "==",
+                "value": true
+              }
+            }
+          ],
+          "delta": 3
+        }
+      ]
+    },
+    {
+      "id": "run_errand",
+      "title": "替人跑腿送信换工钱",
+      "omen_title": "驿路小财",
+      "omen_text": "一封口信压在袖中，来回路上有辛苦钱。",
+      "omen_place": "河对岸小路",
+      "omen_gain": "稳定铜钱",
+      "omen_warning": "奔走劳身，难有横财",
+      "location_id": "river",
+      "reward_desc": "稳定赚些铜钱，低风险还债",
+      "risk_desc": "收益平稳，但不容易暴富",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "unlocked_errand_route",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "debt_compare",
+              "target_id": "current",
+              "operator": ">=",
+              "value": 10
+            }
+          ],
+          "delta": 2
+        }
+      ]
+    },
+    {
+      "id": "graveyard_follow_clue",
+      "title": "沿旧痕继续寻找埋藏处",
+      "omen_title": "旧痕再显",
+      "omen_text": "前日留下的细痕未断，雪泥下仍有暗线。",
+      "omen_place": "荒坟旧痕",
+      "omen_gain": "更深的埋藏物",
+      "omen_warning": "财重则眼多，莫让人跟上",
+      "location_id": "graveyard",
+      "reward_desc": "更高收益，可能推进线索",
+      "risk_desc": "高风险，容易引来注目",
+      "base_weight": 5,
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "met_collector",
+              "operator": "==",
+              "value": false
+            }
+          ],
+          "delta": 3
+        }
+      ],
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "saw_graveyard_cache",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "location_tag_compare",
+              "target_id": "graveyard",
+              "operator": "==",
+              "value": "strange"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

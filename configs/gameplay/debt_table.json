@@ -1,0 +1,9 @@
+{
+  "debt": {
+    "current": 20,
+    "initial": 20,
+    "due_day": 10,
+    "daily_interest": 1,
+    "collector_name": "贾三坡"
+  }
+}

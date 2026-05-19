@@ -1,0 +1,34 @@
+{
+  "flags": [
+    {
+      "id": "met_collector",
+      "name": "已见过债主的人",
+      "default": false
+    },
+    {
+      "id": "repaid_debt_once",
+      "name": "曾经还过债",
+      "default": false
+    },
+    {
+      "id": "saw_graveyard_cache",
+      "name": "发现坟地旧藏线索",
+      "default": false
+	},
+	{
+	  "id": "found_hidden_stash",
+	  "name": "找到真正埋藏的钱袋",
+	  "default": false
+    },
+	{
+	  "id": "earned_villager_trust",
+	  "name": "获得村人信任",
+	  "default": false
+	},
+	{
+	  "id": "unlocked_errand_route",
+	  "name": "打开稳妥跑腿门路",
+	  "default": false
+    }
+  ]
+}

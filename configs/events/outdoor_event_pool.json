@@ -1,0 +1,202 @@
+{
+  "events": [
+    {
+      "id": "rabbit_success",
+      "name": "追到一只野兔",
+      "location_ids": ["mountain"],
+      "option_ids": ["hunt_rabbit"],
+      "weight": 10,
+      "result_text": "你顺着浅雪中的脚印追到一只野兔，收获了一些肉。",
+      "effects": ["gain_meat_small", "lose_stamina_small"]
+    },
+    {
+      "id": "rabbit_empty",
+      "name": "扑了个空",
+      "location_ids": ["mountain"],
+      "option_ids": ["hunt_rabbit"],
+      "weight": 6,
+      "result_text": "你在山里转了半天，脚印断断续续，最后空手而归。",
+      "effects": ["lose_stamina_small"]
+    },
+    {
+      "id": "herb_success",
+      "name": "找到可用草药",
+      "location_ids": ["field"],
+      "option_ids": ["gather_herb"],
+      "weight": 10,
+      "result_text": "你在荒地边缘认出几株常见草药，小心采下后带了回来。",
+      "effects": ["gain_herb_small", "lose_stamina_small"]
+    },
+    {
+      "id": "river_find_money",
+      "name": "捡到遗落零碎",
+      "location_ids": ["river"],
+      "option_ids": ["find_tool"],
+      "weight": 8,
+      "result_text": "你在河滩碎石间翻到些还值钱的小玩意，换得几枚铜钱。",
+      "effects": ["gain_money_small", "lose_stamina_small"]
+    },
+    {
+      "id": "graveyard_trouble",
+      "name": "翻找旧物惹人怀疑",
+      "location_ids": ["graveyard"],
+      "option_ids": ["search_cache"],
+      "weight": 8,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "saw_graveyard_cache",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "result_text": "你在荒坟附近翻找旧物时被路人远远看见，虽有收获，却也多了几分风险。",
+      "effects": ["gain_money_small", "gain_suspicion_small", "lose_stamina_small", "mark_saw_graveyard_cache", "unlock_graveyard_follow_clue"]
+    },
+    {
+      "id": "graveyard_snow_clue",
+      "name": "雪地旧痕",
+      "location_ids": ["graveyard"],
+      "option_ids": ["search_cache"],
+      "weight": 5,
+      "conditions": [
+        {
+          "type": "weather_compare",
+          "target_id": "id",
+          "operator": "==",
+          "value": "snow"
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "saw_graveyard_cache",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "result_text": "薄雪覆盖着荒坟边缘，你意外辨出一串旧脚印，像是有人早就把东西藏在这里。",
+      "effects": ["gain_money_small", "mark_saw_graveyard_cache", "unlock_graveyard_follow_clue"]
+    },
+    {
+      "id": "graveyard_follow_clue_success",
+      "name": "循迹找到埋藏处",
+      "location_ids": ["graveyard"],
+      "option_ids": ["graveyard_follow_clue"],
+      "weight": 10,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "saw_graveyard_cache",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "result_text": "你循着之前留下的细碎痕迹，真的在乱草与碎土间翻出一小包旧钱。",
+      "effects": ["gain_money_medium", "gain_money_small", "gain_suspicion_small", "mark_found_hidden_stash"]
+    },
+    {
+      "id": "forest_injury",
+      "name": "林中受伤",
+      "location_ids": ["forest"],
+      "option_ids": ["deep_hunt"],
+      "weight": 8,
+      "result_text": "你为了追猎钻进密林深处，猎物没抓稳，反倒被枝石划伤。",
+      "effects": ["gain_meat_medium", "lose_stamina_medium", "lose_health_small", "gain_attention_small"]
+	},
+	{
+	  "id": "rest_home_recover",
+	  "name": "在屋里缓过一口气",
+	  "location_ids": ["field"],
+	  "option_ids": ["rest_home"],
+	  "weight": 10,
+	  "result_text": "你把门关紧，缩在屋里少露面，总算让身子缓过一口气。",
+	  "effects": ["gain_stamina_small", "lose_suspicion_small"]
+    },
+	{
+	  "id": "cook_meat_meal",
+	  "name": "熬了一锅热汤",
+	  "location_ids": ["field"],
+	  "option_ids": ["cook_meat"],
+	  "weight": 10,
+	  "result_text": "你把存下的肉熬成了热汤，至少接下来两天不用太担心肚子。",
+	  "effects": ["lose_meat_small", "gain_food_small"]
+	},
+	{
+	  "id": "sell_herb_cash",
+	  "name": "药草换了零钱",
+	  "location_ids": ["field"],
+	  "option_ids": ["sell_herb"],
+	  "weight": 10,
+	  "result_text": "你把晒干的药草卖给路过的郎中，换回几枚铜钱。",
+	  "effects": ["lose_herb_small", "gain_money_small"]
+	},
+	{
+	  "id": "buy_food_supply",
+	  "name": "换回些粗粮",
+	  "location_ids": ["field"],
+	  "option_ids": ["buy_food"],
+	  "weight": 10,
+	  "result_text": "你咬牙拿铜钱换了些粗粮，至少暂时不必空着肚子。",
+	  "effects": ["lose_money_small", "gain_food_small"]
+	},
+	{
+	  "id": "use_herb_recover",
+	  "name": "药草压住了旧伤",
+	  "location_ids": ["field"],
+	  "option_ids": ["use_herb"],
+	  "weight": 10,
+	  "result_text": "你把药草细细捣碎敷在伤处，疼劲总算轻了些。",
+	  "effects": ["lose_herb_small", "gain_health_small"]
+	},
+	{
+	  "id": "help_villager_basic",
+	  "name": "帮人搭手换点谢钱",
+	  "location_ids": ["field"],
+	  "option_ids": ["help_villager"],
+	  "weight": 8,
+	  "conditions": [
+	    {
+	      "type": "flag_compare",
+	      "target_id": "earned_villager_trust",
+	      "operator": "==",
+	      "value": false
+	    }
+	  ],
+	  "result_text": "你替村口人家搬了半天柴和杂物，对方虽还带着戒备，还是塞给你几枚铜钱。",
+	  "effects": ["gain_money_tiny", "mark_earned_villager_trust", "unlock_errand_route"]
+	},
+	{
+	  "id": "help_villager_repeat",
+	  "name": "熟脸后更容易接活",
+	  "location_ids": ["field"],
+	  "option_ids": ["help_villager"],
+	  "weight": 10,
+	  "conditions": [
+	    {
+	      "type": "flag_compare",
+	      "target_id": "earned_villager_trust",
+	      "operator": "==",
+	      "value": true
+	    }
+	  ],
+	  "result_text": "有人认出你肯出力，顺手把零碎杂活也托给了你，虽不多，却比前些日子稳当。",
+	  "effects": ["gain_money_tiny"]
+	},
+	{
+	  "id": "run_errand_paid",
+	  "name": "替人跑腿拿到工钱",
+	  "location_ids": ["river"],
+	  "option_ids": ["run_errand"],
+	  "weight": 10,
+	  "conditions": [
+	    {
+	      "type": "flag_compare",
+	      "target_id": "unlocked_errand_route",
+	      "operator": "==",
+	      "value": true
+	    }
+	  ],
+	  "result_text": "你替人把口信和小包裹送到了河对岸，来回虽累，却换回了踏实的工钱。",
+	  "effects": ["gain_money_small", "lose_stamina_small"]
+    }
+  ]
+}

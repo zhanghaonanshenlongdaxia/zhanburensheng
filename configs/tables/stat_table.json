@@ -1,0 +1,36 @@
+{
+  "stats": [
+    {
+      "id": "stamina",
+      "name": "体力",
+      "default": 100,
+      "min": 0,
+      "max": 100,
+      "group": "player"
+    },
+    {
+      "id": "health",
+      "name": "健康",
+      "default": 100,
+      "min": 0,
+      "max": 100,
+      "group": "player"
+    },
+    {
+      "id": "suspicion",
+      "name": "怀疑",
+      "default": 0,
+      "min": 0,
+      "max": 100,
+      "group": "player"
+    },
+    {
+      "id": "village_attention",
+      "name": "村民关注",
+      "default": 0,
+      "min": 0,
+      "max": 100,
+      "group": "player"
+    }
+  ]
+}

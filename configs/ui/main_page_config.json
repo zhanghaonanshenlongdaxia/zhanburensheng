@@ -1,0 +1,14 @@
+{
+  "player_stat_order": [
+    "stamina",
+    "health",
+    "suspicion",
+    "village_attention"
+  ],
+  "inventory_item_order": [
+    "food",
+    "money",
+    "herb",
+    "meat"
+  ]
+}

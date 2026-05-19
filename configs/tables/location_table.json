@@ -1,0 +1,29 @@
+{
+  "locations": [
+    {
+      "id": "mountain",
+      "name": "小黑山",
+      "tags": ["outdoor", "cold"]
+    },
+    {
+      "id": "field",
+      "name": "村外荒地",
+      "tags": ["outdoor", "safe"]
+    },
+    {
+      "id": "river",
+      "name": "河边",
+      "tags": ["outdoor", "wet"]
+    },
+    {
+      "id": "graveyard",
+      "name": "荒坟",
+      "tags": ["outdoor", "strange"]
+    },
+    {
+      "id": "forest",
+      "name": "林地深处",
+      "tags": ["outdoor", "danger"]
+    }
+  ]
+}

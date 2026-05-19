@@ -1,0 +1,36 @@
+{
+  "rules": [
+    {
+      "id": "daily_food_cost",
+      "name": "每日耗粮",
+      "conditions": [],
+      "effects": ["lose_food_daily"]
+    },
+    {
+      "id": "starving_penalty",
+      "name": "缺粮惩罚",
+      "conditions": [
+        {
+          "type": "item_compare",
+          "target_id": "food",
+          "operator": "<=",
+          "value": 0
+        }
+      ],
+      "effects": ["lose_health_starving", "gain_suspicion_starving"]
+	},
+	{
+	  "id": "exhausted_penalty",
+	  "name": "透支体力",
+	  "conditions": [
+	    {
+	      "type": "stat_compare",
+	      "target_id": "stamina",
+	      "operator": "<=",
+	      "value": 10
+	    }
+	  ],
+	  "effects": ["lose_health_small"]
+    }
+  ]
+}

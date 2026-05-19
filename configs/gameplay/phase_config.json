@@ -1,0 +1,12 @@
+{
+  "phases": [
+    {
+      "id": "morning",
+      "name": "白天"
+    },
+    {
+      "id": "night",
+      "name": "夜晚"
+    }
+  ]
+}

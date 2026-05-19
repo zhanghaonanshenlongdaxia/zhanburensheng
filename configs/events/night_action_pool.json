@@ -1,0 +1,99 @@
+{
+  "events": [
+    {
+      "id": "repay_small_debt",
+      "name": "拿铜钱还一部分债",
+      "weight": 8,
+      "conditions": [
+        {
+          "type": "item_compare",
+          "target_id": "money",
+          "operator": ">=",
+          "value": 5
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "result_text": "你趁夜把攒下的几枚铜钱送了出去，债主暂时没再逼得太紧。",
+      "effects": ["lose_money_repay_small", "reduce_debt_small", "mark_repaid_debt_once"]
+    },
+    {
+      "id": "interest_grows",
+      "name": "债息又涨了",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "result_text": "你没能凑出更多钱，欠下的数目又被悄悄往上添了一笔。",
+      "effects": ["increase_debt_interest"]
+    },
+    {
+      "id": "collector_pressure",
+      "name": "债主催逼",
+      "weight": 10,
+      "conditions": [
+        {
+          "type": "day_compare",
+          "target_id": "current_day",
+          "operator": ">=",
+          "value": 7
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "met_collector",
+          "operator": "==",
+          "value": false
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "result_text": "约定的日子已经临近，债主的人上门敲打，逼得你心头更紧。",
+      "effects": ["gain_suspicion_small", "gain_attention_small", "mark_met_collector"]
+	},
+	{
+	  "id": "pressure_eases_after_repay",
+	  "name": "还债后风声暂缓",
+	  "weight": 7,
+	  "conditions": [
+	    {
+	      "type": "all_of",
+	      "conditions": [
+	        {
+	          "type": "flag_compare",
+	          "target_id": "met_collector",
+	          "operator": "==",
+	          "value": true
+	        },
+	        {
+	          "type": "flag_compare",
+	          "target_id": "repaid_debt_once",
+	          "operator": "==",
+	          "value": true
+	        },
+	        {
+	          "type": "debt_compare",
+	          "target_id": "current",
+	          "operator": "<=",
+	          "value": 15
+	        }
+	      ]
+	    }
+	  ],
+	  "result_text": "你先前递出去的钱总算起了作用，债主的人这几夜没再继续逼门。",
+	  "effects": ["clear_met_collector"]
+    }
+  ]
+}

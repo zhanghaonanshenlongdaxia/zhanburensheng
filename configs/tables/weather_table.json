@@ -1,0 +1,40 @@
+{
+  "weathers": [
+    {
+      "id": "sunny",
+      "name": "晴天",
+      "tags": ["clear", "mild"],
+      "stamina_cost_rate": 1.0,
+      "success_rate_bonus": 0.1,
+      "risk_rate_bonus": -0.05,
+      "blocked_locations": []
+    },
+    {
+      "id": "rain",
+      "name": "小雨",
+      "tags": ["wet", "cold"],
+      "stamina_cost_rate": 1.2,
+      "success_rate_bonus": -0.05,
+      "risk_rate_bonus": 0.1,
+      "blocked_locations": []
+    },
+    {
+      "id": "cold_wave",
+      "name": "寒潮",
+      "tags": ["cold", "harsh"],
+      "stamina_cost_rate": 1.5,
+      "success_rate_bonus": -0.1,
+      "risk_rate_bonus": 0.2,
+      "blocked_locations": []
+    },
+    {
+      "id": "blizzard",
+      "name": "暴雪",
+      "tags": ["cold", "harsh", "snow"],
+      "stamina_cost_rate": 2.0,
+      "success_rate_bonus": -0.25,
+      "risk_rate_bonus": 0.45,
+      "blocked_locations": ["mountain", "forest"]
+    }
+  ]
+}
