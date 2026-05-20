@@ -29,6 +29,26 @@
 	  "id": "unlocked_errand_route",
 	  "name": "打开稳妥跑腿门路",
 	  "default": false
+    },
+	{
+	  "id": "cold_mild",
+	  "name": "染寒",
+	  "default": false
+    },
+	{
+	  "id": "cold_worse",
+	  "name": "寒症",
+	  "default": false
+    },
+	{
+	  "id": "cold_severe",
+	  "name": "重寒",
+	  "default": false
+    },
+	{
+	  "id": "cold_treated_today",
+	  "name": "今日已经用药",
+	  "default": false
     }
   ]
 }

@@ -79,10 +79,22 @@
       "value": 10
     },
     {
+      "id": "gain_stamina_tiny",
+      "type": "stat_delta",
+      "target_id": "stamina",
+      "value": 5
+    },
+    {
       "id": "gain_health_small",
       "type": "stat_delta",
       "target_id": "health",
       "value": 6
+    },
+    {
+      "id": "gain_health_tiny",
+      "type": "stat_delta",
+      "target_id": "health",
+      "value": 3
     },
     {
       "id": "lose_health_small",
@@ -107,6 +119,54 @@
       "type": "stat_delta",
       "target_id": "village_attention",
       "value": 4
+    },
+    {
+      "id": "mark_cold_mild",
+      "type": "set_flag",
+      "target_id": "cold_mild",
+      "value": true
+    },
+    {
+      "id": "mark_cold_worse",
+      "type": "set_flag",
+      "target_id": "cold_worse",
+      "value": true
+    },
+    {
+      "id": "mark_cold_severe",
+      "type": "set_flag",
+      "target_id": "cold_severe",
+      "value": true
+    },
+    {
+      "id": "clear_cold_mild",
+      "type": "clear_flag",
+      "target_id": "cold_mild",
+      "value": false
+    },
+    {
+      "id": "clear_cold_worse",
+      "type": "clear_flag",
+      "target_id": "cold_worse",
+      "value": false
+    },
+    {
+      "id": "clear_cold_severe",
+      "type": "clear_flag",
+      "target_id": "cold_severe",
+      "value": false
+    },
+    {
+      "id": "mark_cold_treated_today",
+      "type": "set_flag",
+      "target_id": "cold_treated_today",
+      "value": true
+    },
+    {
+      "id": "clear_cold_treated_today",
+      "type": "clear_flag",
+      "target_id": "cold_treated_today",
+      "value": false
     },
     {
       "id": "lose_food_daily",

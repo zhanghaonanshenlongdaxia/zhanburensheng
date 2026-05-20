@@ -216,10 +216,33 @@
               "value": 1
             },
             {
-              "type": "stat_compare",
-              "target_id": "health",
-              "operator": "<=",
-              "value": 24
+              "type": "any_of",
+              "conditions": [
+                {
+                  "type": "stat_compare",
+                  "target_id": "health",
+                  "operator": "<=",
+                  "value": 24
+                },
+                {
+                  "type": "flag_compare",
+                  "target_id": "cold_mild",
+                  "operator": "==",
+                  "value": true
+                },
+                {
+                  "type": "flag_compare",
+                  "target_id": "cold_worse",
+                  "operator": "==",
+                  "value": true
+                },
+                {
+                  "type": "flag_compare",
+                  "target_id": "cold_severe",
+                  "operator": "==",
+                  "value": true
+                }
+              ]
             }
           ]
         }

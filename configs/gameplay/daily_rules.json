@@ -1,10 +1,183 @@
 {
   "rules": [
     {
+      "id": "reset_cold_treatment",
+      "name": "重置用药间隔",
+      "conditions": [],
+      "effects": ["clear_cold_treated_today"]
+    },
+    {
+      "id": "fed_recover_stamina",
+      "name": "有粮恢复体力",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "food",
+              "operator": ">=",
+              "value": 1
+            },
+            {
+              "type": "stat_compare",
+              "target_id": "stamina",
+              "operator": "<",
+              "value": 100
+            }
+          ]
+        }
+      ],
+      "effects": ["gain_stamina_tiny"]
+    },
+    {
       "id": "daily_food_cost",
       "name": "每日耗粮",
       "conditions": [],
       "effects": ["lose_food_daily"]
+    },
+    {
+      "id": "eat_meat_recover",
+      "name": "吃肉补身",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "meat",
+              "operator": ">=",
+              "value": 1
+            },
+            {
+              "type": "any_of",
+              "conditions": [
+                {
+                  "type": "stat_compare",
+                  "target_id": "health",
+                  "operator": "<=",
+                  "value": 70
+                },
+                {
+                  "type": "stat_compare",
+                  "target_id": "stamina",
+                  "operator": "<=",
+                  "value": 70
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "effects": ["lose_meat_small", "gain_health_small", "gain_stamina_small"]
+    },
+    {
+      "id": "use_herb_cure_severe_cold",
+      "name": "用药压下重寒",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "herb",
+              "operator": ">=",
+              "value": 1
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_severe",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_treated_today",
+              "operator": "==",
+              "value": false
+            }
+          ]
+        }
+      ],
+      "effects": ["lose_herb_small", "clear_cold_severe", "mark_cold_worse", "mark_cold_treated_today", "gain_health_tiny"]
+    },
+    {
+      "id": "use_herb_cure_worse_cold",
+      "name": "用药治寒症",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "herb",
+              "operator": ">=",
+              "value": 1
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_worse",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_severe",
+              "operator": "==",
+              "value": false
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_treated_today",
+              "operator": "==",
+              "value": false
+            }
+          ]
+        }
+      ],
+      "effects": ["lose_herb_small", "clear_cold_worse", "mark_cold_treated_today", "gain_health_tiny", "gain_stamina_tiny"]
+    },
+    {
+      "id": "use_herb_cure_mild_cold",
+      "name": "用药散寒",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "herb",
+              "operator": ">=",
+              "value": 1
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_mild",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_worse",
+              "operator": "==",
+              "value": false
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_severe",
+              "operator": "==",
+              "value": false
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_treated_today",
+              "operator": "==",
+              "value": false
+            }
+          ]
+        }
+      ],
+      "effects": ["lose_herb_small", "clear_cold_mild", "mark_cold_treated_today", "gain_stamina_tiny"]
     },
     {
       "id": "starving_penalty",
@@ -31,6 +204,73 @@
 	    }
 	  ],
 	  "effects": ["lose_health_small"]
+    },
+    {
+      "id": "cold_severe_penalty",
+      "name": "重寒伤身",
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "cold_severe",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "effects": ["lose_health_starving", "lose_stamina_medium"]
+    },
+    {
+      "id": "cold_worse_penalty",
+      "name": "寒症加重",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "cold_worse",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_severe",
+              "operator": "==",
+              "value": false
+            }
+          ]
+        }
+      ],
+      "effects": ["lose_health_small", "lose_stamina_small", "clear_cold_worse", "mark_cold_severe"]
+    },
+    {
+      "id": "cold_mild_penalty",
+      "name": "染寒未治",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "cold_mild",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_worse",
+              "operator": "==",
+              "value": false
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_severe",
+              "operator": "==",
+              "value": false
+            }
+          ]
+        }
+      ],
+      "effects": ["lose_stamina_small", "clear_cold_mild", "mark_cold_worse"]
     }
   ]
 }

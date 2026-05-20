@@ -50,6 +50,8 @@ var _inventory_loot_grid: GridContainer
 var _inventory_empty_label: Label
 var _inventory_button: Button
 var _town_button: Button
+var _feedback_layer: Control
+var _feedback_bubble_index: int = 0
 var _player_state_rich: RichTextLabel
 var _inventory_rich: RichTextLabel
 var _selection_rich: RichTextLabel
@@ -60,6 +62,7 @@ func _ready() -> void:
 	_ensure_town_board()
 	_ensure_inventory_overlay()
 	_ensure_sidebar_buttons()
+	_ensure_feedback_layer()
 	_ensure_rich_text_replacements()
 	_apply_visual_polish()
 	_app = get_tree().get_first_node_in_group("app") as App
@@ -325,6 +328,17 @@ func _ensure_sidebar_buttons() -> void:
 	_town_button = _make_sidebar_button("去城镇")
 	_town_button.pressed.connect(_on_town_button_pressed)
 	row.add_child(_town_button)
+
+func _ensure_feedback_layer() -> void:
+	if _feedback_layer != null:
+		return
+	_feedback_layer = Control.new()
+	_feedback_layer.name = "FeedbackLayer"
+	_feedback_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_feedback_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_feedback_layer.z_index = 80
+	add_child(_feedback_layer)
+	move_child(_feedback_layer, get_child_count() - 1)
 
 func _make_sidebar_button(text: String) -> Button:
 	var button := Button.new()
@@ -653,6 +667,341 @@ func _colorize_rarity_token(text: String, prefix: String, color_hex: String) -> 
 		result = result.substr(0, prefix_index) + colored_token + result.substr(token_end)
 		search_from = prefix_index + colored_token.length()
 	return result
+
+func _play_effect_feedback(applied_effects: Array) -> void:
+	if _app == null or applied_effects.is_empty() or _feedback_layer == null:
+		return
+	_feedback_bubble_index = (_feedback_bubble_index + 1) % 100000
+	var base_index := _feedback_bubble_index
+	var shown := 0
+	for effect_variant in applied_effects:
+		var effect: Dictionary = effect_variant
+		var feedback := _feedback_from_effect(effect)
+		if feedback.is_empty():
+			continue
+		_spawn_feedback_card(
+			str(feedback.get("text", "")),
+			feedback.get("color", Color(0.92, 0.84, 0.62, 1.0)),
+			bool(feedback.get("fly_to_bag", false)),
+			bool(feedback.get("shake", false)),
+			base_index + shown
+		)
+		if bool(feedback.get("scar", false)):
+			_play_scar_flash()
+		shown += 1
+		if shown >= 4:
+			break
+	if shown > 0:
+		_pulse_target(_inventory_button if _inventory_button != null else _inventory_rich)
+
+func _play_manual_item_feedback(changes: Array) -> void:
+	var effects: Array = []
+	for change_variant in changes:
+		var change: Dictionary = change_variant
+		effects.append({
+			"type": "item_delta",
+			"target_id": str(change.get("id", "")),
+			"value": int(change.get("value", 0))
+		})
+	_play_effect_feedback(effects)
+
+func _feedback_from_effect(effect: Dictionary) -> Dictionary:
+	var effect_type := str(effect.get("type", ""))
+	var target_id := str(effect.get("target_id", ""))
+	var value := int(effect.get("value", 0))
+	match effect_type:
+		"item_delta":
+			if value == 0:
+				return {}
+			var item_name := _item_display_name(target_id)
+			var item_color := _item_feedback_color(target_id)
+			return {
+				"text": "%s %s x%d" % ["获得" if value > 0 else "失去", item_name, abs(value)],
+				"color": item_color if value > 0 else Color(0.86, 0.34, 0.28, 1.0),
+				"fly_to_bag": value > 0,
+				"shake": value < 0
+			}
+		"stat_delta":
+			if value == 0:
+				return {}
+			var stat_name := _stat_display_name(target_id)
+			var positive := value > 0
+			return {
+				"text": "%s %s %s%d" % [stat_name, "提升" if positive else "下降", "+" if positive else "", value],
+				"color": _stat_feedback_color(target_id, positive),
+				"fly_to_bag": false,
+				"shake": not positive,
+				"scar": target_id == "health" and value < 0
+			}
+		"set_flag":
+			if not target_id.begins_with("cold_"):
+				return {}
+			return {
+				"text": "状态 %s" % _flag_display_name(target_id),
+				"color": Color(0.72, 0.52, 0.92, 1.0),
+				"fly_to_bag": false,
+				"shake": true,
+				"scar": target_id == "cold_severe"
+			}
+		"clear_flag":
+			if not target_id.begins_with("cold_"):
+				return {}
+			return {
+				"text": "解除 %s" % _flag_display_name(target_id),
+				"color": Color(0.50, 0.82, 0.50, 1.0),
+				"fly_to_bag": false,
+				"shake": false
+			}
+		"debt_delta":
+			if value == 0:
+				return {}
+			return {
+				"text": "欠债 %s%d" % ["+" if value > 0 else "", value],
+				"color": Color(0.86, 0.34, 0.28, 1.0) if value > 0 else Color(0.90, 0.70, 0.35, 1.0),
+				"fly_to_bag": false,
+				"shake": value > 0
+			}
+	return {}
+
+func _spawn_feedback_card(text: String, color: Color, fly_to_bag: bool, shake: bool, index: int) -> void:
+	if text.is_empty() or _feedback_layer == null:
+		return
+	var card := PanelContainer.new()
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.z_index = 90 + index
+	card.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	card.scale = Vector2(0.86, 0.86)
+	card.add_theme_stylebox_override("panel", _make_feedback_style(color, shake))
+	_feedback_layer.add_child(card)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	card.add_child(margin)
+
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 20)
+	label.add_theme_color_override("font_color", Color(0.99, 0.94, 0.80, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.04, 0.02, 0.015, 1.0))
+	label.add_theme_constant_override("outline_size", 4)
+	margin.add_child(label)
+
+	card.reset_size()
+	var start := _feedback_bubble_start(index, card.size)
+	card.position = start
+	card.pivot_offset = card.size * 0.5
+
+	if shake:
+		_play_loss_shake(card, index)
+	elif fly_to_bag:
+		_play_fly_to_bag(card, color, index)
+	else:
+		_play_float_fade(card, index)
+
+func _play_fly_to_bag(card: Control, color: Color, index: int) -> void:
+	var bubble_delay := _feedback_delay(index)
+	var hover := card.position + Vector2(0.0, -54.0)
+	var target := _feedback_bag_center() - card.size * 0.35
+	var tween := create_tween()
+	tween.tween_interval(bubble_delay)
+	tween.set_parallel(true)
+	tween.tween_property(card, "modulate:a", 1.0, 0.12)
+	tween.tween_property(card, "scale", Vector2(1.06, 1.06), 0.16)
+	tween.tween_property(card, "position", hover, 0.34).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.set_parallel(false)
+	tween.tween_interval(0.38)
+	tween.set_parallel(true)
+	tween.tween_property(card, "position", target, 0.54).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(card, "scale", Vector2(0.42, 0.42), 0.50).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(card, "modulate:a", 0.0, 0.16).set_delay(0.42)
+	tween.finished.connect(func() -> void:
+		if is_instance_valid(card):
+			card.queue_free()
+	)
+	_spawn_bag_glow(color, bubble_delay + 1.08)
+
+func _play_loss_shake(card: Control, index: int) -> void:
+	var start := card.position
+	var delay := _feedback_delay(index)
+	var tween := create_tween()
+	tween.tween_property(card, "modulate:a", 1.0, 0.08).set_delay(delay)
+	tween.tween_property(card, "scale", Vector2(1.08, 1.08), 0.10)
+	for offset in [Vector2(-10, 0), Vector2(12, 0), Vector2(-7, 0), Vector2(6, 0), Vector2.ZERO]:
+		tween.tween_property(card, "position", start + offset, 0.045)
+	tween.tween_interval(0.42)
+	tween.tween_property(card, "modulate:a", 0.0, 0.18)
+	tween.finished.connect(func() -> void:
+		if is_instance_valid(card):
+			card.queue_free()
+	)
+	_pulse_target(_player_state_rich)
+
+func _play_float_fade(card: Control, index: int) -> void:
+	var start := card.position
+	var delay := _feedback_delay(index)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(card, "modulate:a", 1.0, 0.12).set_delay(delay)
+	tween.tween_property(card, "position", start + Vector2(0.0, -76.0), 1.18).set_delay(delay).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(card, "scale", Vector2(1.04, 1.04), 0.22).set_delay(delay)
+	tween.tween_property(card, "modulate:a", 0.0, 0.24).set_delay(delay + 0.94)
+	tween.finished.connect(func() -> void:
+		if is_instance_valid(card):
+			card.queue_free()
+	)
+
+func _play_scar_flash() -> void:
+	if _feedback_layer == null:
+		return
+	var overlay := Control.new()
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	overlay.z_index = 120
+	_feedback_layer.add_child(overlay)
+
+	var wash := ColorRect.new()
+	wash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	wash.color = Color(0.58, 0.02, 0.0, 0.34)
+	overlay.add_child(wash)
+
+	var center := size * 0.5
+	for idx in range(3):
+		var slash := ColorRect.new()
+		slash.color = Color(0.86, 0.05, 0.035, 0.72)
+		slash.size = Vector2(260.0 - float(idx) * 42.0, 8.0)
+		slash.position = center + Vector2(-126.0 + float(idx) * 44.0, -80.0 + float(idx) * 54.0)
+		slash.rotation = -0.42
+		overlay.add_child(slash)
+
+	var tween := create_tween()
+	tween.tween_property(overlay, "modulate:a", 1.0, 0.08)
+	tween.tween_property(overlay, "modulate:a", 0.0, 0.46).set_delay(0.16)
+	tween.finished.connect(func() -> void:
+		if is_instance_valid(overlay):
+			overlay.queue_free()
+	)
+
+func _spawn_bag_glow(color: Color, delay: float) -> void:
+	if _inventory_button == null or _feedback_layer == null:
+		return
+	var button_rect := _inventory_button.get_global_rect()
+	var layer_origin := _feedback_layer.get_global_rect().position
+	var glow := PanelContainer.new()
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	glow.position = button_rect.position - layer_origin - Vector2(8.0, 8.0)
+	glow.size = button_rect.size + Vector2(16.0, 16.0)
+	glow.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	glow.add_theme_stylebox_override("panel", _make_feedback_style(color, false))
+	_feedback_layer.add_child(glow)
+	var tween := create_tween()
+	tween.tween_property(glow, "modulate:a", 0.86, 0.10).set_delay(delay)
+	tween.tween_property(glow, "scale", Vector2(1.12, 1.16), 0.18)
+	tween.tween_property(glow, "modulate:a", 0.0, 0.24)
+	tween.finished.connect(func() -> void:
+		if is_instance_valid(glow):
+			glow.queue_free()
+	)
+
+func _pulse_target(target: Control) -> void:
+	if target == null:
+		return
+	var original := target.modulate
+	var tween := create_tween()
+	tween.tween_property(target, "modulate", Color(1.0, 0.88, 0.45, 1.0), 0.08)
+	tween.tween_property(target, "modulate", original, 0.28)
+
+func _make_feedback_style(color: Color, danger: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.046, 0.032, 0.94) if not danger else Color(0.16, 0.035, 0.025, 0.96)
+	style.border_color = color
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.shadow_color = Color(color.r, color.g, color.b, 0.42)
+	style.shadow_size = 12
+	return style
+
+func _feedback_scene_center() -> Vector2:
+	var layer_origin := _feedback_layer.get_global_rect().position if _feedback_layer != null else Vector2.ZERO
+	if main_stage != null:
+		var rect := main_stage.get_global_rect()
+		return rect.get_center() - layer_origin
+	return size * 0.5
+
+func _feedback_bubble_start(index: int, card_size: Vector2) -> Vector2:
+	var layer_origin := _feedback_layer.get_global_rect().position if _feedback_layer != null else Vector2.ZERO
+	var base_rect := result_panel.get_global_rect() if result_panel != null else Rect2(Vector2(size.x * 0.48, size.y * 0.62), Vector2(size.x * 0.42, 120.0))
+	var slot := index % 7
+	var column := int(index / 7) % 2
+	var x := base_rect.position.x + base_rect.size.x - card_size.x - 34.0 - float(column) * 170.0
+	var y := base_rect.position.y + 42.0 - float(slot) * 34.0
+	x = clampf(x, 28.0, maxf(size.x - card_size.x - 28.0, 28.0))
+	y = clampf(y, 94.0, maxf(size.y - card_size.y - 64.0, 94.0))
+	return Vector2(x, y) - layer_origin
+
+func _feedback_delay(index: int) -> float:
+	return float(index % 10) * 0.14
+
+func _feedback_bag_center() -> Vector2:
+	var layer_origin := _feedback_layer.get_global_rect().position if _feedback_layer != null else Vector2.ZERO
+	if _inventory_button != null:
+		return _inventory_button.get_global_rect().get_center() - layer_origin
+	if _inventory_rich != null:
+		return _inventory_rich.get_global_rect().get_center() - layer_origin
+	return Vector2(size.x - 88.0, 40.0)
+
+func _item_display_name(item_id: String) -> String:
+	if _app == null:
+		return item_id
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	var definition: Dictionary = inventory_model.item_defs.get(item_id, {})
+	return str(definition.get("name", item_id))
+
+func _stat_display_name(stat_id: String) -> String:
+	if _app == null:
+		return stat_id
+	var player_model: PlayerModel = _app.architecture.get_model(&"player")
+	var definition: Dictionary = player_model.stat_defs.get(stat_id, {})
+	return str(definition.get("name", stat_id))
+
+func _flag_display_name(flag_id: String) -> String:
+	if _app == null:
+		return flag_id
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	var definition: Dictionary = flag_model.flag_defs.get(flag_id, {})
+	return str(definition.get("name", flag_id))
+
+func _item_feedback_color(item_id: String) -> Color:
+	if _app == null:
+		return Color(0.90, 0.80, 0.58, 1.0)
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	var definition: Dictionary = inventory_model.item_defs.get(item_id, {})
+	var rarity := str(definition.get("rarity", "common"))
+	if str(definition.get("group", "resource")) == "resource":
+		return _resource_color(item_id)
+	return _rarity_color(rarity)
+
+func _stat_feedback_color(stat_id: String, positive: bool) -> Color:
+	if not positive:
+		return Color(0.86, 0.34, 0.28, 1.0)
+	match stat_id:
+		"health":
+			return Color(0.54, 0.86, 0.52, 1.0)
+		"stamina":
+			return Color(0.55, 0.76, 0.86, 1.0)
+		"suspicion", "village_attention":
+			return Color(0.72, 0.52, 0.92, 1.0)
+		_:
+			return Color(0.90, 0.80, 0.58, 1.0)
 
 func _get_main_node(path: NodePath) -> Node:
 	if main_margin != null:
@@ -1001,7 +1350,8 @@ func _apply_exploration_effects(effect_ids: Array) -> void:
 	if _app == null or effect_ids.is_empty():
 		return
 	var effect_system: EffectSystem = _app.architecture.get_system(&"effect")
-	effect_system.apply_effects(effect_ids)
+	var applied_effects: Array = effect_system.apply_effects(effect_ids)
+	_play_effect_feedback(applied_effects)
 
 func _on_town_log_changed(text: String) -> void:
 	_set_selection_text("%s\n%s" % [text, _get_progress_summary()])
@@ -1015,6 +1365,10 @@ func _on_town_buy_requested(item_id: String, cost: int, summary: String) -> void
 	inventory_model.add_item(item_id, 1)
 	_town_board.update_inventory(inventory_model.item_defs, inventory_model.items)
 	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
+	_play_manual_item_feedback([
+		{"id": "money", "value": -cost},
+		{"id": item_id, "value": 1}
+	])
 	_refresh_status()
 
 func _on_town_sell_requested(item_id: String, value: int, summary: String) -> void:
@@ -1026,6 +1380,10 @@ func _on_town_sell_requested(item_id: String, value: int, summary: String) -> vo
 	inventory_model.add_item("money", value)
 	_town_board.update_inventory(inventory_model.item_defs, inventory_model.items)
 	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
+	_play_manual_item_feedback([
+		{"id": item_id, "value": -1},
+		{"id": "money", "value": value}
+	])
 	_refresh_status()
 
 func _on_town_extracted(summary: String) -> void:
@@ -1061,12 +1419,15 @@ func _on_day_resolved(payload: Dictionary) -> void:
 	for rule_variant in payload.get("rules", []):
 		var rule: Dictionary = rule_variant
 		lines.append("日结算：%s" % str(rule.get("name", "未知规则")))
+		_play_effect_feedback(rule.get("effects", []))
 	var night_action: Dictionary = payload.get("night_action", {})
 	if not night_action.is_empty():
 		lines.append("夜间行动：%s" % str(night_action.get("result_text", "")))
+		_play_effect_feedback(night_action.get("effects", []))
 	var npc_event: Dictionary = payload.get("npc_event", {})
 	if not npc_event.is_empty():
 		lines.append("夜间事件：%s" % str(npc_event.get("result_text", "")))
+		_play_effect_feedback(npc_event.get("effects", []))
 	var ending: Dictionary = payload.get("ending", {})
 	if not ending.is_empty():
 		lines.append("结局触发：%s" % str(ending.get("title", "未知结局")))
@@ -1167,12 +1528,19 @@ func _get_progress_summary() -> String:
 
 func _get_warning_summary(player_model: PlayerModel, inventory_model: InventoryModel, debt_model: DebtModel, day_model: DayCycleModel) -> String:
 	var warnings: Array[String] = []
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
 	if player_model.get_stat("health") <= 10:
 		warnings.append("健康危险")
 	if player_model.get_stat("stamina") <= 12:
 		warnings.append("体力见底")
 	if inventory_model.get_amount("food") <= 1:
 		warnings.append("缺粮")
+	if flag_model.get_flag("cold_severe"):
+		warnings.append("重寒伤身")
+	elif flag_model.get_flag("cold_worse"):
+		warnings.append("寒症需用药")
+	elif flag_model.get_flag("cold_mild"):
+		warnings.append("染寒未治")
 	if debt_model.get_value("current") > 0 and day_model.current_day >= debt_model.get_value("due_day") - 2:
 		warnings.append("临近催债")
 	return " / ".join(warnings)

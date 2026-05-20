@@ -1,0 +1,243 @@
+{
+  "templates": {
+    "hunt_rabbit": {
+      "name": "小黑山东兔径",
+      "intro": "你按卦象绕到小黑山东坡，乱石和枯草里都有短耳兽留下的痕迹。",
+      "extract_text": "你从东坡兔径撤回村里，草腥味还沾在裤脚上。",
+      "omen_tip": "循短脚印，先查浅窟",
+      "omen_warn": "贪翻旧绳套，惊动大兽",
+      "favored_containers": ["rabbit_fresh_tracks", "rabbit_burrow"],
+      "forbidden_containers": ["snare_grass"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "path", "name": "东坡入口", "desc": "碎石间有细小脚印，草叶被啃出新茬。", "image": "hunt_rabbit", "image_path": "res://assets/generated/exploration/events/hunt_rabbit.jpg", "containers": ["rabbit_fresh_tracks"], "color": "#2A2217"},
+        {"x": 1, "y": 0, "type": "slope", "name": "乱石兔道", "desc": "兔道绕着石缝打转，稍不留神就会跟丢。", "containers": ["rabbit_burrow", "snare_grass"]},
+        {"x": 1, "y": -1, "type": "thicket", "name": "枯草窝", "desc": "草窝里有温热压痕，也可能藏着别的野物。", "containers": ["rabbit_burrow"], "enemies": ["boar"], "enemy_chance": 18},
+        {"x": 2, "y": 0, "type": "creek", "name": "洗爪浅溪", "desc": "浅溪边脚印被水冲散，但石缝里常卡着小东西。", "containers": ["creek_stones_light"], "exit": true}
+      ]
+    },
+    "gather_herb": {
+      "name": "村外荒药地",
+      "intro": "你来到村外荒地，霜草压低，泥土里透出一点苦药气。",
+      "extract_text": "你从荒药地回村，怀里多了几把带土的草根。",
+      "omen_tip": "沿苦味找活根",
+      "omen_warn": "久翻旧篓，霉气坏药",
+      "favored_containers": ["waste_herb_patch", "dry_tuber_mound"],
+      "forbidden_containers": ["old_medicine_basket"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "path", "name": "荒地垄口", "desc": "废田埂裂得很深，草根从裂缝里钻出来。", "image": "gather_herb", "image_path": "res://assets/generated/exploration/events/gather_herb.jpg", "containers": ["waste_herb_patch"]},
+        {"x": 1, "y": 0, "type": "thicket", "name": "苦草沟", "desc": "沟底湿冷，药草长得密，但杂草也多。", "containers": ["waste_herb_patch", "dry_tuber_mound"]},
+        {"x": 1, "y": 1, "type": "slope", "name": "坍塌田坎", "desc": "田坎被雨水冲塌，露出一只旧药篓。", "containers": ["old_medicine_basket"]},
+        {"x": 2, "y": 1, "type": "road", "name": "回村土路", "desc": "土路能直接折回村口，适合见好就收。", "exit": true}
+      ]
+    },
+    "find_tool": {
+      "name": "河滩浮铁处",
+      "intro": "你顺着浑水声下到河滩，卦象里的浮铁可能就埋在泥沙下。",
+      "extract_text": "你踩着湿泥离开河滩，手里东西冰冷沉重。",
+      "omen_tip": "摸浅水铁影",
+      "omen_warn": "钻芦苇暗处，湿寒招祸",
+      "favored_containers": ["river_iron_silt", "waterlogged_tool"],
+      "forbidden_containers": ["reed_cache"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "creek", "name": "浅水石滩", "desc": "碎石被水磨得发亮，旧铁和铜片容易陷在缝里。", "image": "find_tool", "image_path": "res://assets/generated/exploration/events/find_tool.jpg", "containers": ["river_iron_silt"]},
+        {"x": 1, "y": 0, "type": "creek", "name": "浑水弯", "desc": "水弯卷着淤泥，伸手下去可能摸到铁，也可能划伤。", "containers": ["waterlogged_tool", "creek_stones_light"]},
+        {"x": 1, "y": -1, "type": "thicket", "name": "芦苇背风处", "desc": "芦苇遮住视线，里面偶尔有人藏过小包。", "containers": ["reed_cache"], "enemies": ["wolf"], "enemy_chance": 15},
+        {"x": 2, "y": 0, "type": "road", "name": "河堤缺口", "desc": "缺口通向村外小路，离开前还能再回望河面。", "exit": true}
+      ]
+    },
+    "search_cache": {
+      "name": "荒坟边缘",
+      "intro": "你绕到荒坟背风处，乱草低伏，像有人曾在这里匆忙翻土。",
+      "extract_text": "你从荒坟边缘脱身，没敢回头看第二眼。",
+      "omen_tip": "看新旧土色",
+      "omen_warn": "探棺钉黑缝，阴地留痕",
+      "favored_containers": ["grave_loose_soil", "ash_copper_cache"],
+      "forbidden_containers": ["coffin_nail_gap"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "path", "name": "坟外斜径", "desc": "斜径被野草遮住，脚下偶尔踩到碎陶。", "image": "search_cache", "image_path": "res://assets/generated/exploration/events/search_cache.jpg", "containers": ["grave_loose_soil"]},
+        {"x": 1, "y": 0, "type": "thicket", "name": "背风乱草", "desc": "乱草下土色新旧不一，像被人反复掩过。", "containers": ["ash_copper_cache"]},
+        {"x": 2, "y": 0, "type": "cave", "name": "塌碑阴影", "desc": "半截墓碑倒在土里，碑根下露出黑缝。", "containers": ["coffin_nail_gap"], "enemies": ["wolf"], "enemy_chance": 22},
+        {"x": 2, "y": 1, "type": "road", "name": "背坟小路", "desc": "小路绕出坟地，能避开村口大路。", "exit": true}
+      ]
+    },
+    "deep_hunt": {
+      "name": "密林深羽道",
+      "intro": "你钻进密林深处，羽声在树冠间一闪即没。",
+      "extract_text": "你从密林里退出来，枝叶刮破了袖口，也带回了林中的收获。",
+      "omen_tip": "追落羽与低枝巢",
+      "omen_warn": "摸猎户旧藏，兽也认路",
+      "favored_containers": ["forest_feather_trail", "pheasant_roost"],
+      "forbidden_containers": ["hunter_cache"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "thicket", "name": "林缘羽痕", "desc": "落羽挂在矮枝上，地面有细碎爪印。", "image": "deep_hunt", "image_path": "res://assets/generated/exploration/events/deep_hunt.jpg", "containers": ["forest_feather_trail"]},
+        {"x": 1, "y": 0, "type": "thicket", "name": "密叶惊巢", "desc": "树冠很低，惊起的东西可能是野鸡，也可能是兽。", "containers": ["pheasant_roost"], "enemies": ["wolf"], "enemy_chance": 28},
+        {"x": 2, "y": -1, "type": "cave", "name": "猎户旧窝", "desc": "旧窝里有绳套和火灰，说明有人很久前在这里设伏。", "containers": ["hunter_snare", "hunter_cache"], "enemies": ["bear"], "enemy_chance": 20},
+        {"x": 2, "y": 0, "type": "creek", "name": "林下水线", "desc": "溪水切开林地，沿水走能找到出口。", "containers": ["creek_stones_light"], "exit": true}
+      ]
+    },
+    "rest_home": {
+      "name": "自家破屋",
+      "intro": "你没有出远门，只把门闩插紧，在破屋里翻找还能撑下去的东西。",
+      "extract_text": "你在破屋里熬过一天，身上暖了些，但债期仍在逼近。",
+      "omen_tip": "守灶席养息",
+      "omen_warn": "翻墙角旧罐，空耗心神",
+      "favored_containers": ["home_bedding", "cold_stove"],
+      "forbidden_containers": ["hidden_copper_corner"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "hut", "name": "冷炕边", "desc": "炕席破旧，缝里有些被遗忘的小东西。", "image": "rest_home", "image_path": "res://assets/generated/exploration/events/rest_home.jpg", "containers": ["home_bedding"]},
+        {"x": 1, "y": 0, "type": "stove", "name": "冷灶灰", "desc": "灶灰没完全冷透，能让你省些体力。", "containers": ["cold_stove"]},
+        {"x": 1, "y": 1, "type": "hut", "name": "墙角破罐", "desc": "破罐藏在土墙角，里面可能还剩一点旧粮。", "containers": ["hidden_copper_corner"], "exit": true}
+      ]
+    },
+    "cook_meat": {
+      "name": "灶前暗火",
+      "intro": "你压低火苗熬肉汤，肉香不能飘到院外。",
+      "extract_text": "肉汤熬成，灶灰被你细细盖好，外人看不出动过火。",
+      "omen_tip": "慢火压香，收骨埋灰",
+      "omen_warn": "急刮锅底，肉味外泄",
+      "favored_containers": ["meat_pot", "bone_broth"],
+      "forbidden_containers": ["spice_jar"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "stove", "name": "黑陶肉锅", "desc": "锅沿发黑，肉骨沉在汤底，需要慢慢看火。", "image": "cook_meat", "image_path": "res://assets/generated/exploration/events/cook_meat.jpg", "containers": ["meat_pot"]},
+        {"x": 1, "y": 0, "type": "hut", "name": "灶边盐罐", "desc": "盐罐快见底，调味能让肉汤多撑一顿。", "containers": ["spice_jar"]},
+        {"x": 1, "y": -1, "type": "hut", "name": "屋后灰坑", "desc": "骨渣和灶灰要埋干净，不能让人闻出肉味。", "containers": ["bone_broth"], "exit": true}
+      ]
+    },
+    "sell_herb": {
+      "name": "村路郎中摊",
+      "intro": "你把草药塞进袖中，去村路边等那个行脚郎中。",
+      "extract_text": "你从村路边回来，药味淡了，钱袋却多响了一点。",
+      "omen_tip": "候人少时议价",
+      "omen_warn": "贪看药囊，惹郎中记脸",
+      "favored_containers": ["road_dust_sign", "herb_buyer_basket"],
+      "forbidden_containers": ["doctor_pouch"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "road", "name": "村路灰尘", "desc": "路边尘土里能看出车辙，郎中大概刚到不久。", "image": "sell_herb", "image_path": "res://assets/generated/exploration/events/sell_herb.jpg", "containers": ["road_dust_sign"]},
+        {"x": 1, "y": 0, "type": "village", "name": "药担旁", "desc": "药担上挂着小秤，草药成色会被看得很细。", "containers": ["herb_buyer_basket"]},
+        {"x": 2, "y": 0, "type": "road", "name": "路口树影", "desc": "树影能挡住一部分目光，适合低调离开。", "containers": ["doctor_pouch"], "exit": true}
+      ]
+    },
+    "buy_food": {
+      "name": "村口货担",
+      "intro": "你捏着铜钱去村口货担，粗粮在布袋里压得很实。",
+      "extract_text": "你提着粗粮离开货担，钱袋轻了，心里却稳了一点。",
+      "omen_tip": "先买粗粮，少说闲话",
+      "omen_warn": "久讨价，被人记住钱袋",
+      "favored_containers": ["peddler_grain_sack", "cracked_measure"],
+      "forbidden_containers": ["bargain_stall"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "village", "name": "货担前", "desc": "木担吱呀作响，粮袋旁摆着缺口量斗。", "image": "buy_food", "image_path": "res://assets/generated/exploration/events/buy_food.jpg", "containers": ["peddler_grain_sack"]},
+        {"x": 1, "y": 0, "type": "road", "name": "讨价土路", "desc": "土路人来人往，说话太急会被旁人记住。", "containers": ["bargain_stall"]},
+        {"x": 1, "y": 1, "type": "village", "name": "量斗阴影", "desc": "量斗底下常漏一点碎粮，也藏着货郎的小心思。", "containers": ["cracked_measure"], "exit": true}
+      ]
+    },
+    "use_herb": {
+      "name": "屋内敷伤处",
+      "intro": "你把门缝堵住，在暗处碾开草药，准备给自己敷伤。",
+      "extract_text": "伤口被苦药压住，你把染血布条塞进灶灰里。",
+      "omen_tip": "先压伤口，再碾药泥",
+      "omen_warn": "乱翻暗格，牵动旧伤",
+      "favored_containers": ["wound_cloth", "herb_mortar"],
+      "forbidden_containers": ["hidden_bandage"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "hut", "name": "暗屋草席", "desc": "草席吸着旧血味，不能让邻人看见。", "image": "use_herb", "image_path": "res://assets/generated/exploration/events/use_herb.jpg", "containers": ["wound_cloth"]},
+        {"x": 1, "y": 0, "type": "stove", "name": "石臼边", "desc": "石臼能碾药，但声音要压低。", "containers": ["herb_mortar"]},
+        {"x": 1, "y": -1, "type": "hut", "name": "床脚暗格", "desc": "床脚暗格里可能还有上次剩下的布条。", "containers": ["hidden_bandage"], "exit": true}
+      ]
+    },
+    "help_villager": {
+      "name": "村口人家",
+      "intro": "你到村口人家搭手，既要干活，也要看清对方是不是值得结交。",
+      "extract_text": "你从村口人家离开，手掌磨疼了，人情也攒下一点。",
+      "omen_tip": "做明面活，换实在人情",
+      "omen_warn": "探主人旧罐，薄情变疑心",
+      "favored_containers": ["woodpile", "collapsed_fence"],
+      "forbidden_containers": ["villager_jar"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "village", "name": "柴门前", "desc": "柴门半开，院里堆着没劈完的湿柴。", "image": "help_villager", "image_path": "res://assets/generated/exploration/events/help_villager.jpg", "containers": ["woodpile"]},
+        {"x": 1, "y": 0, "type": "village", "name": "塌篱笆", "desc": "篱笆倒了一截，修好能换来几句好话。", "containers": ["collapsed_fence"]},
+        {"x": 2, "y": 0, "type": "hut", "name": "水缸旁", "desc": "水缸边有主人忘收的小物，不该乱拿，但能看出家底。", "containers": ["villager_jar"], "exit": true}
+      ]
+    },
+    "run_errand": {
+      "name": "河对岸送信路",
+      "intro": "你把口信压在袖中，沿河对岸小路赶一趟辛苦钱。",
+      "extract_text": "你跑完这趟路，腿脚发酸，袖中工钱攥得很紧。",
+      "omen_tip": "认里程石赶直路",
+      "omen_warn": "钻渡口芦苇，误时又湿脚",
+      "favored_containers": ["errand_milestone", "courier_cache"],
+      "forbidden_containers": ["ferry_reeds"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "road", "name": "河堤起点", "desc": "土路沿河伸出去，脚程快慢决定能不能天黑前回来。", "image": "run_errand", "image_path": "res://assets/generated/exploration/events/run_errand.jpg", "containers": ["errand_milestone"]},
+        {"x": 1, "y": 0, "type": "creek", "name": "渡口芦苇", "desc": "渡口风大，芦苇里有人藏过过路钱。", "containers": ["ferry_reeds"], "enemies": ["wolf"], "enemy_chance": 12},
+        {"x": 2, "y": 0, "type": "road", "name": "送信石亭", "desc": "石亭背后避风，常有人在这里交接口信。", "containers": ["courier_cache"], "exit": true}
+      ]
+    },
+    "graveyard_follow_clue": {
+      "name": "荒坟旧痕深处",
+      "intro": "你沿前日旧痕再入荒坟，这次目标不是边缘，而是更深的埋藏处。",
+      "extract_text": "你从荒坟深处撤出，背后像有许多双眼睛跟着你。",
+      "omen_tip": "续旧痕，取半埋包袱",
+      "omen_warn": "碰军中遗藏，财重眼多",
+      "favored_containers": ["grave_old_trace", "buried_satchel"],
+      "forbidden_containers": ["broken_stele_cache", "soldier_relic_cache"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "path", "name": "旧痕入口", "desc": "旧脚印被新土盖过，但方向仍能辨认。", "image": "graveyard_follow_clue", "image_path": "res://assets/generated/exploration/events/graveyard_follow_clue.jpg", "containers": ["grave_old_trace"]},
+        {"x": 1, "y": 0, "type": "thicket", "name": "坟后黑草", "desc": "黑草长得异常密，下面像压着旧包袱。", "containers": ["buried_satchel"], "enemies": ["wolf"], "enemy_chance": 25},
+        {"x": 2, "y": -1, "type": "cave", "name": "塌碑暗洞", "desc": "暗洞不是天然形成，里面有逃难人仓促藏物的痕迹。", "containers": ["broken_stele_cache", "soldier_relic_cache"], "enemies": ["bear"], "enemy_chance": 18},
+        {"x": 2, "y": 0, "type": "cliff", "name": "坟崖出口", "desc": "崖边能绕出坟地，但一步踏错就会摔下去。", "containers": ["cliff_last_herb"], "exit": true}
+      ]
+    }
+  },
+  "containers": {
+    "rabbit_fresh_tracks": {"name": "新鲜兔脚印", "rarity": "common", "loot": [{"chance": 42, "name": "【普通】野兔皮", "effects": ["gain_rabbit_pelt", "gain_meat_small"], "text": "你顺着脚印摸到草窝，抓到一点肉食和一张小皮。"}, {"chance": 28, "name": "断开的兔径", "effects": ["lose_stamina_small"], "text": "脚印绕进乱石，白耗不少力气。"}, {"chance": 20, "name": "【普通】山薯根", "effects": ["gain_dry_tuber", "gain_food_small"], "text": "没逮到兔子，却挖出能充饥的山薯根。"}, {"chance": 10, "name": "【优质】野猪獠牙", "effects": ["gain_boar_tusk"], "text": "兔径旁有一截旧獠牙，像是野猪蹭断的。"}]},
+    "rabbit_burrow": {"name": "兔窟", "rarity": "common", "loot": [{"chance": 50, "name": "【普通】野兔皮", "effects": ["gain_rabbit_pelt", "gain_meat_small"], "text": "兔窟很浅，你摸出一只瘦兔。"}, {"chance": 24, "name": "空兔窟", "effects": [], "text": "窟里还暖，却已经空了。"}, {"chance": 18, "name": "【普通】山薯根", "effects": ["gain_dry_tuber"], "text": "窟边露出几截山薯根。"}, {"chance": 8, "name": "【稀有】旧猎刀", "effects": ["gain_old_hunter_knife"], "text": "旧刀半埋在窟后，像是猎户遗下的。"}]},
+    "snare_grass": {"name": "旧绳套草丛", "rarity": "uncommon", "loot": [{"chance": 35, "name": "旧套索", "effects": ["gain_meat_small"], "text": "旧套索还能用，你顺手补了点肉食。"}, {"chance": 25, "name": "【优质】野猪獠牙", "effects": ["gain_boar_tusk"], "text": "绳套旁有断獠牙，成色还不错。"}, {"chance": 25, "name": "绊脚枯藤", "effects": ["lose_stamina_small"], "text": "你被枯藤绊住，差点摔进石缝。"}, {"chance": 15, "name": "【稀有】旧猎刀", "effects": ["gain_old_hunter_knife"], "text": "绳套根部压着一把缺口猎刀。"}]},
+    "waste_herb_patch": {"name": "荒地药草丛", "rarity": "common", "loot": [{"chance": 46, "name": "【普通】苦叶草", "effects": ["gain_bitter_leaf", "gain_herb_small"], "text": "苦叶草还算新鲜，能止血。"}, {"chance": 25, "name": "杂草根", "effects": [], "text": "看着像药，气味却不对。"}, {"chance": 20, "name": "【优质】赤根草", "effects": ["gain_bloodroot"], "text": "根须泛红，是郎中愿意收的草药。"}, {"chance": 9, "name": "【稀有】小山参", "effects": ["gain_mountain_ginseng"], "text": "年份不深，但已经明显不俗。"}]},
+    "dry_tuber_mound": {"name": "干裂薯根土包", "rarity": "common", "loot": [{"chance": 55, "name": "【普通】山薯根", "effects": ["gain_dry_tuber", "gain_food_small"], "text": "山薯根味涩，但乱世里就是粮。"}, {"chance": 25, "name": "空土包", "effects": ["lose_stamina_small"], "text": "你刨开土包，里面早被虫蛀空。"}, {"chance": 20, "name": "【普通】苦叶草", "effects": ["gain_bitter_leaf"], "text": "薯根没挖到，旁边倒长着苦叶草。"}]},
+    "old_medicine_basket": {"name": "旧药篓", "rarity": "rare", "loot": [{"chance": 35, "name": "【优质】赤根草", "effects": ["gain_bloodroot"], "text": "药篓底压着几根成色不错的赤根草。"}, {"chance": 26, "name": "【稀有】小山参", "effects": ["gain_mountain_ginseng"], "text": "小山参被旧布包着，根须还完整。"}, {"chance": 10, "name": "【珍贵】紫芝", "effects": ["gain_purple_lingzhi", "gain_suspicion_small"], "text": "紫芝藏得太好，带回去不能声张。"}, {"chance": 29, "name": "霉烂药渣", "effects": [], "text": "药渣已经发霉，不能用了。"}]},
+    "river_iron_silt": {"name": "淤泥铁影", "rarity": "common", "loot": [{"chance": 30, "name": "【普通】锈铜片", "effects": ["gain_rusty_copper_piece", "gain_money_tiny"], "text": "铜片被泥水冲得发黑，还能按料卖。"}, {"chance": 20, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string"], "text": "旧钱串沉在泥里，锈蚀不轻。"}, {"chance": 32, "name": "湿滑空泥", "effects": ["lose_stamina_small", "mark_cold_mild"], "text": "你摸了半天只摸到湿泥，冷水顺着袖口灌进去，寒意留在骨缝里。"}, {"chance": 18, "name": "【稀有】旧猎刀", "effects": ["gain_old_hunter_knife", "lose_stamina_small"], "text": "刀身被水泡过，修一修还能用，但你在水里耗了太久。"}]},
+    "waterlogged_tool": {"name": "泡水农具堆", "rarity": "uncommon", "loot": [{"chance": 28, "name": "【普通】锈铜片", "effects": ["gain_rusty_copper_piece"], "text": "农具碎片里夹着锈铜片。"}, {"chance": 24, "name": "【稀有】旧猎刀", "effects": ["gain_old_hunter_knife", "lose_stamina_small"], "text": "猎刀不该出现在农具堆里，来路有点怪；摸出来时手臂已经冻麻。"}, {"chance": 28, "name": "割手铁片", "effects": ["lose_health_small"], "text": "铁片划破手掌，东西却没什么价值。"}, {"chance": 12, "name": "污水入寒", "effects": ["mark_cold_mild", "lose_stamina_small"], "text": "你被污水浸透衣袖，回身时已经开始发冷打颤。"}, {"chance": 8, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button"], "text": "泥里混着半片玉扣，绝不是农家物件。"}]},
+    "reed_cache": {"name": "芦苇暗包", "rarity": "rare", "loot": [{"chance": 35, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string", "gain_money_small"], "text": "暗包里有一小串旧钱。"}, {"chance": 25, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button"], "text": "残玉扣被油布包着，像逃难人藏下的。"}, {"chance": 12, "name": "【珍贵】弯折银簪", "effects": ["gain_silver_hairpin_bent", "gain_suspicion_small"], "text": "银簪弯折，卖出去会有人追问来路。"}, {"chance": 28, "name": "空油布", "effects": [], "text": "油布还在，里面东西却被取走了。"}]},
+    "creek_stones_light": {"name": "溪石缝", "rarity": "common", "loot": [{"chance": 28, "name": "【优质】清露苔", "effects": ["gain_clear_moss", "gain_herb_small"], "text": "背阴湿石上长着清露苔。"}, {"chance": 24, "name": "【普通】锈铜片", "effects": ["gain_rusty_copper_piece"], "text": "铜片卡在石缝里。"}, {"chance": 32, "name": "湿滑空石", "effects": ["lose_stamina_small"], "text": "你脚下一滑，没捞到东西。"}, {"chance": 8, "name": "冷水灌靴", "effects": ["mark_cold_mild"], "text": "溪水灌进鞋里，寒意一阵阵往上爬。"}, {"chance": 8, "name": "【稀有】蛇胆", "effects": ["gain_snake_gall"], "text": "石缝边有蛇蜕和一截刚死不久的小蛇。"}]},
+    "grave_loose_soil": {"name": "松动坟土", "rarity": "uncommon", "loot": [{"chance": 35, "name": "【普通】锈铜片", "effects": ["gain_rusty_copper_piece", "gain_suspicion_small"], "text": "坟土里混着旧铜片，拿走会惹心虚。"}, {"chance": 30, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string", "mark_saw_graveyard_cache"], "text": "旧钱串压在土下，像有人故意埋的。"}, {"chance": 25, "name": "破陶片", "effects": [], "text": "只是碎陶，不值钱。"}, {"chance": 10, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button", "gain_suspicion_small"], "text": "玉扣半埋半露，来路不干净。"}]},
+    "ash_copper_cache": {"name": "灰土小藏", "rarity": "rare", "loot": [{"chance": 30, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string", "gain_money_small"], "text": "灰土里藏着几枚旧钱。"}, {"chance": 25, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button"], "text": "玉扣边缘还有火烧痕。"}, {"chance": 10, "name": "【珍贵】弯折银簪", "effects": ["gain_silver_hairpin_bent", "gain_suspicion_small"], "text": "银簪被灰土盖住，明显是慌忙埋下的。"}, {"chance": 35, "name": "焦黑碎骨", "effects": ["gain_suspicion_small"], "text": "你不确定那是不是人的骨头，只觉得背后发冷。"}]},
+    "coffin_nail_gap": {"name": "棺钉黑缝", "rarity": "rare", "loot": [{"chance": 26, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button", "gain_suspicion_small"], "text": "黑缝里卡着残玉扣。"}, {"chance": 18, "name": "【珍贵】弯折银簪", "effects": ["gain_silver_hairpin_bent", "gain_suspicion_small"], "text": "银簪弯得厉害，像被硬塞进去。"}, {"chance": 6, "name": "【传说】逃兵私印", "effects": ["gain_soldier_hidden_seal", "gain_suspicion_small"], "text": "私印沉甸甸的，可能牵出更大的事。"}, {"chance": 34, "name": "腐木黑水", "effects": ["lose_stamina_small", "mark_cold_mild"], "text": "你掏出一手腐水，胃里发酸，阴冷湿气像贴在皮肤上。"}, {"chance": 16, "name": "棺缝空响", "effects": ["gain_suspicion_small"], "text": "你撬了半天只听见木缝空响，心里却越来越不踏实。"}]},
+    "forest_feather_trail": {"name": "落羽痕", "rarity": "common", "loot": [{"chance": 44, "name": "野鸡血羽", "effects": ["gain_meat_small"], "text": "你顺着落羽追到一只受惊野鸡。"}, {"chance": 24, "name": "断羽空痕", "effects": ["lose_stamina_small"], "text": "羽痕到这里断了。"}, {"chance": 22, "name": "【普通】野兔皮", "effects": ["gain_rabbit_pelt"], "text": "没找到野鸡，却摸到一张小皮。"}, {"chance": 10, "name": "【稀有】蛇胆", "effects": ["gain_snake_gall"], "text": "落羽旁有蛇迹，倒让你得了蛇胆。"}]},
+    "pheasant_roost": {"name": "低枝鸟巢", "rarity": "uncommon", "loot": [{"chance": 45, "name": "野鸡窝", "effects": ["gain_meat_medium"], "text": "你惊起野鸡，费力抓到两只。"}, {"chance": 20, "name": "空鸟巢", "effects": [], "text": "巢里只剩碎壳。"}, {"chance": 20, "name": "【优质】清露苔", "effects": ["gain_clear_moss"], "text": "巢下湿木上长着清露苔。"}, {"chance": 15, "name": "【珍贵】残缺弓谱", "effects": ["gain_remnant_bow_manual"], "text": "树洞里压着残缺弓谱，像猎户藏的。"}]},
+    "hunter_snare": {"name": "猎户绳套", "rarity": "uncommon", "loot": [{"chance": 35, "name": "套中残肉", "effects": ["gain_meat_small"], "text": "绳套里还剩一点猎物残肉。"}, {"chance": 25, "name": "【优质】野猪獠牙", "effects": ["gain_boar_tusk"], "text": "獠牙挂在绳结上。"}, {"chance": 20, "name": "【稀有】旧猎刀", "effects": ["gain_old_hunter_knife"], "text": "旧猎刀藏在绳套旁。"}, {"chance": 20, "name": "反绊绳", "effects": ["lose_health_small"], "text": "你触到反绊绳，腿上被抽出一道血痕。"}]},
+    "hunter_cache": {"name": "猎户旧藏", "rarity": "rare", "loot": [{"chance": 32, "name": "【稀有】旧猎刀", "effects": ["gain_old_hunter_knife"], "text": "刀口有缺，但还能防身。"}, {"chance": 22, "name": "【珍贵】残缺弓谱", "effects": ["gain_remnant_bow_manual"], "text": "弓谱缺页，却记着几种设伏法。"}, {"chance": 8, "name": "【传说】黑铁短刃", "effects": ["gain_black_iron_shortblade", "gain_suspicion_small"], "text": "短刃不像民间铁匠能打出来。"}, {"chance": 38, "name": "潮湿箭杆", "effects": [], "text": "箭杆早潮烂了。"}]},
+    "home_bedding": {"name": "破席缝", "rarity": "common", "loot": [{"chance": 35, "name": "藏起的干粮", "effects": ["gain_food_small"], "text": "席缝里还有一小把干粮。"}, {"chance": 25, "name": "歇下片刻", "effects": ["gain_stamina_small"], "text": "你靠着破席歇了一阵，体力稍回。"}, {"chance": 20, "name": "旧铜片", "effects": ["gain_money_tiny"], "text": "你摸到两枚忘在席下的铜钱。"}, {"chance": 20, "name": "霉味破布", "effects": [], "text": "只是几片霉布。"}]},
+    "cold_stove": {"name": "冷灶灰", "rarity": "common", "loot": [{"chance": 38, "name": "省下一口粮", "effects": ["gain_food_small"], "text": "你从灶边找出一点能煮的碎粮。"}, {"chance": 30, "name": "烤暖身体", "effects": ["gain_stamina_small"], "text": "你把余温聚起来，身上暖了些。"}, {"chance": 17, "name": "草药灰包", "effects": ["gain_herb_small"], "text": "灶灰边有一小包旧草药。"}, {"chance": 15, "name": "呛鼻烟灰", "effects": ["lose_health_small"], "text": "烟灰呛得你咳了一阵。"}]},
+    "hidden_copper_corner": {"name": "墙角破罐", "rarity": "common", "loot": [{"chance": 34, "name": "几枚旧钱", "effects": ["gain_money_tiny"], "text": "破罐底还有几枚旧钱。"}, {"chance": 30, "name": "半捧粗粮", "effects": ["gain_food_small"], "text": "粗粮不多，却够撑一顿。"}, {"chance": 20, "name": "【普通】苦叶草", "effects": ["gain_bitter_leaf"], "text": "旧草药还没完全坏。"}, {"chance": 16, "name": "空罐", "effects": [], "text": "罐里只剩土腥味。"}]},
+    "meat_pot": {"name": "黑陶肉锅", "rarity": "common", "loot": [{"chance": 55, "name": "热肉汤", "effects": ["gain_food_small", "gain_stamina_small"], "text": "肉汤压住饥寒，能多撑一天。"}, {"chance": 20, "name": "浓肉汁", "effects": ["gain_health_small"], "text": "你喝下浓汤，伤口的冷痛缓了点。"}, {"chance": 15, "name": "肉香外泄", "effects": ["gain_attention_small"], "text": "肉香飘出门缝，可能有人闻见。"}, {"chance": 10, "name": "糊锅底", "effects": ["lose_stamina_small"], "text": "锅底糊了，你费力刮了半天。"}]},
+    "spice_jar": {"name": "灶边盐罐", "rarity": "common", "loot": [{"chance": 45, "name": "咸汤充饥", "effects": ["gain_food_small"], "text": "一点盐让汤更顶饿。"}, {"chance": 25, "name": "旧草根", "effects": ["gain_herb_small"], "text": "盐罐旁还有几根干草根。"}, {"chance": 30, "name": "空盐罐", "effects": [], "text": "盐早就见底了。"}]},
+    "bone_broth": {"name": "骨汤灰坑", "rarity": "common", "loot": [{"chance": 50, "name": "骨汤余味", "effects": ["gain_stamina_small"], "text": "骨汤淡，但能暖身。"}, {"chance": 25, "name": "埋好骨渣", "effects": ["lose_suspicion_small"], "text": "你把骨渣埋好，少些被人看见的风险。"}, {"chance": 25, "name": "灰坑烫手", "effects": ["lose_health_small"], "text": "灰坑没冷透，烫得你缩手。"}]},
+    "road_dust_sign": {"name": "车辙尘痕", "rarity": "common", "loot": [{"chance": 40, "name": "避人时机", "effects": ["lose_suspicion_small"], "text": "你看准人少的时候再靠近药担。"}, {"chance": 25, "name": "路边零活", "effects": ["gain_money_tiny"], "text": "顺手帮人搬了个小包，得了两枚钱。"}, {"chance": 35, "name": "尘土空等", "effects": ["lose_stamina_small"], "text": "你在路边等太久，腿脚发酸。"}]},
+    "herb_buyer_basket": {"name": "郎中药篮", "rarity": "uncommon", "loot": [{"chance": 36, "name": "药草好价", "effects": ["gain_money_small", "lose_herb_small"], "text": "郎中看中草药成色，多给了几枚钱。"}, {"chance": 25, "name": "药草压价", "effects": ["gain_money_tiny", "lose_herb_small"], "text": "草药被压价，但总算换成钱。"}, {"chance": 22, "name": "换得伤药", "effects": ["gain_health_small", "lose_herb_small"], "text": "你没要钱，换了点能敷伤的药。"}, {"chance": 17, "name": "被人看见", "effects": ["gain_attention_small"], "text": "旁人多看了你的草药几眼。"}]},
+    "doctor_pouch": {"name": "郎中旧药囊", "rarity": "rare", "loot": [{"chance": 35, "name": "【优质】赤根草", "effects": ["gain_bloodroot"], "text": "郎中药囊里掉出一根赤根草。"}, {"chance": 25, "name": "【稀有】小山参", "effects": ["gain_mountain_ginseng"], "text": "郎中拿小山参抵了一部分价。"}, {"chance": 15, "name": "【珍贵】紫芝", "effects": ["gain_purple_lingzhi", "gain_suspicion_small"], "text": "这笔交换太划算，反倒容易被记住。"}, {"chance": 25, "name": "空药囊", "effects": [], "text": "药囊里没剩什么。"}]},
+    "peddler_grain_sack": {"name": "粗粮袋", "rarity": "common", "loot": [{"chance": 55, "name": "买得粗粮", "effects": ["gain_food_small", "lose_money_small"], "text": "你用铜钱换来粗粮。"}, {"chance": 20, "name": "多舀半斗", "effects": ["gain_food_small"], "text": "货郎手滑，多给了你半斗碎粮。"}, {"chance": 15, "name": "粮价太高", "effects": ["lose_money_small"], "text": "今天粮价高得离谱，钱袋轻了。"}, {"chance": 10, "name": "霉粮", "effects": ["lose_health_small"], "text": "有些粮发霉，吃下去不舒服。"}]},
+    "bargain_stall": {"name": "讨价货摊", "rarity": "common", "loot": [{"chance": 38, "name": "压低价钱", "effects": ["gain_money_tiny"], "text": "你少花了两枚钱。"}, {"chance": 30, "name": "换得山薯", "effects": ["gain_dry_tuber"], "text": "货郎搭了几根山薯根。"}, {"chance": 20, "name": "被人记住", "effects": ["gain_attention_small"], "text": "你讨价太久，被旁人看了几眼。"}, {"chance": 12, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string"], "text": "找零里混着一小串旧钱。"}]},
+    "cracked_measure": {"name": "缺口量斗", "rarity": "uncommon", "loot": [{"chance": 45, "name": "漏下碎粮", "effects": ["gain_food_small"], "text": "量斗缺口漏出一把碎粮。"}, {"chance": 25, "name": "【普通】锈铜片", "effects": ["gain_rusty_copper_piece"], "text": "量斗底卡着一枚锈铜片。"}, {"chance": 30, "name": "空斗底", "effects": [], "text": "斗底干干净净。"}]},
+    "wound_cloth": {"name": "染血布条", "rarity": "common", "loot": [{"chance": 36, "name": "压住伤口", "effects": ["gain_health_small", "lose_herb_small", "clear_cold_mild", "clear_cold_worse", "clear_cold_severe"], "text": "草药敷上后，伤口总算不再渗血，身上的寒意也被压下去。"}, {"chance": 24, "name": "省下一点药", "effects": ["gain_health_small", "clear_cold_mild"], "text": "你手法稳，少用了些药；若只是刚染寒，也能缓过来。"}, {"chance": 24, "name": "伤口崩开", "effects": ["lose_health_small", "lose_herb_small"], "text": "旧伤被牵动，疼得发冷，药草也耗掉了一份。"}, {"chance": 16, "name": "血布藏好", "effects": ["lose_suspicion_small"], "text": "你把血布藏好，免得被人看出受伤。"}]},
+    "herb_mortar": {"name": "石臼药泥", "rarity": "common", "loot": [{"chance": 40, "name": "药泥见效", "effects": ["gain_health_small", "lose_herb_small", "clear_cold_mild", "clear_cold_worse", "clear_cold_severe"], "text": "药泥苦味很重，敷上后有效，发冷的症状也退了。"}, {"chance": 22, "name": "热药汤", "effects": ["gain_stamina_small", "lose_herb_small", "clear_cold_mild", "clear_cold_worse"], "text": "你把草药熬成热汤，轻寒和寒症都能压住。"}, {"chance": 18, "name": "多碾药汁", "effects": ["gain_health_small"], "text": "你把草药碾得很细，药性更好。"}, {"chance": 20, "name": "药性不对", "effects": ["lose_herb_small"], "text": "草药用错了，白白耗掉一份。"}]},
+    "hidden_bandage": {"name": "床脚暗格", "rarity": "uncommon", "loot": [{"chance": 40, "name": "干净布条", "effects": ["gain_health_small"], "text": "暗格里还有几条干净布。"}, {"chance": 25, "name": "旧铜钱", "effects": ["gain_money_tiny"], "text": "你摸出几枚藏忘了的铜钱。"}, {"chance": 20, "name": "【普通】苦叶草", "effects": ["gain_bitter_leaf"], "text": "暗格里有一小包苦叶草。"}, {"chance": 15, "name": "空暗格", "effects": [], "text": "暗格早被翻空了。"}]},
+    "woodpile": {"name": "湿柴堆", "rarity": "common", "loot": [{"chance": 40, "name": "帮劈湿柴", "effects": ["gain_money_tiny", "mark_earned_villager_trust"], "text": "主人给了几枚钱，也记住了你这次帮忙。"}, {"chance": 25, "name": "柴下野兔", "effects": ["gain_meat_small"], "text": "柴堆下窜出一只小兽，被你顺手逮住。"}, {"chance": 20, "name": "手掌磨破", "effects": ["lose_health_small"], "text": "湿柴难劈，你手掌磨破。"}, {"chance": 15, "name": "多得一口饭", "effects": ["gain_food_small"], "text": "主人给了你一口剩饭。"}]},
+    "collapsed_fence": {"name": "塌篱笆", "rarity": "common", "loot": [{"chance": 40, "name": "修好篱笆", "effects": ["gain_money_small", "mark_earned_villager_trust"], "text": "篱笆修好，主人多给了些工钱。"}, {"chance": 25, "name": "篱下药草", "effects": ["gain_bitter_leaf"], "text": "篱笆根下长着几株苦叶草。"}, {"chance": 20, "name": "被人搭话", "effects": ["gain_attention_small"], "text": "邻人多问了你几句近况。"}, {"chance": 15, "name": "白忙一阵", "effects": ["lose_stamina_small"], "text": "木桩太烂，修了也撑不住。"}]},
+    "villager_jar": {"name": "水缸旁旧罐", "rarity": "uncommon", "loot": [{"chance": 35, "name": "谢礼粗粮", "effects": ["gain_food_small"], "text": "主人从旧罐里舀了点粗粮给你。"}, {"chance": 25, "name": "几枚工钱", "effects": ["gain_money_small"], "text": "你得到几枚实在工钱。"}, {"chance": 20, "name": "信任门路", "effects": ["unlock_errand_route", "mark_earned_villager_trust"], "text": "主人提到河对岸有人缺跑腿送信的人。"}, {"chance": 20, "name": "空旧罐", "effects": [], "text": "旧罐只是摆着压缸盖的。"}]},
+    "errand_milestone": {"name": "路边里程石", "rarity": "common", "loot": [{"chance": 45, "name": "赶路省力", "effects": ["gain_money_small"], "text": "你少绕了路，送信工钱稳稳到手。"}, {"chance": 25, "name": "脚程太急", "effects": ["lose_stamina_small"], "text": "你赶得太急，腿脚发酸。"}, {"chance": 20, "name": "路边铜片", "effects": ["gain_rusty_copper_piece"], "text": "里程石旁压着锈铜片。"}, {"chance": 10, "name": "额外口信", "effects": ["gain_money_tiny"], "text": "有人顺路托你多带一句话。"}]},
+    "ferry_reeds": {"name": "渡口芦苇", "rarity": "uncommon", "loot": [{"chance": 28, "name": "苇中小包", "effects": ["gain_money_small"], "text": "芦苇里藏着一只小钱包。"}, {"chance": 22, "name": "【优质】清露苔", "effects": ["gain_clear_moss"], "text": "湿石边长着清露苔。"}, {"chance": 32, "name": "湿脚受寒", "effects": ["lose_health_small", "mark_cold_mild"], "text": "你踩进冷水，寒意直钻脚心，若不尽快用药，怕要拖成寒症。"}, {"chance": 18, "name": "【稀有】蛇胆", "effects": ["gain_snake_gall"], "text": "芦苇根边有蛇迹。"}]},
+    "courier_cache": {"name": "石亭暗格", "rarity": "rare", "loot": [{"chance": 35, "name": "稳妥工钱", "effects": ["gain_money_medium"], "text": "口信交得稳妥，对方给足了钱。"}, {"chance": 25, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string"], "text": "石亭暗格里压着一串旧钱。"}, {"chance": 20, "name": "被人盯梢", "effects": ["gain_attention_small"], "text": "你觉得有人在亭外看了你一眼。"}, {"chance": 20, "name": "空暗格", "effects": [], "text": "暗格里只有蛛网。"}]},
+    "grave_old_trace": {"name": "旧痕土线", "rarity": "uncommon", "loot": [{"chance": 35, "name": "旧痕续上", "effects": ["mark_saw_graveyard_cache"], "text": "你确认旧痕没断，深处还有东西。"}, {"chance": 25, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string"], "text": "旧痕边露出一串钱。"}, {"chance": 25, "name": "乱脚印", "effects": ["gain_suspicion_small"], "text": "这里不止你一个人来过。"}, {"chance": 15, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button"], "text": "残玉扣像是从旧包袱里漏出来的。"}]},
+    "buried_satchel": {"name": "半埋旧包袱", "rarity": "rare", "loot": [{"chance": 28, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button"], "text": "旧包袱里有半片残玉扣。"}, {"chance": 24, "name": "【珍贵】弯折银簪", "effects": ["gain_silver_hairpin_bent", "gain_suspicion_small"], "text": "银簪弯折，仍能换不少钱。"}, {"chance": 10, "name": "【传说】逃兵私印", "effects": ["gain_soldier_hidden_seal", "gain_suspicion_small"], "text": "私印来路危险，值钱也要命。"}, {"chance": 38, "name": "腐烂衣物", "effects": ["lose_stamina_small"], "text": "包袱大半烂透，只翻得一手霉味。"}]},
+    "broken_stele_cache": {"name": "断碑暗洞", "rarity": "rare", "loot": [{"chance": 28, "name": "【珍贵】残缺弓谱", "effects": ["gain_remnant_bow_manual"], "text": "弓谱藏在断碑后，缺页却有价值。"}, {"chance": 18, "name": "【传说】黑铁短刃", "effects": ["gain_black_iron_shortblade", "gain_suspicion_small"], "text": "黑铁短刃沉得异常。"}, {"chance": 5, "name": "【神话】古骨令", "effects": ["gain_ancient_bone_token", "gain_suspicion_small"], "text": "古骨令刻着没人认得的旧纹。"}, {"chance": 49, "name": "断碑碎土", "effects": ["lose_stamina_small"], "text": "你挖出许多碎土，没找到正主。"}]},
+    "soldier_relic_cache": {"name": "逃兵遗藏", "rarity": "rare", "loot": [{"chance": 25, "name": "【传说】逃兵私印", "effects": ["gain_soldier_hidden_seal", "gain_suspicion_small"], "text": "私印能牵出一条线，也可能引来祸。"}, {"chance": 18, "name": "【传说】黑铁短刃", "effects": ["gain_black_iron_shortblade", "gain_suspicion_small"], "text": "短刃不像村里东西。"}, {"chance": 8, "name": "【神话】古骨令", "effects": ["gain_ancient_bone_token", "gain_suspicion_small"], "text": "古骨令被油布包着，像祭物也像令牌。"}, {"chance": 49, "name": "霉烂军布", "effects": ["gain_suspicion_small"], "text": "军布霉烂，带走也惹麻烦。"}]},
+    "cliff_last_herb": {"name": "崖边阴药", "rarity": "rare", "loot": [{"chance": 30, "name": "【稀有】小山参", "effects": ["gain_mountain_ginseng"], "text": "崖边阴处长着小山参。"}, {"chance": 18, "name": "【珍贵】紫芝", "effects": ["gain_purple_lingzhi"], "text": "紫芝贴着崖壁，采下时手心全是汗。"}, {"chance": 4, "name": "【传说】百年山参", "effects": ["gain_hundred_year_ginseng", "gain_suspicion_small"], "text": "百年山参完整得吓人，千万不能露白。"}, {"chance": 48, "name": "脚下打滑", "effects": ["lose_health_small"], "text": "你脚下一滑，险些摔下去。"}]}
+  },
+  "enemies": {
+    "boar": {"name": "大野猪", "avoid_chance": 44, "injury_chance": 82},
+    "bear": {"name": "黑熊", "avoid_chance": 30, "injury_chance": 76},
+    "wolf": {"name": "野狼", "avoid_chance": 50, "injury_chance": 84},
+    "tiger": {"name": "山君", "avoid_chance": 22, "injury_chance": 68}
+  }
+}
