@@ -136,6 +136,36 @@
 	  "default": false
     },
 	{
+	  "id": "deduced_old_goods_line",
+	  "name": "推断旧物暗价门路",
+	  "default": false
+    },
+	{
+	  "id": "deduced_old_well_route",
+	  "name": "推断旧井藏路线",
+	  "default": false
+    },
+	{
+	  "id": "deduced_support_network",
+	  "name": "推断互助补给网",
+	  "default": false
+    },
+	{
+	  "id": "deduced_debt_timing",
+	  "name": "推断催债节奏",
+	  "default": false
+    },
+	{
+	  "id": "deduced_grave_cache",
+	  "name": "推断荒坟旧藏",
+	  "default": false
+    },
+	{
+	  "id": "deduced_hunter_route",
+	  "name": "推断猎户伏兽路",
+	  "default": false
+    },
+	{
 	  "id": "equip_old_hunter_knife",
 	  "name": "装备旧猎刀",
 	  "default": false

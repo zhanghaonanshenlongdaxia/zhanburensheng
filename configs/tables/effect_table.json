@@ -355,6 +355,102 @@
       "value": true
     },
     {
+      "id": "mark_deduced_old_goods_line",
+      "type": "set_flag",
+      "target_id": "deduced_old_goods_line",
+      "value": true
+    },
+    {
+      "id": "mark_deduced_old_well_route",
+      "type": "set_flag",
+      "target_id": "deduced_old_well_route",
+      "value": true
+    },
+    {
+      "id": "mark_deduced_support_network",
+      "type": "set_flag",
+      "target_id": "deduced_support_network",
+      "value": true
+    },
+    {
+      "id": "mark_deduced_debt_timing",
+      "type": "set_flag",
+      "target_id": "deduced_debt_timing",
+      "value": true
+    },
+    {
+      "id": "mark_deduced_grave_cache",
+      "type": "set_flag",
+      "target_id": "deduced_grave_cache",
+      "value": true
+    },
+    {
+      "id": "mark_deduced_hunter_route",
+      "type": "set_flag",
+      "target_id": "deduced_hunter_route",
+      "value": true
+    },
+    {
+      "id": "gain_relation_grocer",
+      "type": "relation_delta",
+      "target_id": "grocer",
+      "value": 1
+    },
+    {
+      "id": "lose_relation_grocer",
+      "type": "relation_delta",
+      "target_id": "grocer",
+      "value": -1
+    },
+    {
+      "id": "gain_relation_doctor",
+      "type": "relation_delta",
+      "target_id": "doctor",
+      "value": 1
+    },
+    {
+      "id": "lose_relation_doctor",
+      "type": "relation_delta",
+      "target_id": "doctor",
+      "value": -1
+    },
+    {
+      "id": "gain_relation_peddler",
+      "type": "relation_delta",
+      "target_id": "peddler",
+      "value": 1
+    },
+    {
+      "id": "lose_relation_peddler",
+      "type": "relation_delta",
+      "target_id": "peddler",
+      "value": -1
+    },
+    {
+      "id": "gain_relation_tea_oldman",
+      "type": "relation_delta",
+      "target_id": "tea_oldman",
+      "value": 1
+    },
+    {
+      "id": "lose_relation_tea_oldman",
+      "type": "relation_delta",
+      "target_id": "tea_oldman",
+      "value": -1
+    },
+    {
+      "id": "gain_relation_porter",
+      "type": "relation_delta",
+      "target_id": "porter",
+      "value": 1
+    },
+    {
+      "id": "lose_relation_porter",
+      "type": "relation_delta",
+      "target_id": "porter",
+      "value": -1
+    },
+    {
       "id": "unlock_old_well_cache",
       "type": "unlock_option",
       "target_id": "old_well_cache",
@@ -445,10 +541,22 @@
       "value": -5
     },
     {
+      "id": "lose_money_repay_medium",
+      "type": "item_delta",
+      "target_id": "money",
+      "value": -10
+    },
+    {
       "id": "reduce_debt_small",
       "type": "debt_delta",
       "target_id": "current",
       "value": -5
+    },
+    {
+      "id": "reduce_debt_medium",
+      "type": "debt_delta",
+      "target_id": "current",
+      "value": -10
     },
     {
       "id": "increase_debt_interest",

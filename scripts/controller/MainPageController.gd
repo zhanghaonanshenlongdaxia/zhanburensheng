@@ -5,6 +5,8 @@ const ExplorationBoardScript := preload("res://scripts/ui/ExplorationBoard.gd")
 const TownBoardScript := preload("res://scripts/ui/TownBoard.gd")
 const OptionCardBackdropScript := preload("res://scripts/ui/OptionCardBackdrop.gd")
 const ClueBoardScript := preload("res://scripts/ui/ClueBoard.gd")
+const FortuneChoiceEffectLayerScript := preload("res://scripts/ui/FortuneChoiceEffectLayer.gd")
+const FortuneSlipTokenButtonScript := preload("res://scripts/ui/FortuneSlipTokenButton.gd")
 
 @onready var day_label: Label = $MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/TopRow/DayLabel
 @onready var weather_label: Label = $MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/TopRow/WeatherLabel
@@ -64,8 +66,19 @@ var _status_scroll: ScrollContainer
 var _status_scroll_content: VBoxContainer
 var _result_scroll: ScrollContainer
 var _result_scroll_content: VBoxContainer
+var _situation_echo_row: HBoxContainer
 var _item_icon_textures: Dictionary = {}
 var _option_backdrops: Array = []
+var _option_confirm_boxes: Array[Control] = []
+var _option_confirm_buttons: Array[Button] = []
+var _option_cancel_buttons: Array[Button] = []
+var _pending_option_index: int = -1
+var _confirmed_option: Dictionary = {}
+var _fortune_effect_layer: Control
+var _omen_token_button: Button
+var _omen_token_tween: Tween
+var _omen_detail_overlay: PanelContainer
+var _omen_detail_text: RichTextLabel
 
 func _ready() -> void:
 	_ensure_scroll_viewport()
@@ -75,7 +88,9 @@ func _ready() -> void:
 	_ensure_clue_overlay()
 	_ensure_sidebar_buttons()
 	_ensure_feedback_layer()
+	_ensure_fortune_choice_ui()
 	_ensure_option_backdrops()
+	_ensure_sidebar_result_layout()
 	_ensure_rich_text_replacements()
 	_apply_visual_polish()
 	_app = get_tree().get_first_node_in_group("app") as App
@@ -123,6 +138,44 @@ func _ensure_scroll_viewport() -> void:
 	main_margin.layout_mode = 2
 	main_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	main_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+func _ensure_sidebar_result_layout() -> void:
+	var sidebar_stack := _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack") as VBoxContainer
+	var stats_panel := _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack/StatsPanel") as PanelContainer
+	if sidebar_stack == null or stats_panel == null or result_panel == null:
+		return
+	_situation_echo_row = sidebar_stack.get_node_or_null("SituationEchoRow") as HBoxContainer
+	if _situation_echo_row == null:
+		_situation_echo_row = HBoxContainer.new()
+		_situation_echo_row.name = "SituationEchoRow"
+		_situation_echo_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_situation_echo_row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		_situation_echo_row.add_theme_constant_override("separation", 10)
+		sidebar_stack.add_child(_situation_echo_row)
+		var header_panel := _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel") as PanelContainer
+		var insert_index := header_panel.get_index() + 1 if header_panel != null and header_panel.get_parent() == sidebar_stack else 1
+		sidebar_stack.move_child(_situation_echo_row, mini(insert_index, sidebar_stack.get_child_count() - 1))
+	for panel in [stats_panel, result_panel]:
+		if panel.get_parent() != _situation_echo_row:
+			if panel.get_parent() != null:
+				panel.get_parent().remove_child(panel)
+			_situation_echo_row.add_child(panel)
+		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var result_header := result_panel.get_node_or_null("MarginContainer/ResultVBox/ResultHeader") as HBoxContainer
+	if result_header != null and next_day_button != null and next_day_button.get_parent() != result_header:
+		if next_day_button.get_parent() != null:
+			next_day_button.get_parent().remove_child(next_day_button)
+		result_header.add_child(next_day_button)
+		next_day_button.custom_minimum_size = Vector2(78.0, 30.0)
+		next_day_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+		next_day_button.add_theme_font_size_override("font_size", 13)
+	var result_subtitle := result_panel.get_node_or_null("MarginContainer/ResultVBox/ResultHeader/ResultSubTitle") as Label
+	if result_subtitle != null:
+		result_subtitle.visible = false
+	var sidebar_flavor := _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack/SidebarFlavor") as Label
+	if sidebar_flavor != null and sidebar_flavor.get_parent() == sidebar_stack:
+		sidebar_stack.move_child(sidebar_flavor, sidebar_stack.get_child_count() - 1)
 
 func _ensure_exploration_board() -> void:
 	if _exploration_board != null:
@@ -392,6 +445,7 @@ func _ensure_clue_overlay() -> void:
 	_clue_board = ClueBoardScript.new()
 	_clue_board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_clue_board.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_clue_board.deduction_requested.connect(_on_clue_deduction_requested)
 	root.add_child(_clue_board)
 
 func _ensure_sidebar_buttons() -> void:
@@ -437,6 +491,140 @@ func _ensure_feedback_layer() -> void:
 	_feedback_layer.z_index = 80
 	add_child(_feedback_layer)
 	move_child(_feedback_layer, get_child_count() - 1)
+
+func _ensure_fortune_choice_ui() -> void:
+	_ensure_option_confirm_controls()
+	if _fortune_effect_layer == null:
+		_fortune_effect_layer = FortuneChoiceEffectLayerScript.new()
+		_fortune_effect_layer.name = "FortuneChoiceEffectLayer"
+		_fortune_effect_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_fortune_effect_layer.z_index = 75
+		add_child(_fortune_effect_layer)
+		move_child(_fortune_effect_layer, get_child_count() - 1)
+	if _omen_token_button == null:
+		_omen_token_button = FortuneSlipTokenButtonScript.new()
+		_omen_token_button.name = "SelectedOmenToken"
+		_omen_token_button.visible = false
+		_omen_token_button.text = "已定卦"
+		_omen_token_button.custom_minimum_size = Vector2(176.0, 38.0)
+		_omen_token_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		_omen_token_button.offset_left = -594.0
+		_omen_token_button.offset_top = 18.0
+		_omen_token_button.offset_right = -404.0
+		_omen_token_button.offset_bottom = 58.0
+		_omen_token_button.z_index = 30
+		_omen_token_button.focus_mode = Control.FOCUS_NONE
+		_omen_token_button.tooltip_text = "查看已定卦象"
+		_apply_omen_token_style()
+		_omen_token_button.pressed.connect(_on_omen_token_pressed)
+		add_child(_omen_token_button)
+	if _omen_detail_overlay == null:
+		_omen_detail_overlay = _make_omen_detail_overlay()
+		add_child(_omen_detail_overlay)
+		move_child(_omen_detail_overlay, get_child_count() - 1)
+
+func _ensure_option_confirm_controls() -> void:
+	if not _option_confirm_boxes.is_empty():
+		return
+	for index in option_buttons.size():
+		var button := option_buttons[index]
+		var content_row := button.get_node_or_null("ContentRow") as HBoxContainer
+		if content_row == null:
+			continue
+		var box := VBoxContainer.new()
+		box.name = "ConfirmBox"
+		box.visible = false
+		box.custom_minimum_size = Vector2(94.0, 0.0)
+		box.size_flags_horizontal = Control.SIZE_SHRINK_END
+		box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		box.mouse_filter = Control.MOUSE_FILTER_STOP
+		box.add_theme_constant_override("separation", 6)
+		content_row.add_child(box)
+		var confirm_button := Button.new()
+		confirm_button.text = "确认"
+		confirm_button.custom_minimum_size = Vector2(86.0, 30.0)
+		confirm_button.focus_mode = Control.FOCUS_NONE
+		confirm_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		_apply_solid_button_style(confirm_button)
+		confirm_button.pressed.connect(_on_option_confirm_pressed.bind(index))
+		box.add_child(confirm_button)
+		var cancel_button := Button.new()
+		cancel_button.text = "取消"
+		cancel_button.custom_minimum_size = Vector2(86.0, 30.0)
+		cancel_button.focus_mode = Control.FOCUS_NONE
+		cancel_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		_apply_solid_button_style(cancel_button)
+		cancel_button.pressed.connect(_on_option_cancel_pressed.bind(index))
+		box.add_child(cancel_button)
+		_option_confirm_boxes.append(box)
+		_option_confirm_buttons.append(confirm_button)
+		_option_cancel_buttons.append(cancel_button)
+
+func _apply_omen_token_style() -> void:
+	if _omen_token_button == null:
+		return
+	var normal := StyleBoxEmpty.new()
+	var hover := StyleBoxEmpty.new()
+	_omen_token_button.add_theme_stylebox_override("normal", normal)
+	_omen_token_button.add_theme_stylebox_override("hover", hover)
+	_omen_token_button.add_theme_stylebox_override("pressed", hover)
+	_omen_token_button.add_theme_color_override("font_color", Color(0.20, 0.10, 0.035, 1.0))
+	_omen_token_button.add_theme_color_override("font_hover_color", Color(0.08, 0.035, 0.010, 1.0))
+	_omen_token_button.add_theme_color_override("font_pressed_color", Color(0.36, 0.13, 0.04, 1.0))
+	_omen_token_button.add_theme_color_override("font_outline_color", Color(0.96, 0.78, 0.42, 0.78))
+	_omen_token_button.add_theme_constant_override("outline_size", 2)
+	_omen_token_button.add_theme_font_size_override("font_size", 14)
+
+func _make_omen_detail_overlay() -> PanelContainer:
+	var overlay := PanelContainer.new()
+	overlay.name = "OmenDetailOverlay"
+	overlay.visible = false
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.z_index = 65
+	overlay.add_theme_stylebox_override("panel", _make_panel_style(Color(0.0, 0.0, 0.0, 0.58), Color(0.0, 0.0, 0.0, 0.0), 0, 0))
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(520.0, 300.0)
+	panel.add_theme_stylebox_override("panel", _make_inventory_bag_style())
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	panel.add_child(margin)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	margin.add_child(root)
+	var header := HBoxContainer.new()
+	root.add_child(header)
+	var title := Label.new()
+	title.text = "已定卦象"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(0.96, 0.84, 0.56, 1.0))
+	header.add_child(title)
+	var close_button := Button.new()
+	close_button.text = "关闭"
+	close_button.custom_minimum_size = Vector2(86.0, 34.0)
+	_apply_solid_button_style(close_button)
+	close_button.pressed.connect(func() -> void:
+		_omen_detail_overlay.visible = false
+	)
+	header.add_child(close_button)
+	_omen_detail_text = RichTextLabel.new()
+	_omen_detail_text.bbcode_enabled = true
+	_omen_detail_text.fit_content = false
+	_omen_detail_text.scroll_active = true
+	_omen_detail_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_omen_detail_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_omen_detail_text.add_theme_font_size_override("normal_font_size", 15)
+	_omen_detail_text.add_theme_color_override("default_color", Color(0.84, 0.78, 0.64, 1.0))
+	root.add_child(_omen_detail_text)
+	return overlay
 
 func _ensure_option_backdrops() -> void:
 	_option_backdrops.clear()
@@ -539,7 +727,7 @@ func _ensure_status_scroll_area() -> void:
 		rich.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 func _ensure_result_scroll_area() -> void:
-	var result_vbox := _get_main_node("RootColumn/ResultPanel/MarginContainer/ResultVBox") as VBoxContainer
+	var result_vbox := result_panel.get_node_or_null("MarginContainer/ResultVBox") as VBoxContainer if result_panel != null else null
 	if result_vbox == null:
 		return
 	_result_scroll = result_vbox.get_node_or_null("ResultScroll") as ScrollContainer
@@ -553,8 +741,7 @@ func _ensure_result_scroll_area() -> void:
 		_result_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_result_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		result_vbox.add_child(_result_scroll)
-		var next_button_index := next_day_button.get_index() if next_day_button != null else result_vbox.get_child_count() - 1
-		result_vbox.move_child(_result_scroll, maxi(1, next_button_index))
+		result_vbox.move_child(_result_scroll, mini(1, result_vbox.get_child_count() - 1))
 	_result_scroll_content = _result_scroll.get_node_or_null("ResultScrollContent") as VBoxContainer
 	if _result_scroll_content == null:
 		_result_scroll_content = VBoxContainer.new()
@@ -599,9 +786,15 @@ func _apply_visual_polish() -> void:
 	var option_pressed: StyleBoxFlat = _make_option_style(Color(0.184, 0.124, 0.076, 0.99), Color(1.00, 0.76, 0.38, 1.0))
 	_set_panel_style("MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel", page_style)
 	_set_panel_style("MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/StatsPanel", card_style)
+	var stats_panel_for_style := _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack/StatsPanel") as PanelContainer
+	if stats_panel_for_style == null and _situation_echo_row != null:
+		stats_panel_for_style = _situation_echo_row.get_node_or_null("StatsPanel") as PanelContainer
+	if stats_panel_for_style != null:
+		stats_panel_for_style.add_theme_stylebox_override("panel", card_style)
 	_set_panel_style("MainMargin/RootColumn/TopLayout/MainStage/StagePanel", page_style)
 	_set_panel_style("MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel", card_style)
-	_set_panel_style("MainMargin/RootColumn/ResultPanel", card_style)
+	if result_panel != null:
+		result_panel.add_theme_stylebox_override("panel", card_style)
 
 	for button in option_buttons:
 		button.add_theme_stylebox_override("normal", option_normal)
@@ -616,7 +809,10 @@ func _apply_visual_polish() -> void:
 	_set_label("MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/SubtitleLabel", Color(0.69, 0.62, 0.50, 1.0), 14)
 	_set_label("MainMargin/RootColumn/TopLayout/MainStage/StagePanel/MarginContainer/StageVBox/StageHeader/ActionHint", Color(0.94, 0.83, 0.60, 1.0), 21)
 	_set_label("MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox/ChoicesTitle", Color(0.94, 0.83, 0.60, 1.0), 19)
-	_set_label("MainMargin/RootColumn/ResultPanel/MarginContainer/ResultVBox/ResultHeader/ResultTitle", Color(0.94, 0.83, 0.60, 1.0), 19)
+	var result_title := result_panel.get_node_or_null("MarginContainer/ResultVBox/ResultHeader/ResultTitle") as Label if result_panel != null else null
+	if result_title != null:
+		result_title.add_theme_color_override("font_color", Color(0.94, 0.83, 0.60, 1.0))
+		result_title.add_theme_font_size_override("font_size", 17)
 	_set_static_label_text("RootColumn/TopLayout/MainStage/StagePanel/MarginContainer/StageVBox/StageHeader/ActionHint", "晨占所见")
 	_set_static_label_text("RootColumn/TopLayout/MainStage/StagePanel/MarginContainer/StageVBox/StageHeader/StageSubHint", "三道机缘，择一入局")
 	_set_static_label_text("RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox/ChoicesTitle", "今日卦象")
@@ -959,7 +1155,31 @@ func _feedback_from_effect(effect: Dictionary) -> Dictionary:
 				"fly_to_bag": false,
 				"shake": value > 0
 			}
+		"relation_delta":
+			if value == 0:
+				return {}
+			return {
+				"text": "%s %s%d" % [_relation_display_name(target_id), "+" if value > 0 else "", value],
+				"color": Color(0.68, 0.84, 0.52, 1.0) if value > 0 else Color(0.82, 0.42, 0.36, 1.0),
+				"fly_to_bag": false,
+				"shake": value < 0
+			}
 	return {}
+
+func _relation_display_name(npc_id: String) -> String:
+	match npc_id:
+		"grocer":
+			return "粮铺掌柜"
+		"doctor":
+			return "周郎中"
+		"peddler":
+			return "游货郎"
+		"tea_oldman":
+			return "茶棚老人"
+		"porter":
+			return "码头脚夫"
+		_:
+			return npc_id
 
 func _spawn_feedback_card(text: String, color: Color, fly_to_bag: bool, shake: bool, index: int) -> void:
 	if text.is_empty() or _feedback_layer == null:
@@ -1228,6 +1448,7 @@ func _on_day_started(payload: Dictionary) -> void:
 	_current_weather = weather
 	_interaction_mode = "fortune"
 	_last_action_summary = ""
+	_reset_fortune_choice_state(true)
 	choices_panel.visible = true
 	if _exploration_board != null:
 		_exploration_board.visible = false
@@ -1252,6 +1473,7 @@ func _on_day_started(payload: Dictionary) -> void:
 			var option: Dictionary = options[index]
 			button.visible = true
 			button.disabled = false
+			button.modulate = Color.WHITE
 			button.text = ""
 			option_label.bbcode_enabled = true
 			option_label.text = _build_option_markup(option, weather)
@@ -1269,6 +1491,7 @@ func _on_day_started(payload: Dictionary) -> void:
 				)
 		else:
 			button.visible = false
+			button.modulate = Color.WHITE
 			option_label.text = ""
 			if option_backdrop != null:
 				option_backdrop.visible = false
@@ -1286,12 +1509,152 @@ func _on_option_pressed(index: int) -> void:
 		return
 	if _interaction_mode != "fortune":
 		return
+	_set_pending_option(index)
+
+func _set_pending_option(index: int) -> void:
+	_pending_option_index = index
+	for i in option_buttons.size():
+		var button := option_buttons[i]
+		button.disabled = false
+		button.modulate = Color(1.0, 0.96, 0.78, 1.0) if i == index else Color(0.66, 0.62, 0.54, 0.78)
+		if i < _option_confirm_boxes.size():
+			_option_confirm_boxes[i].visible = i == index
+	var fortune_model: FortuneSelectionModel = _app.architecture.get_model(&"fortune")
+	var options := fortune_model.options
+	var option: Dictionary = options[index] if index >= 0 and index < options.size() else {}
+	var title := str(option.get("omen_title", option.get("title", "此卦")))
+	_set_selection_text("你抽出了「%s」。确认后才会定卦；若还想换，点右侧取消或改选另一签。" % title)
+
+func _on_option_cancel_pressed(index: int) -> void:
+	if _interaction_mode != "fortune":
+		return
+	if _pending_option_index != index:
+		return
+	_pending_option_index = -1
+	for i in option_buttons.size():
+		option_buttons[i].disabled = false
+		option_buttons[i].modulate = Color.WHITE
+		if i < _option_confirm_boxes.size():
+			_option_confirm_boxes[i].visible = false
+	_set_selection_text("已放回卦签。请选择今日行动。")
+
+func _on_option_confirm_pressed(index: int) -> void:
+	if _app == null or _interaction_mode != "fortune":
+		return
+	if _pending_option_index != index:
+		_set_pending_option(index)
+		return
 	_interaction_mode = "selecting"
 	for button in option_buttons:
 		button.disabled = true
+	for box in _option_confirm_boxes:
+		box.visible = false
 	_sync_quick_action_buttons()
-	_set_selection_text("卦象已定，正在辨认今日机缘……")
+	var fortune_model: FortuneSelectionModel = _app.architecture.get_model(&"fortune")
+	var options := fortune_model.options
+	_confirmed_option = options[index].duplicate(true) if index >= 0 and index < options.size() else {}
+	_set_selection_text("卦签已定，正在收束今日机缘……")
+	await _play_fortune_confirm_effect(index)
 	_app.architecture.command_dispatcher.dispatch(preload("res://scripts/command/SelectFortuneCommand.gd"), {"index": index})
+
+func _play_fortune_confirm_effect(index: int) -> void:
+	if index < 0 or index >= option_buttons.size():
+		return
+	var selected_button := option_buttons[index]
+	if _fortune_effect_layer != null:
+		_fortune_effect_layer.emit_confirm_sparks(selected_button.get_global_rect())
+	for i in option_buttons.size():
+		if i == index or not option_buttons[i].visible:
+			continue
+		if _fortune_effect_layer != null:
+			_fortune_effect_layer.emit_dissolve(option_buttons[i].get_global_rect(), Color(0.68, 0.58, 0.42, 1.0))
+		var fade_tween := create_tween()
+		fade_tween.tween_property(option_buttons[i], "modulate", Color(0.72, 0.68, 0.60, 0.0), 0.44)
+	_spawn_flying_omen_token(selected_button)
+	await get_tree().create_timer(0.62).timeout
+
+func _spawn_flying_omen_token(source: Control) -> void:
+	if source == null or _omen_token_button == null:
+		return
+	var source_rect := source.get_global_rect()
+	var local_start := get_global_transform().affine_inverse() * source_rect.position
+	var target_rect := _omen_token_button.get_global_rect()
+	var local_target := get_global_transform().affine_inverse() * target_rect.position
+	var slip: Button = FortuneSlipTokenButtonScript.new()
+	slip.name = "FlyingOmenSlip"
+	slip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slip.position = local_start
+	slip.size = Vector2(minf(source_rect.size.x, 300.0), 56.0)
+	slip.pivot_offset = slip.size * 0.5
+	slip.z_index = 85
+	slip.modulate = Color(1.0, 0.96, 0.78, 1.0)
+	slip.text = "定卦 · %s" % str(_confirmed_option.get("omen_title", _confirmed_option.get("title", "未知卦象")))
+	slip.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	slip.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	slip.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	slip.add_theme_color_override("font_color", Color(0.20, 0.10, 0.035, 1.0))
+	slip.add_theme_color_override("font_outline_color", Color(0.96, 0.78, 0.42, 0.78))
+	slip.add_theme_constant_override("outline_size", 2)
+	slip.add_theme_font_size_override("font_size", 17)
+	add_child(slip)
+	move_child(slip, get_child_count() - 1)
+	_omen_token_button.visible = false
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(slip, "position", local_target, 0.58).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(slip, "scale", Vector2(0.58, 0.68), 0.58).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(slip, "modulate:a", 0.0, 0.18).set_delay(0.46)
+	tween.finished.connect(func() -> void:
+		if is_instance_valid(slip):
+			slip.queue_free()
+		_show_omen_token()
+	)
+
+func _show_omen_token() -> void:
+	if _omen_token_button == null:
+		return
+	var title := str(_confirmed_option.get("omen_title", _confirmed_option.get("title", "已定卦")))
+	_omen_token_button.text = "定卦 · %s" % title
+	_omen_token_button.visible = true
+	_omen_token_button.modulate = Color(1.0, 0.96, 0.72, 1.0)
+	if _omen_token_tween != null:
+		_omen_token_tween.kill()
+	_omen_token_tween = create_tween()
+	_omen_token_tween.set_loops()
+	_omen_token_tween.tween_property(_omen_token_button, "modulate", Color(1.0, 0.82, 0.34, 1.0), 0.62)
+	_omen_token_tween.tween_property(_omen_token_button, "modulate", Color(1.0, 1.0, 0.82, 1.0), 0.62)
+
+func _on_omen_token_pressed() -> void:
+	if _confirmed_option.is_empty() or _omen_detail_overlay == null or _omen_detail_text == null:
+		return
+	var verdict := _fortune_verdict(_confirmed_option, _current_weather)
+	_omen_detail_text.text = "[font_size=21][color=#F0C15A][b]%s[/b][/color][/font_size]\n[color=%s][b]%s[/b][/color]  [color=#D8CFAE]%s[/color]\n\n[color=#A97B3E]所指[/color] [color=#E8DDC2]%s[/color]\n[color=#A97B3E]可得[/color] [color=#D7CFBB]%s[/color]\n[color=#7E8190]忌[/color] [color=#CDBFA0]%s[/color]\n\n[color=#B9AD8D]%s[/color]" % [
+		str(_confirmed_option.get("omen_title", _confirmed_option.get("title", "未知卦象"))),
+		str(verdict.get("color", "#D8CFAE")),
+		str(verdict.get("grade", "平")),
+		str(verdict.get("text", "")),
+		str(_confirmed_option.get("omen_place", _location_name(str(_confirmed_option.get("location_id", "field"))))),
+		_style_reward_text(str(_confirmed_option.get("omen_gain", _confirmed_option.get("reward_desc", "-")))),
+		str(_confirmed_option.get("omen_warning", _confirmed_option.get("risk_desc", "-"))),
+		str(_confirmed_option.get("omen_text", "命象不明，只见雾中一线。"))
+	]
+	_omen_detail_overlay.visible = true
+
+func _reset_fortune_choice_state(hide_token: bool = false) -> void:
+	_pending_option_index = -1
+	for i in option_buttons.size():
+		option_buttons[i].modulate = Color.WHITE
+		if i < _option_confirm_boxes.size():
+			_option_confirm_boxes[i].visible = false
+	if hide_token:
+		_confirmed_option.clear()
+		if _omen_token_tween != null:
+			_omen_token_tween.kill()
+			_omen_token_tween = null
+		if _omen_token_button != null:
+			_omen_token_button.visible = false
+		if _omen_detail_overlay != null:
+			_omen_detail_overlay.visible = false
 
 func _refresh_inventory_overlay() -> void:
 	if _app == null or _inventory_content == null or _inventory_resource_list == null or _inventory_loot_grid == null:
@@ -1626,6 +1989,12 @@ func _refresh_clue_overlay() -> void:
 	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
 	_clue_board.set_flags(flag_model.flags)
 
+func _on_clue_deduction_requested(effect_ids: Array, summary: String) -> void:
+	_apply_exploration_effects(effect_ids)
+	_refresh_clue_overlay()
+	_refresh_status()
+	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
+
 func _on_town_button_pressed() -> void:
 	if _app == null:
 		return
@@ -1845,7 +2214,7 @@ func _on_day_resolved(payload: Dictionary) -> void:
 	else:
 		lines.append(_get_end_of_day_outlook())
 		var current_day: int = int(payload.get("day", 1))
-		next_day_button.text = "进入第%d天" % [current_day + 1]
+		next_day_button.text = "第%d天" % [current_day + 1]
 		next_day_button.visible = true
 		next_day_button.disabled = false
 	if not lines.is_empty():
@@ -1905,12 +2274,14 @@ func _refresh_status() -> void:
 	_set_rich_text(_player_state_rich, player_state_label, player_display_text)
 	var special_inventory_text: String = _get_special_inventory_summary(inventory_model)
 	var equipment_text := _get_equipment_summary()
-	var inventory_display_text: String = "%s\n阶段：%s    欠债：%d/%d    催债日：%d\n%s" % [
+	var debt_pressure := _get_debt_pressure_label(debt_model, day_model)
+	var inventory_display_text: String = "%s\n阶段：%s    欠债：%d/%d    催债日：%d    债压：%s\n%s" % [
 		_format_display_entries(inventory_model.get_display_value_map(inventory_order)),
 		day_model.current_phase,
 		debt_model.get_value("current"),
 		debt_model.get_value("initial"),
 		debt_model.get_value("due_day"),
+		debt_pressure,
 		_get_progress_summary()
 	]
 	if not equipment_text.is_empty():
@@ -1923,6 +2294,18 @@ func _get_route_hint() -> String:
 	if _app == null:
 		return "路线未定"
 	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	if flag_model.get_flag("deduced_old_goods_line"):
+		return "当前路线：旧物暗价已推断清楚，搜旧物和卖战利品更稳"
+	if flag_model.get_flag("deduced_old_well_route"):
+		return "当前路线：旧井藏路已推断清楚，夜探旧井时更少走弯路"
+	if flag_model.get_flag("deduced_support_network"):
+		return "当前路线：互助补给网已推断清楚，粮药和城镇人情更便宜更稳"
+	if flag_model.get_flag("deduced_debt_timing"):
+		return "当前路线：催债节奏已推断清楚，茶棚和渡口消息更有价值"
+	if flag_model.get_flag("deduced_grave_cache"):
+		return "当前路线：荒坟旧藏已推断清楚，深挖旧藏更有把握"
+	if flag_model.get_flag("deduced_hunter_route"):
+		return "当前路线：猎户伏兽路已推断清楚，山林遇兽和设伏更稳"
 	if flag_model.get_flag("soldier_relic_clue"):
 		return "当前路线：私印暗记已经对上旧营地，可追军中遗物但风险很高"
 	if flag_model.get_flag("jade_buyer_clue") and not flag_model.get_flag("met_jade_buyer"):
@@ -1971,9 +2354,10 @@ func _get_progress_summary() -> String:
 	var initial_debt: int = maxi(debt_model.get_value("initial"), 1)
 	var repaid: int = maxi(initial_debt - current_debt, 0)
 	var echoes := _get_consequence_echoes()
+	var debt_pressure := _get_debt_pressure_label(debt_model, _app.architecture.get_model(&"day_cycle"))
 	if echoes.is_empty():
-		return "还债进度：%d/%d    %s\n阶段目标：%s" % [repaid, initial_debt, _get_route_hint(), _get_stage_goal()]
-	return "还债进度：%d/%d    %s\n阶段目标：%s\n回响：%s" % [repaid, initial_debt, _get_route_hint(), _get_stage_goal(), " / ".join(echoes)]
+		return "还债进度：%d/%d    债压：%s    %s\n阶段目标：%s" % [repaid, initial_debt, debt_pressure, _get_route_hint(), _get_stage_goal()]
+	return "还债进度：%d/%d    债压：%s    %s\n阶段目标：%s\n回响：%s" % [repaid, initial_debt, debt_pressure, _get_route_hint(), _get_stage_goal(), " / ".join(echoes)]
 
 func _get_consequence_echoes() -> Array[String]:
 	var echoes: Array[String] = []
@@ -1982,6 +2366,19 @@ func _get_consequence_echoes() -> Array[String]:
 	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
 	var player_model: PlayerModel = _app.architecture.get_model(&"player")
 	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	var relation_model: RefCounted = _app.architecture.get_model(&"relation")
+	var debt_model: DebtModel = _app.architecture.get_model(&"debt")
+	var day_model: DayCycleModel = _app.architecture.get_model(&"day_cycle")
+	var debt_stage := _get_debt_pressure_stage(debt_model, day_model)
+	match debt_stage:
+		"overdue":
+			echoes.append("债期已过，催债人会更常上门")
+		"critical":
+			echoes.append("债压失控，钱粮和人脉都会被催债拖累")
+		"due":
+			echoes.append("催债日贴脸，今明两天必须处理还钱或避债")
+		"near":
+			echoes.append("催债临近，最好提前变现或探风")
 	if flag_model.get_flag("cold_severe"):
 		echoes.append("重寒会持续伤身，必须尽快治")
 	elif flag_model.get_flag("cold_worse"):
@@ -2025,11 +2422,37 @@ func _get_consequence_echoes() -> Array[String]:
 		echoes.append("夜市暗线可承接高值旧物")
 	if flag_model.get_flag("market_heat_cooled"):
 		echoes.append("夜市风声被压下过，热度高时可继续避风头")
+	if flag_model.get_flag("deduced_old_goods_line"):
+		echoes.append("旧物暗价已推断，卖战利品和搜旧货更稳")
+	if flag_model.get_flag("deduced_old_well_route"):
+		echoes.append("旧井藏路已推断，井边高危搜索更少出坏事")
+	if flag_model.get_flag("deduced_support_network"):
+		echoes.append("互助补给网已推断，粮药交易和城镇人情更顺")
+	if flag_model.get_flag("deduced_debt_timing"):
+		echoes.append("催债节奏已推断，茶棚与渡口线更能避险")
+	if flag_model.get_flag("deduced_grave_cache"):
+		echoes.append("荒坟旧藏已推断，坟地深挖更容易控住风险")
+	if flag_model.get_flag("deduced_hunter_route"):
+		echoes.append("猎户伏兽路已推断，山林遇兽有更多处理办法")
+	var strong_contacts := _strong_contact_summary(relation_model)
+	if not strong_contacts.is_empty():
+		echoes.append("可信人脉：%s" % strong_contacts)
+	if player_model.get_stat("suspicion") >= 45 and not strong_contacts.is_empty():
+		echoes.append("怀疑过高会消耗熟人口风")
 	if player_model.get_stat("village_attention") >= 35:
 		echoes.append("村中关注偏高，卖贵重物更易惹眼")
 	if player_model.get_stat("suspicion") >= 35:
 		echoes.append("怀疑偏高，接下来应少走犯忌路线")
 	return echoes
+
+func _strong_contact_summary(relation_model: RefCounted) -> String:
+	if relation_model == null:
+		return ""
+	var names: Array[String] = []
+	for npc_id in ["grocer", "doctor", "peddler", "tea_oldman", "porter"]:
+		if relation_model.get_score(npc_id) >= 3:
+			names.append(_relation_display_name(npc_id))
+	return "、".join(names)
 
 func _get_stage_goal() -> String:
 	if _app == null:
@@ -2045,6 +2468,25 @@ func _get_stage_goal() -> String:
 	var active_task := _active_town_task_summary(relation_model)
 	if not active_task.is_empty():
 		return active_task
+	var debt_stage := _get_debt_pressure_stage(debt_model, day_model)
+	if debt_stage == "critical":
+		if inventory_model.get_amount("money") >= 10:
+			return "债压失控：今晚先还一笔大钱，立刻压住催逼"
+		if flag_model.get_flag("deduced_debt_timing") or flag_model.get_flag("tea_debt_contact"):
+			return "债压失控：先走茶棚债讯线避门，再尽快筹钱"
+		return "债压失控：优先变现战利品，别再空手过夜"
+	if debt_stage == "overdue":
+		if inventory_model.get_amount("money") >= 5:
+			return "债期已过：先还一笔，哪怕只压住今晚"
+		if _has_sellable_loot(inventory_model):
+			return "债期已过：去城镇卖战利品，先凑出还债钱"
+		return "债期已过：走高收益路线筹钱，但要准备被催逼"
+	if debt_stage == "due":
+		if inventory_model.get_amount("money") >= 10:
+			return "催债贴近：今晚可还一笔大钱，优先保住局面"
+		if flag_model.get_flag("deduced_debt_timing"):
+			return "催债贴近：按催债节奏探风，决定还钱或避让"
+		return "催债贴近：先变现、探风或走稳定赚钱线"
 	if player_model.get_stat("health") <= 14:
 		return "先保命：买药、用药或避开高风险探索"
 	if inventory_model.get_amount("food") <= 1:
@@ -2055,6 +2497,14 @@ func _get_stage_goal() -> String:
 		return "催债临近：优先把战利品变现还债"
 	if flag_model.get_flag("black_market_fence_line") and (player_model.get_stat("village_attention") >= 40 or player_model.get_stat("suspicion") >= 40):
 		return "先避风头：去灰巷清夜市痕迹，别让高收益线反噬"
+	if flag_model.get_flag("deduced_old_goods_line") and _has_sellable_loot(inventory_model):
+		return "变现旧物：旧物暗价已推断，去城镇找货郎出手更划算"
+	if flag_model.get_flag("deduced_debt_timing") and day_model.current_day >= debt_model.get_value("due_day") - 2:
+		return "按催债节奏行事：先去茶棚或渡口确认风声，再还钱或避让"
+	if flag_model.get_flag("deduced_support_network") and (inventory_model.get_amount("food") <= 3 or flag_model.get_flag("cold_mild")):
+		return "用互助网补给：去城镇低价买粮药，或接粮药委托"
+	if flag_model.get_flag("deduced_grave_cache") and inventory_model.get_amount("money") < debt_model.get_value("current"):
+		return "冲旧藏收益：荒坟路线已推断，可深挖但别让怀疑失控"
 	if flag_model.get_flag("soldier_relic_clue"):
 		return "可冲高收益：追旧营军中遗物，注意怀疑和关注"
 	if flag_model.get_flag("jade_buyer_clue") and inventory_model.get_amount("broken_jade_button") > 0:
@@ -2103,6 +2553,16 @@ func _equipment_stage_goal(inventory_model: InventoryModel, flag_model: FlagMode
 		return "整理装备：山君骨可佩，林中和洞穴行动更稳"
 	return ""
 
+func _has_sellable_loot(inventory_model: InventoryModel) -> bool:
+	for item_id_variant in inventory_model.items.keys():
+		var item_id := str(item_id_variant)
+		if inventory_model.get_amount(item_id) <= 0:
+			continue
+		var definition: Dictionary = inventory_model.item_defs.get(item_id, {})
+		if str(definition.get("group", "resource")) != "resource":
+			return true
+	return false
+
 func _active_town_task_summary(relation_model: RefCounted) -> String:
 	if relation_model == null:
 		return ""
@@ -2144,12 +2604,56 @@ func _get_warning_summary(player_model: PlayerModel, inventory_model: InventoryM
 	elif flag_model.get_flag("cold_mild"):
 		warnings.append("染寒未治")
 	if debt_model.get_value("current") > 0 and day_model.current_day >= debt_model.get_value("due_day") - 2:
-		warnings.append("临近催债")
+		warnings.append(_get_debt_warning_text(debt_model, day_model))
 	if player_model.get_stat("village_attention") >= 45:
 		warnings.append("村中关注过高")
 	if player_model.get_stat("suspicion") >= 45:
 		warnings.append("怀疑接近失控")
 	return " / ".join(warnings)
+
+func _get_debt_pressure_stage(debt_model: DebtModel, day_model: DayCycleModel) -> String:
+	if debt_model.get_value("current") <= 0:
+		return "clear"
+	var days_left := debt_model.get_value("due_day") - day_model.current_day
+	var current_debt := debt_model.get_value("current")
+	var initial_debt := maxi(debt_model.get_value("initial"), 1)
+	if days_left < -2 or current_debt >= initial_debt + 8:
+		return "critical"
+	if days_left < 0:
+		return "overdue"
+	if days_left <= 1:
+		return "due"
+	if days_left <= 3:
+		return "near"
+	return "grace"
+
+func _get_debt_pressure_label(debt_model: DebtModel, day_model: DayCycleModel) -> String:
+	match _get_debt_pressure_stage(debt_model, day_model):
+		"clear":
+			return "已清"
+		"critical":
+			return "失控"
+		"overdue":
+			return "逾期"
+		"due":
+			return "催逼"
+		"near":
+			return "临近"
+		_:
+			return "宽限"
+
+func _get_debt_warning_text(debt_model: DebtModel, day_model: DayCycleModel) -> String:
+	match _get_debt_pressure_stage(debt_model, day_model):
+		"critical":
+			return "债压失控"
+		"overdue":
+			return "债期已过"
+		"due":
+			return "催债贴近"
+		"near":
+			return "临近催债"
+		_:
+			return ""
 
 func _is_route_flag(flag_id: String) -> bool:
 	return flag_id in [
@@ -2170,6 +2674,12 @@ func _is_route_flag(flag_id: String) -> bool:
 		"black_market_fence_line",
 		"market_heat_cooled",
 		"support_network_built",
+		"deduced_old_goods_line",
+		"deduced_old_well_route",
+		"deduced_support_network",
+		"deduced_debt_timing",
+		"deduced_grave_cache",
+		"deduced_hunter_route",
 		"earned_villager_trust",
 		"unlocked_errand_route",
 		"saw_graveyard_cache",
@@ -2356,23 +2866,38 @@ func _build_option_markup(option: Dictionary, weather: Dictionary) -> String:
 	var risk_desc: String = _style_risk_text(str(option.get("risk_desc", "-")))
 	var title_markup: String = _style_title_text(title, str(option.get("location_id", "field")), str(option.get("risk_desc", "")), str(weather.get("id", "clear")))
 	var fortune_mark: String = _build_fortune_mark(option, weather)
+	var route_badge := _option_route_badge(option)
 	if _compact_option_markup:
 		var compact_lines: Array[String] = [
 			title_markup,
 			fortune_mark,
+			route_badge,
 			"[font_size=13][color=#B9AD8D]%s[/color][/font_size]" % omen_text,
 			"[font_size=12][color=#A97B3E]所指[/color]  [color=#D7CFBB]%s[/color]    [pulse freq=1.2 color=#F0C15A ease=-2.0][color=#A97B3E]可得[/color][/pulse]  [color=#D7CFBB]%s[/color][/font_size]" % [omen_place, omen_gain],
 			"[font_size=12][shake rate=12.0 level=2 connected=1][color=#7E8190]忌[/color]  [color=#CDBFA0]%s[/color][/shake][/font_size]" % omen_warning
 		]
+		compact_lines = compact_lines.filter(func(line: String) -> bool: return not line.is_empty())
 		return String.chr(10).join(compact_lines)
 	var lines: Array[String] = [
 		title_markup,
 		fortune_mark,
+		route_badge,
 		"[font_size=14][color=#B9AD8D]%s[/color][/font_size]" % omen_text,
 		"[font_size=14][color=#A97B3E]所指[/color]  [color=#D7CFBB]%s[/color]    [pulse freq=1.2 color=#F0C15A ease=-2.0][color=#A97B3E]可得[/color][/pulse]  [color=#D7CFBB]%s[/color][/font_size]" % [omen_place, omen_gain],
 		"[font_size=13][shake rate=12.0 level=2 connected=1][color=#7E8190]忌[/color]  [color=#CDBFA0]%s[/color][/shake]    %s[/font_size]" % [omen_warning, risk_desc]
 	]
+	lines = lines.filter(func(line: String) -> bool: return not line.is_empty())
 	return String.chr(10).join(lines)
+
+func _option_route_badge(option: Dictionary) -> String:
+	var route_tag := str(option.get("route_tag", ""))
+	if route_tag.is_empty():
+		return ""
+	var route_hint := str(option.get("route_hint", "线索已整理，路线收益更明确。"))
+	return "[font_size=12][color=#C79A4C]线[/color] [pulse freq=1.0 color=#DDBD72 ease=-2.0][color=#E9D79A][b]%s[/b][/color][/pulse]  [color=#9FB58D]%s[/color][/font_size]" % [
+		route_tag,
+		route_hint
+	]
 
 func _build_fortune_mark(option: Dictionary, weather: Dictionary) -> String:
 	var verdict: Dictionary = _fortune_verdict(option, weather)
@@ -2594,32 +3119,55 @@ func _apply_responsive_layout() -> void:
 
 	root_column.add_theme_constant_override("separation", 8 if very_short else (10 if short_window else 16))
 	top_layout.add_theme_constant_override("separation", 8 if cramped else (14 if compact else 20))
-	sidebar.custom_minimum_size.x = 178.0 if tiny else (228.0 if cramped else (292.0 if compact else 360.0))
+	sidebar.custom_minimum_size.x = 292.0 if tiny else (360.0 if cramped else (430.0 if compact else 520.0))
 	sidebar.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var sidebar_stack: VBoxContainer = _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack") as VBoxContainer
 	if sidebar_stack != null:
 		sidebar_stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		sidebar_stack.add_theme_constant_override("separation", 8 if cramped else 12)
+	if _situation_echo_row != null:
+		_situation_echo_row.add_theme_constant_override("separation", 8 if cramped else 10)
+		_situation_echo_row.custom_minimum_size.y = 250.0 if very_short else (276.0 if cramped else (300.0 if compact else 320.0))
 	var stats_panel: PanelContainer = _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack/StatsPanel") as PanelContainer
+	if stats_panel == null and _situation_echo_row != null:
+		stats_panel = _situation_echo_row.get_node_or_null("StatsPanel") as PanelContainer
 	if stats_panel != null:
-		stats_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		stats_panel.custom_minimum_size.y = 286.0 if very_short else (348.0 if cramped else (390.0 if compact else 430.0))
+		stats_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		stats_panel.custom_minimum_size.y = 250.0 if very_short else (276.0 if cramped else (300.0 if compact else 320.0))
+	if result_panel != null:
+		result_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		result_panel.custom_minimum_size.y = 250.0 if very_short else (276.0 if cramped else (300.0 if compact else 320.0))
 	if _status_scroll != null:
-		_status_scroll.custom_minimum_size.y = 210.0 if very_short else (270.0 if cramped else (308.0 if compact else 344.0))
+		_status_scroll.custom_minimum_size.y = 166.0 if very_short else (190.0 if cramped else (214.0 if compact else 232.0))
 	main_stage.add_theme_constant_override("separation", 8 if cramped else (12 if compact else 16))
 	_set_panel_margins("RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer", 12 if cramped else 18)
 	_set_panel_margins("RootColumn/TopLayout/Sidebar/SidebarStack/StatsPanel/MarginContainer", 12 if cramped else 18)
+	var stats_margin := stats_panel.get_node_or_null("MarginContainer") as MarginContainer if stats_panel != null else null
+	if stats_margin != null:
+		var status_margin := 10 if very_short else (12 if cramped else 14)
+		stats_margin.add_theme_constant_override("margin_left", status_margin)
+		stats_margin.add_theme_constant_override("margin_top", status_margin)
+		stats_margin.add_theme_constant_override("margin_right", status_margin)
+		stats_margin.add_theme_constant_override("margin_bottom", status_margin)
 	_set_panel_margins("RootColumn/TopLayout/MainStage/StagePanel/MarginContainer", 12 if cramped else 20)
 	_set_panel_margins("RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer", 12 if cramped else 18)
-	_set_panel_margins("RootColumn/ResultPanel/MarginContainer", 12 if very_short else (14 if short_window else 18))
+	var result_margin := result_panel.get_node_or_null("MarginContainer") as MarginContainer if result_panel != null else null
+	if result_margin != null:
+		var margin := 10 if very_short else (12 if short_window else 14)
+		result_margin.add_theme_constant_override("margin_left", margin)
+		result_margin.add_theme_constant_override("margin_top", margin)
+		result_margin.add_theme_constant_override("margin_right", margin)
+		result_margin.add_theme_constant_override("margin_bottom", margin)
 	choices_panel.custom_minimum_size = Vector2(0.0, 0.0)
 	if _exploration_board != null:
 		_exploration_board.custom_minimum_size.y = 300.0 if very_short else (330.0 if cramped else 380.0)
 	if _town_board != null:
 		_town_board.custom_minimum_size.y = 300.0 if very_short else (330.0 if cramped else 380.0)
-	result_panel.custom_minimum_size.y = 92.0 if very_short else (118.0 if short_window else 158.0)
 	if _result_scroll != null:
-		_result_scroll.custom_minimum_size.y = 34.0 if very_short else (54.0 if short_window else 86.0)
+		_result_scroll.custom_minimum_size.y = 170.0 if very_short else (196.0 if short_window else 226.0)
+	if next_day_button != null:
+		next_day_button.custom_minimum_size = Vector2(70.0 if cramped else 78.0, 28.0)
+		next_day_button.add_theme_font_size_override("font_size", 12 if cramped else 13)
 	scene_illustration.clip_contents = true
 	scene_illustration.custom_minimum_size.y = 104.0 if very_short else (122.0 if tiny else (136.0 if cramped else (172.0 if compact else 210.0)))
 	for button in option_buttons:

@@ -51,6 +51,9 @@ func _apply_single_effect(effect: Dictionary) -> void:
 		"unlock_option":
 			var option_unlock_model: OptionUnlockModel = _app.architecture.get_model(&"option_unlock")
 			option_unlock_model.set_unlocked(target_id, true)
+		"relation_delta":
+			var relation_model: RefCounted = _app.architecture.get_model(&"relation")
+			relation_model.add_score(target_id, value)
 		"debt_delta":
 			var debt_model: DebtModel = _app.architecture.get_model(&"debt")
 			debt_model.apply_delta(target_id, value)

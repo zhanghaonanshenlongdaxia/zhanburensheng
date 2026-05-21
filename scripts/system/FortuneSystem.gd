@@ -48,16 +48,33 @@ func _calculate_option_weight(option: Dictionary, condition_system: ConditionSys
 func _pick_weighted_options(options: Array, count: int) -> Array:
 	var pool: Array = options.duplicate(true)
 	var result: Array = []
+	var route_pick := _pick_route_option(pool)
+	if not route_pick.is_empty():
+		result.append(route_pick)
+		_remove_option_from_pool(pool, str(route_pick.get("id", "")))
 	while result.size() < count and not pool.is_empty():
 		var picked: Dictionary = _pick_single_weighted(pool)
 		if picked.is_empty():
 			break
 		result.append(picked)
-		for index in range(pool.size()):
-			if str(pool[index].get("id", "")) == str(picked.get("id", "")):
-				pool.remove_at(index)
-				break
+		_remove_option_from_pool(pool, str(picked.get("id", "")))
 	return result
+
+func _pick_route_option(options: Array) -> Dictionary:
+	var route_options: Array = []
+	for option_variant in options:
+		var option: Dictionary = option_variant
+		if not str(option.get("route_flag", "")).is_empty():
+			route_options.append(option)
+	if route_options.is_empty():
+		return {}
+	return _pick_single_weighted(route_options)
+
+func _remove_option_from_pool(pool: Array, option_id: String) -> void:
+	for index in range(pool.size()):
+		if str(pool[index].get("id", "")) == option_id:
+			pool.remove_at(index)
+			return
 
 func _pick_single_weighted(options: Array) -> Dictionary:
 	var total_weight: int = 0

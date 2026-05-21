@@ -43,6 +43,9 @@ func check_condition(condition: Dictionary) -> bool:
 		"flag_compare":
 			var flag_model: FlagModel = _app.architecture.get_model(&"flag")
 			actual_variant = flag_model.get_flag(target_id)
+		"relation_compare":
+			var relation_model: RefCounted = _app.architecture.get_model(&"relation")
+			actual_variant = relation_model.get_score(target_id)
 		"debt_compare":
 			var debt_model: DebtModel = _app.architecture.get_model(&"debt")
 			actual_variant = debt_model.get_value(target_id)

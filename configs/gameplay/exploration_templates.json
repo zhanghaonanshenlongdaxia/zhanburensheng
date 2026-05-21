@@ -384,6 +384,102 @@
         {"x": 2, "y": -1, "type": "hut", "name": "邻窗闲眼", "desc": "窗后有人总爱看热闹，话传出去比脚步还快。", "containers": ["nosy_neighbor_window"]},
         {"x": 3, "y": 0, "type": "road", "name": "夹巷出口", "desc": "夹巷通回村口，带着人情走，比带着脏钱轻些。", "exit": true}
       ]
+    },
+    "deduced_old_goods_run": {
+      "name": "货郎暗价线",
+      "intro": "你按线索簿里整理出的暗价门路去找游货郎，这次不再只碰运气，而是带着暗号和出手顺序。",
+      "extract_text": "你从货郎暗摊离开，旧物的价钱和来路都被压进几句行话里。",
+      "omen_tip": "先试旧秤，再看买家纸条",
+      "omen_warn": "翻暗账问军物，会被反探",
+      "favored_containers": ["hidden_scale", "old_goods_bundle", "buyer_name_slip"],
+      "forbidden_containers": ["secret_account_book", "buyer_shadow_pouch"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "road", "name": "暗摊路口", "desc": "货郎把秤挂在阴影里，秤砣底下的旧痕和你记下的暗号相合。", "image": "sell_herb", "image_path": "res://assets/generated/exploration/events/sell_herb.jpg", "containers": ["hidden_scale"]},
+        {"x": 1, "y": 0, "type": "village", "name": "旧物包袱", "desc": "包袱里混着铜、玉和旧银件，先分成色再谈价钱。", "containers": ["old_goods_bundle"]},
+        {"x": 1, "y": -1, "type": "hut", "name": "买家纸条", "desc": "纸条压在秤盒下，能接残玉买家，也可能把你带进更深的旧物线。", "containers": ["buyer_name_slip"]},
+        {"x": 2, "y": 0, "type": "road", "name": "后巷影子", "desc": "后巷有人盯着货面，问得越细越容易被记住。", "containers": ["buyer_shadow_pouch"]},
+        {"x": 3, "y": 0, "type": "road", "name": "暗摊退路", "desc": "货郎收秤后不再多话，这时候走最合适。", "exit": true}
+      ]
+    },
+    "deduced_old_well_descent": {
+      "name": "旧井三结路",
+      "intro": "你把井绳三结、守夜人口风和竹篱退路重新过了一遍，趁夜绕到废井边。",
+      "extract_text": "你沿竹篱暗口退回村后，井底回声被远远甩在身后。",
+      "omen_tip": "验井绳三结，再摸井壁",
+      "omen_warn": "贪下井底，守夜人会回头",
+      "favored_containers": ["well_rope_mark", "well_side_crack", "bamboo_exit_bundle"],
+      "forbidden_containers": ["well_bottom_cache", "watcher_footprint"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "road", "name": "井路暗口", "desc": "后村岔路被草遮住，只有认得绳结的人才会往这里拐。", "image": "search_cache", "image_path": "res://assets/generated/exploration/events/search_cache.jpg", "containers": ["well_rope_mark"]},
+        {"x": 1, "y": 0, "type": "hut", "name": "废井井沿", "desc": "井沿苔痕断在同一处，井壁石缝里可能压着旧物。", "containers": ["well_side_crack"]},
+        {"x": 1, "y": -1, "type": "cave", "name": "井底暗匣", "desc": "井底暗匣还在，但绳响太重，稍贪就会惊人。", "containers": ["well_bottom_cache"], "enemies": ["wolf"], "enemy_chance": 16},
+        {"x": 2, "y": 0, "type": "thicket", "name": "守夜脚印", "desc": "墙后有守夜人旧脚印，绕开它能少惹一层麻烦。", "containers": ["watcher_footprint"]},
+        {"x": 3, "y": 0, "type": "road", "name": "竹篱暗口", "desc": "竹篱后的小路通向村后，不必经过村口。", "containers": ["bamboo_exit_bundle"], "exit": true}
+      ]
+    },
+    "deduced_support_round": {
+      "name": "互助补给圈",
+      "intro": "你按线索簿里串好的粮药人情走夹巷，先还口风，再取补给。",
+      "extract_text": "你从夹巷退回村里，手里东西不显眼，却足够稳住几天。",
+      "omen_tip": "先递人情，再拿粮药",
+      "omen_warn": "翻人情账，会欠下更重的话",
+      "favored_containers": ["shared_supper_pot", "medicine_note_bundle", "work_exchange_board"],
+      "forbidden_containers": ["favor_debt_book", "nosy_neighbor_window"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "village", "name": "共饭灶边", "desc": "灶边多出来的一碗稀饭没人点破，懂规矩就能拿。", "image": "help_villager", "image_path": "res://assets/generated/exploration/events/help_villager.jpg", "containers": ["shared_supper_pot"]},
+        {"x": 1, "y": 0, "type": "hut", "name": "药签门缝", "desc": "药签压在门缝下，拿药前要先把口信放对位置。", "containers": ["medicine_note_bundle"]},
+        {"x": 1, "y": 1, "type": "road", "name": "换工木牌", "desc": "木牌上留着低风险零活，换粮换钱都干净。", "containers": ["work_exchange_board"]},
+        {"x": 2, "y": 0, "type": "village", "name": "人情账角", "desc": "账角记录着谁欠谁，知道太多也会被人记住。", "containers": ["favor_debt_book"]},
+        {"x": 3, "y": 0, "type": "road", "name": "夹巷出口", "desc": "夹巷接回村口，带着补给走，不必走明路。", "exit": true}
+      ]
+    },
+    "deduced_debt_timing_run": {
+      "name": "茶棚避债路",
+      "intro": "你把催债人的脚步、茶棚口风和渡口短活连起来，准备先探风，再决定露不露面。",
+      "extract_text": "你从茶棚和旧桥之间绕回村里，知道今天哪些路最好别走。",
+      "omen_tip": "先听茶桌，再辨脚印",
+      "omen_warn": "久坐旁桌，赌客会套话",
+      "favored_containers": ["tea_whisper_table", "debt_runner_trace", "porter_message_bag"],
+      "forbidden_containers": ["nosy_gambler_table", "reed_smuggler_cache"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "village", "name": "茶棚矮桌", "desc": "茶烟绕着桌沿打转，老人只把关键话说半句。", "image": "sell_herb", "image_path": "res://assets/generated/exploration/events/sell_herb.jpg", "containers": ["tea_whisper_table"]},
+        {"x": 1, "y": 0, "type": "road", "name": "旧桥脚印", "desc": "桥下泥印深浅不一，能看出催债人走的是急路还是绕路。", "containers": ["debt_runner_trace"]},
+        {"x": 1, "y": 1, "type": "village", "name": "赌客旁桌", "desc": "赌客爱套近况，听消息时最好别让他也听见你。", "containers": ["nosy_gambler_table"]},
+        {"x": 2, "y": 0, "type": "creek", "name": "渡口口信", "desc": "脚夫的口信袋能换小钱，也能把你今天的行踪绕开村口。", "containers": ["porter_message_bag"]},
+        {"x": 3, "y": 0, "type": "road", "name": "避债小路", "desc": "小路绕回村后，探清风声就该收脚。", "exit": true}
+      ]
+    },
+    "deduced_grave_cache_deep": {
+      "name": "荒坟旧藏深处",
+      "intro": "你把纸灰、旧痕和私印边角重新对过，荒坟深处的路线终于不再散乱。",
+      "extract_text": "你从荒坟旧痕深处撤出，背后阴风追得急，但来路已经记清。",
+      "omen_tip": "续旧痕，查半埋包袱",
+      "omen_warn": "碰军中遗藏，财重眼多",
+      "favored_containers": ["grave_old_trace", "buried_satchel", "camp_marked_stone"],
+      "forbidden_containers": ["broken_stele_cache", "soldier_relic_cache", "sealed_army_box"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "path", "name": "旧痕入口", "desc": "旧脚印被新土盖过，但你已经认得方向。", "image": "graveyard_follow_clue", "image_path": "res://assets/generated/exploration/events/graveyard_follow_clue.jpg", "containers": ["grave_old_trace"]},
+        {"x": 1, "y": 0, "type": "thicket", "name": "坟后黑草", "desc": "黑草下压着旧包袱，土色比旁边新。", "containers": ["buried_satchel"], "enemies": ["wolf"], "enemy_chance": 22},
+        {"x": 2, "y": -1, "type": "cave", "name": "塌碑暗洞", "desc": "暗洞里有更深的旧藏，但风声会从洞口传出去。", "containers": ["broken_stele_cache", "soldier_relic_cache"], "enemies": ["bear"], "enemy_chance": 18},
+        {"x": 2, "y": 0, "type": "path", "name": "旧营暗记", "desc": "暗记石和私印边角相合，往旧营地还能再追一步。", "containers": ["camp_marked_stone"]},
+        {"x": 3, "y": 0, "type": "cliff", "name": "坟崖出口", "desc": "崖边能绕出坟地，背着重物就别再回头。", "containers": ["cliff_last_herb"], "exit": true}
+      ]
+    },
+    "deduced_hunter_patrol": {
+      "name": "猎户伏兽巡路",
+      "intro": "你按猎户伏兽路进山，先找风口，再看兽径，最后才决定要不要碰深巢。",
+      "extract_text": "你从伏兽巡路退出来，肩上多了收获，脚下也更懂这片林子。",
+      "omen_tip": "先看风口，再动绳套",
+      "omen_warn": "贪进深巢，兽会反扑",
+      "favored_containers": ["windward_trap_spot", "fresh_beast_run", "hunter_snare"],
+      "forbidden_containers": ["deep_beast_den", "hunter_cache"],
+      "cells": [
+        {"x": 0, "y": 0, "type": "thicket", "name": "背风绳点", "desc": "草倒向下风处，绳套埋在这里最不容易惊兽。", "image": "deep_hunt", "image_path": "res://assets/generated/exploration/events/deep_hunt.jpg", "containers": ["windward_trap_spot"]},
+        {"x": 1, "y": 0, "type": "slope", "name": "新鲜兽径", "desc": "兽径压得很新，蹄印和爪印混在一起。", "containers": ["fresh_beast_run"], "enemies": ["boar"], "enemy_chance": 14},
+        {"x": 1, "y": -1, "type": "thicket", "name": "旧绳伏点", "desc": "旧猎户留下的绳点还能用，也可能藏着别的猎物。", "containers": ["hunter_snare"], "enemies": ["wolf"], "enemy_chance": 16},
+        {"x": 2, "y": 0, "type": "cave", "name": "深兽巢边", "desc": "深巢腥气很重，有好东西，也有真正的凶险。", "containers": ["deep_beast_den"], "enemies": ["bear", "tiger"], "enemy_chance": 30},
+        {"x": 2, "y": 1, "type": "creek", "name": "洗血溪", "desc": "溪水能洗掉血味，顺水走就是退路。", "containers": ["creek_stones_light"], "exit": true}
+      ]
     }
   },
   "containers": {

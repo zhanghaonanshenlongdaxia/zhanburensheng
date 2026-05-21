@@ -325,7 +325,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 1
 bbcode_enabled = true
-scroll_active = true
 
 [node name="OptionButton2" type="Button" parent="MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox"]
 clip_contents = true
@@ -365,7 +364,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 1
 bbcode_enabled = true
-scroll_active = true
 
 [node name="OptionButton3" type="Button" parent="MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox"]
 clip_contents = true
@@ -405,7 +403,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 1
 bbcode_enabled = true
-scroll_active = true
 
 [node name="ResultPanel" type="PanelContainer" parent="MainMargin/RootColumn"]
 custom_minimum_size = Vector2(0, 184)

@@ -13,10 +13,15 @@ const CELL_SIZE := 18.0
 const CONTACT_ROW_HEIGHT := 20.0
 const TOWN_TASK_IDS: Array[String] = [
 	"grocer_supply",
+	"grocer_debt_grain",
 	"doctor_delivery",
+	"doctor_cold_house",
 	"peddler_appraisal",
+	"peddler_buyer_probe",
 	"tea_warning",
+	"tea_bridge_watch",
 	"porter_ferry_note",
+	"porter_hidden_work",
 	"watchman_hush"
 ]
 
@@ -124,33 +129,41 @@ func _draw_scene() -> void:
 
 	match scene_type:
 		"grocer":
-			var food_cost := 2 if _npc_relation("grocer") >= 2 else 3
+			var food_cost := 2 if _npc_relation("grocer") >= 2 or _has_flag("deduced_support_network") else 3
+			if _npc_relation("grocer") >= 3 and _has_flag("deduced_support_network"):
+				food_cost = 1
 			_draw_shop_hotspot(scene_rect, "买粗粮", "粮食 +1，花费 %d 铜钱" % food_cost, {"kind": "buy", "item_id": "food", "cost": food_cost}, 0)
 			_draw_shop_hotspot(scene_rect, "买干薯根", "山薯根 +1，花费 4 铜钱", {"kind": "buy", "item_id": "dry_tuber", "cost": 4}, 1)
 			_draw_shop_hotspot(scene_rect, "和掌柜闲谈", _npc_hotspot_body("grocer", "粮价又涨了，村里人迟早撑不住。"), {"kind": "npc", "npc_id": "grocer"}, 2)
 			_draw_npc_task_hotspot(scene_rect, "grocer_supply", "grocer", 3)
+			_draw_npc_task_hotspot(scene_rect, "grocer_debt_grain", "grocer", 4)
 		"apothecary":
-			var herb_cost := 4 if _npc_relation("doctor") >= 2 else 5
+			var herb_cost := 4 if _npc_relation("doctor") >= 2 or _has_flag("deduced_support_network") else 5
 			_draw_shop_hotspot(scene_rect, "买药草", "药草 +1，花费 %d 铜钱" % herb_cost, {"kind": "buy", "item_id": "herb", "cost": herb_cost}, 0)
 			_draw_shop_hotspot(scene_rect, "问郎中", _npc_hotspot_body("doctor", "打听药材行情"), {"kind": "npc", "npc_id": "doctor"}, 1)
 			_draw_npc_task_hotspot(scene_rect, "doctor_delivery", "doctor", 2)
+			_draw_npc_task_hotspot(scene_rect, "doctor_cold_house", "doctor", 3)
 		"pawn":
 			var sellables: Array = _sellable_items()
 			if sellables.is_empty():
 				_draw_shop_hotspot(scene_rect, "货郎回收", _npc_hotspot_body("peddler", "你身上没有能出手的战利品"), {"kind": "npc", "npc_id": "peddler"}, 0)
 				_draw_npc_task_hotspot(scene_rect, "peddler_appraisal", "peddler", 1)
+				_draw_npc_task_hotspot(scene_rect, "peddler_buyer_probe", "peddler", 2)
 			else:
 				for index in mini(sellables.size(), 4):
 					var entry: Dictionary = sellables[index]
 					var value := _sell_value(entry)
 					_draw_shop_hotspot(scene_rect, "卖 %s" % _item_label(entry), "换 %d 铜钱" % value, {"kind": "sell", "item_id": str(entry.get("id", "")), "value": value}, index)
 				_draw_npc_task_hotspot(scene_rect, "peddler_appraisal", "peddler", mini(sellables.size(), 4))
+				_draw_npc_task_hotspot(scene_rect, "peddler_buyer_probe", "peddler", mini(sellables.size() + 1, 5))
 		"tea":
 			_draw_shop_hotspot(scene_rect, "听闲话", _npc_hotspot_body("tea_oldman", "打听里正和贾三坡的动向"), {"kind": "npc", "npc_id": "tea_oldman"}, 0)
 			_draw_shop_hotspot(scene_rect, "找脚夫", _npc_hotspot_body("porter", "问去河对岸的路"), {"kind": "npc", "npc_id": "porter"}, 1)
 			_draw_npc_task_hotspot(scene_rect, "tea_warning", "tea_oldman", 2)
 			_draw_npc_task_hotspot(scene_rect, "porter_ferry_note", "porter", 3)
 			_draw_npc_task_hotspot(scene_rect, "watchman_hush", "tea_oldman", 4)
+			_draw_npc_task_hotspot(scene_rect, "tea_bridge_watch", "tea_oldman", 5)
+			_draw_npc_task_hotspot(scene_rect, "porter_hidden_work", "porter", 6)
 		"back_alley", "sick_house", "old_bridge", "ferry":
 			_draw_task_target_hotspots(scene_rect, scene_type)
 		_:
@@ -277,12 +290,14 @@ func _draw_town_texture(rect: Rect2, scene_type: String) -> void:
 				draw_line(Vector2(rect.position.x + 24.0, y), Vector2(rect.position.x + rect.size.x - 28.0, y + 10.0), Color(0.35, 0.27, 0.17, 0.28), 2.0)
 
 func _draw_shop_hotspot(scene_rect: Rect2, title: String, body: String, data: Dictionary, index: int) -> void:
-	var cols := 2
+	var cols := 3 if scene_rect.size.x >= 620.0 else 2
 	var row := index / cols
 	var col := index % cols
+	var gap := 10.0
+	var rect_width := minf(196.0, (scene_rect.size.x - 44.0 - float(cols - 1) * gap) / float(cols))
 	var rect := Rect2(
-		scene_rect.position + Vector2(22.0 + col * 220.0, 94.0 + row * 64.0),
-		Vector2(196.0, 52.0)
+		scene_rect.position + Vector2(22.0 + float(col) * (rect_width + gap), 90.0 + float(row) * 56.0),
+		Vector2(rect_width, 48.0)
 	)
 	draw_rect(rect, Color(0.10, 0.17, 0.10, 0.88))
 	draw_rect(rect, Color(0.92, 0.68, 0.34, 0.58), false, 1.0)
@@ -496,13 +511,15 @@ func _sell_value(entry: Dictionary) -> int:
 	var base_value := int(entry.get("sell_value", 1))
 	if _npc_relation("peddler") >= 2:
 		base_value += maxi(1, int(ceil(float(base_value) * 0.20)))
+	if _has_flag("deduced_old_goods_line"):
+		base_value += maxi(1, int(ceil(float(base_value) * 0.15)))
 	return base_value
 
 func _talk_to_npc(npc_id: String) -> void:
 	if npc_id.is_empty():
 		_set_log("对方摇头，没有多说。")
 		return
-	var score := _npc_relation(npc_id) + 1
+	var score := _npc_relation(npc_id) + _npc_relation_gain(npc_id)
 	if relation_model != null:
 		relation_model.set_score(npc_id, score)
 	var line := _npc_line(npc_id, _npc_relation(npc_id))
@@ -513,6 +530,17 @@ func _talk_to_npc(npc_id: String) -> void:
 		line = "%s\n%s" % [line, _npc_unlock_text(npc_id)]
 		contact_unlocked.emit(unlock_effects, line)
 	_set_log(line)
+
+func _npc_relation_gain(npc_id: String) -> int:
+	if npc_id in ["grocer", "doctor"] and _has_flag("deduced_support_network"):
+		return 2
+	if npc_id == "peddler" and _has_flag("deduced_old_goods_line"):
+		return 2
+	if npc_id == "tea_oldman" and (_has_flag("deduced_debt_timing") or _has_flag("deduced_old_well_route")):
+		return 2
+	if npc_id == "porter" and _has_flag("deduced_debt_timing"):
+		return 2
+	return 1
 
 func _npc_relation(npc_id: String) -> int:
 	if relation_model == null:
@@ -624,14 +652,24 @@ func _task_title(task_id: String) -> String:
 	match task_id:
 		"grocer_supply":
 			return "搬压潮粮"
+		"grocer_debt_grain":
+			return "赊粮压债"
 		"doctor_delivery":
 			return "送急药包"
+		"doctor_cold_house":
+			return "熬驱寒汤"
 		"peddler_appraisal":
 			return "试旧物暗价"
+		"peddler_buyer_probe":
+			return "探残玉买家"
 		"tea_warning":
 			return "记催债口风"
+		"tea_bridge_watch":
+			return "桥下守风"
 		"porter_ferry_note":
 			return "跑渡口口信"
+		"porter_hidden_work":
+			return "夜渡短工"
 		"watchman_hush":
 			return "压旧井口风"
 		_:
@@ -641,14 +679,24 @@ func _task_body(task_id: String) -> String:
 	match task_id:
 		"grocer_supply":
 			return "去后巷暗仓搬粮，再回来领谢礼"
+		"grocer_debt_grain":
+			return "去后巷找赊粮账，替掌柜避开催债眼线"
 		"doctor_delivery":
 			return "去病家门前送药，换药材或治寒方"
+		"doctor_cold_house":
+			return "去病家熬一锅驱寒汤，顺便学压寒方"
 		"peddler_appraisal":
 			return "去后巷问暗价，可能引出旧物线"
+		"peddler_buyer_probe":
+			return "去后巷探残玉买家的口风"
 		"tea_warning":
 			return "去旧桥看脚印，回忆催债人去向"
+		"tea_bridge_watch":
+			return "去旧桥听半夜脚步，确认谁在替债主跑腿"
 		"porter_ferry_note":
 			return "去渡口送口信，回来换工钱"
+		"porter_hidden_work":
+			return "去渡口搬一趟不挂名的货，钱少但来路干净"
 		"watchman_hush":
 			return "去旧桥旁认守夜人脚印，把旧井口风压住"
 		_:
@@ -658,14 +706,24 @@ func _task_turnin_body(task_id: String) -> String:
 	match task_id:
 		"grocer_supply":
 			return "暗仓粮袋已经搬完，找掌柜领谢礼"
+		"grocer_debt_grain":
+			return "赊粮账和催债眼线都理清了，回掌柜处拿粮"
 		"doctor_delivery":
 			return "药包送到病家，回郎中处交差"
+		"doctor_cold_house":
+			return "驱寒汤熬成，回郎中处领药方"
 		"peddler_appraisal":
 			return "暗价问清，回货郎处交口风"
+		"peddler_buyer_probe":
+			return "残玉买家的暗号探到了，回货郎处交话"
 		"tea_warning":
 			return "旧桥脚印看清了，回茶桌复述"
+		"tea_bridge_watch":
+			return "守风听到的脚步对上了，回茶棚复述"
 		"porter_ferry_note":
 			return "渡口口信送完，找脚夫结钱"
+		"porter_hidden_work":
+			return "夜渡短工做完，回脚夫处结钱粮"
 		"watchman_hush":
 			return "守夜人认了暗号，旧井这条夜路暂时稳住"
 		_:
@@ -675,14 +733,24 @@ func _task_start_text(task_id: String) -> String:
 	match task_id:
 		"grocer_supply":
 			return "你接下粮铺掌柜的活：把后门压潮粮挪到暗仓，别让前街客人看见。"
+		"grocer_debt_grain":
+			return "粮铺掌柜低声托你去后巷翻一页赊粮账，找出能帮你避催债眼线的人家。"
 		"doctor_delivery":
 			return "周郎中把急药包交给你，叮嘱你送到镇边病家，不要多问。"
+		"doctor_cold_house":
+			return "周郎中让你去病家灶前熬驱寒汤：看火候，也看谁家还肯替你留门。"
 		"peddler_appraisal":
 			return "游货郎让你替他试一句暗价，看旧物买家今天收不收货。"
+		"peddler_buyer_probe":
+			return "游货郎把残玉暗号拆成半句话，让你去后巷试买家的反应。"
 		"tea_warning":
 			return "茶棚老人让你记住催债人的脚程，回头别说是他讲的。"
+		"tea_bridge_watch":
+			return "茶棚老人让你在旧桥下守一阵：桥面脚步能听出谁在替王怀安跑腿。"
 		"porter_ferry_note":
 			return "码头脚夫塞给你一封口信，让你跑完再回来结钱。"
+		"porter_hidden_work":
+			return "码头脚夫给你留了一趟夜渡短工，只搬旧麻袋，不问货主名。"
 		"watchman_hush":
 			return "茶棚老人把茶碗推到暗处：旧井边有个守夜人见过绳结，你去旧桥下认清他的脚印，别让他先开口。"
 		_:
@@ -692,31 +760,71 @@ func _task_complete_text(task_id: String) -> String:
 	match task_id:
 		"grocer_supply":
 			return "你把压潮粮搬进暗仓，掌柜给了粮，也多信你一分。"
+		"grocer_debt_grain":
+			return "你把赊粮账里的门路对上了，掌柜给你一袋粗粮，也提醒你少从正街露面。"
 		"doctor_delivery":
 			return "急药送到，周郎中给你一包草药，又教了压寒的方子。"
+		"doctor_cold_house":
+			return "驱寒汤熬得稳，周郎中给你留了药草，顺手把寒症方子讲透。"
 		"peddler_appraisal":
 			return "你带回暗价口风，货郎给了钱，还透露旧玉有人收。"
+		"peddler_buyer_probe":
+			return "你带回残玉买家的反应，货郎压低声音说：这条线能走，但别走太急。"
 		"tea_warning":
 			return "你把债主动向记清，茶棚老人点点头，让你这两日少走村口。"
+		"tea_bridge_watch":
+			return "你把桥下脚步和催债时辰对上，茶棚老人替你把一段闲话压了下去。"
 		"porter_ferry_note":
 			return "口信送到，脚夫按约给了工钱，还分你一点干粮。"
+		"porter_hidden_work":
+			return "你搬完夜渡旧麻袋，脚夫给了钱粮，还告诉你哪条路少碰债主眼线。"
 		"watchman_hush":
 			return "你在旧桥下拿准守夜人的口风：他只认井绳三结，不认你的脸。旧井夜路暂时可以走。"
 		_:
 			return "你交付了委托。"
 
 func _task_reward_effects(task_id: String) -> Array:
+	if task_id == "grocer_supply" and _has_flag("deduced_support_network"):
+		return ["gain_food_medium", "gain_food_small", "mark_grocer_grain_contact"]
+	if task_id == "doctor_delivery" and _has_flag("deduced_support_network"):
+		return ["gain_herb_small", "gain_health_tiny", "clear_cold_mild", "clear_cold_worse", "mark_doctor_medicine_contact"]
+	if task_id == "peddler_appraisal" and _has_flag("deduced_old_goods_line"):
+		return ["gain_money_medium", "mark_jade_buyer_clue", "mark_peddler_old_goods_contact"]
+	if task_id == "tea_warning" and _has_flag("deduced_debt_timing"):
+		return ["lose_suspicion_small", "lose_attention_small", "clear_met_collector", "mark_tea_debt_contact"]
+	if task_id == "watchman_hush" and _has_flag("deduced_old_well_route"):
+		return ["lose_suspicion_small", "mark_old_well_line", "mark_old_well_watchman_deal", "unlock_old_well_cache", "unlock_night_market_fence"]
+	if task_id == "grocer_debt_grain" and _has_flag("deduced_support_network"):
+		return ["gain_food_medium", "lose_attention_small", "mark_grocer_grain_contact", "mark_villager_aid_line"]
+	if task_id == "doctor_cold_house" and (_has_flag("cold_mild") or _has_flag("cold_worse")):
+		return ["gain_herb_small", "clear_cold_mild", "clear_cold_worse", "mark_doctor_medicine_contact"]
+	if task_id == "peddler_buyer_probe" and _has_flag("deduced_old_goods_line"):
+		return ["mark_jade_buyer_clue", "gain_money_small", "mark_peddler_old_goods_contact"]
+	if task_id == "tea_bridge_watch" and _has_flag("deduced_debt_timing"):
+		return ["lose_attention_small", "clear_met_collector", "mark_tea_debt_contact"]
+	if task_id == "porter_hidden_work" and _has_flag("deduced_debt_timing"):
+		return ["gain_money_small", "gain_food_small", "lose_attention_small", "mark_porter_ferry_contact"]
 	match task_id:
 		"grocer_supply":
 			return ["gain_food_medium", "mark_grocer_grain_contact"]
+		"grocer_debt_grain":
+			return ["gain_food_small", "lose_suspicion_small", "mark_grocer_grain_contact"]
 		"doctor_delivery":
 			return ["gain_herb_small", "clear_cold_mild", "clear_cold_worse", "mark_doctor_medicine_contact"]
+		"doctor_cold_house":
+			return ["gain_herb_small", "gain_health_tiny", "mark_doctor_medicine_contact"]
 		"peddler_appraisal":
 			return ["gain_money_small", "mark_jade_buyer_clue", "mark_peddler_old_goods_contact"]
+		"peddler_buyer_probe":
+			return ["mark_jade_buyer_clue", "gain_attention_small", "mark_peddler_old_goods_contact"]
 		"tea_warning":
 			return ["lose_suspicion_small", "clear_met_collector", "mark_tea_debt_contact"]
+		"tea_bridge_watch":
+			return ["lose_attention_small", "mark_tea_debt_contact"]
 		"porter_ferry_note":
 			return ["gain_money_small", "gain_food_small", "mark_porter_ferry_contact"]
+		"porter_hidden_work":
+			return ["gain_money_small", "lose_stamina_small", "mark_porter_ferry_contact"]
 		"watchman_hush":
 			return ["lose_suspicion_small", "mark_old_well_line", "mark_old_well_watchman_deal", "unlock_old_well_cache", "unlock_night_market_fence"]
 		_:
@@ -738,17 +846,45 @@ func _maybe_resolve_task_step(scene_type: String) -> String:
 	return ""
 
 func _task_step_effects(task_id: String) -> Array:
+	if task_id in ["grocer_supply", "doctor_delivery"] and _has_flag("deduced_support_network"):
+		return []
+	if task_id == "peddler_appraisal" and _has_flag("deduced_old_goods_line"):
+		return ["gain_money_tiny"]
+	if task_id == "tea_warning" and _has_flag("deduced_debt_timing"):
+		return ["lose_suspicion_small"]
+	if task_id == "watchman_hush" and _has_flag("deduced_old_well_route"):
+		return ["lose_suspicion_small"]
+	if task_id == "grocer_debt_grain" and _has_flag("deduced_support_network"):
+		return ["lose_attention_small"]
+	if task_id == "doctor_cold_house" and (_has_flag("cold_mild") or _has_flag("cold_worse")):
+		return ["gain_health_tiny"]
+	if task_id == "peddler_buyer_probe" and _has_flag("deduced_old_goods_line"):
+		return ["gain_money_tiny"]
+	if task_id == "tea_bridge_watch" and _has_flag("deduced_debt_timing"):
+		return ["lose_suspicion_small"]
+	if task_id == "porter_hidden_work" and _has_flag("deduced_debt_timing"):
+		return ["lose_attention_small"]
 	match task_id:
 		"grocer_supply":
 			return ["lose_stamina_small"]
+		"grocer_debt_grain":
+			return ["gain_attention_small"]
 		"doctor_delivery":
+			return ["lose_stamina_small"]
+		"doctor_cold_house":
 			return ["lose_stamina_small"]
 		"peddler_appraisal":
 			return ["gain_attention_small"]
+		"peddler_buyer_probe":
+			return ["gain_suspicion_small"]
 		"tea_warning":
 			return ["lose_suspicion_small"]
+		"tea_bridge_watch":
+			return ["lose_stamina_small"]
 		"porter_ferry_note":
 			return ["mark_cold_mild"]
+		"porter_hidden_work":
+			return ["lose_stamina_small"]
 		"watchman_hush":
 			return ["gain_attention_small"]
 		_:
@@ -758,14 +894,24 @@ func _task_step_text(task_id: String) -> String:
 	match task_id:
 		"grocer_supply":
 			return "你钻进后巷暗仓搬压潮粮，粮袋潮重，肩膀很快发酸。"
+		"grocer_debt_grain":
+			return "你在后巷翻到几户赊粮账，知道谁能替你挡一次催债闲话，也知道这事不能让外人看见。"
 		"doctor_delivery":
 			return "你把急药包送到病家门前，屋内咳声压得人心口发闷。"
+		"doctor_cold_house":
+			return "你守着病家小灶熬汤，热气蒸得眼眶发酸，寒意却也被压下去一点。"
 		"peddler_appraisal":
 			return "你在后巷替货郎问暗价，对方没露面，却有人记住了你的身形。"
+		"peddler_buyer_probe":
+			return "你把残玉暗号说到一半就停住，对方没有接话，却把秤砣往暗处推了推。"
 		"tea_warning":
 			return "你在旧桥看清催债人的脚印，确认他们今天绕了远路。"
+		"tea_bridge_watch":
+			return "你蹲在旧桥下听了半晌，木板上的脚步一重一轻，正是王怀安跑腿常走的步子。"
 		"porter_ferry_note":
 			return "你踩着渡口湿泥送口信，冷水灌进鞋里，寒意往上爬。"
+		"porter_hidden_work":
+			return "你在渡口搬了一趟旧麻袋，货不重，水汽却直往袖口里钻。"
 		"watchman_hush":
 			return "你绕到旧桥桥洞下等人，听见桥面有脚步停了一瞬。"
 		_:
@@ -782,15 +928,13 @@ func _active_tasks_for_scene(scene_type: String) -> Array[String]:
 
 func _task_target_scene(task_id: String) -> String:
 	match task_id:
-		"grocer_supply", "peddler_appraisal":
+		"grocer_supply", "grocer_debt_grain", "peddler_appraisal", "peddler_buyer_probe":
 			return "back_alley"
-		"doctor_delivery":
+		"doctor_delivery", "doctor_cold_house":
 			return "sick_house"
-		"tea_warning":
+		"tea_warning", "tea_bridge_watch", "watchman_hush":
 			return "old_bridge"
-		"watchman_hush":
-			return "old_bridge"
-		"porter_ferry_note":
+		"porter_ferry_note", "porter_hidden_work":
 			return "ferry"
 		_:
 			return ""
@@ -806,6 +950,16 @@ func _active_task_panel_text() -> String:
 func _task_available(task_id: String) -> bool:
 	if task_id == "watchman_hush":
 		return (_has_flag("old_well_clue") or _has_flag("old_well_line")) and not _has_flag("old_well_watchman_deal")
+	if task_id == "grocer_debt_grain":
+		return _has_flag("deduced_support_network") or _has_flag("grocer_grain_contact") or _has_flag("met_collector")
+	if task_id == "doctor_cold_house":
+		return _has_flag("cold_mild") or _has_flag("cold_worse") or _has_flag("cold_severe") or _has_flag("doctor_medicine_contact")
+	if task_id == "peddler_buyer_probe":
+		return _has_flag("deduced_old_goods_line") or _has_flag("jade_buyer_clue") or _has_flag("peddler_old_goods_contact")
+	if task_id == "tea_bridge_watch":
+		return _has_flag("deduced_debt_timing") or _has_flag("met_collector") or _has_flag("tea_debt_contact")
+	if task_id == "porter_hidden_work":
+		return _has_flag("unlocked_errand_route") or _has_flag("porter_ferry_contact") or _has_flag("deduced_debt_timing")
 	return true
 
 func _scene_idle_action_text(scene_type: String) -> String:

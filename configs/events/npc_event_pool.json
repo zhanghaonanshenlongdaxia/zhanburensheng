@@ -1,6 +1,241 @@
 {
   "events": [
     {
+      "id": "collector_marks_door",
+      "name": "催债记号贴门",
+      "weight": 7,
+      "conditions": [
+        {
+          "type": "day_compare",
+          "target_id": "current_day",
+          "operator": ">=",
+          "value": 7
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "result_text": "清早门缝里多了一道催债记号，邻人路过时都装作没看见。",
+      "effects": ["gain_attention_medium", "mark_met_collector"]
+    },
+    {
+      "id": "neighbors_notice_heavy_purse",
+      "name": "邻人盯上钱袋",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "item_compare",
+          "target_id": "money",
+          "operator": ">=",
+          "value": 10
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "result_text": "你腰间钱袋比前几日沉，村口几双眼睛看得比粮价还仔细。",
+      "effects": ["gain_suspicion_small"]
+    },
+    {
+      "id": "tea_contact_covers_debt_talk",
+      "name": "茶棚替你转开话头",
+      "weight": 5,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "tea_debt_contact",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "met_collector",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "result_text": "有人提起催债跑腿时，茶棚老人把话头转到粮价上，你少被追问几句。",
+      "effects": ["lose_suspicion_small"]
+    },
+    {
+      "id": "grocer_extends_credit",
+      "name": "粮铺掌柜赊一小袋粮",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "relation_compare",
+          "target_id": "grocer",
+          "operator": ">=",
+          "value": 3
+        },
+        {
+          "type": "item_compare",
+          "target_id": "food",
+          "operator": "<=",
+          "value": 1
+        }
+      ],
+      "result_text": "粮铺掌柜让伙计从后门塞来一小袋粗粮，只说账先记着，别在前街提。",
+      "effects": ["gain_food_small", "gain_relation_grocer"]
+    },
+    {
+      "id": "doctor_sends_warm_recipe",
+      "name": "周郎中送来温药方",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "relation_compare",
+          "target_id": "doctor",
+          "operator": ">=",
+          "value": 2
+        },
+        {
+          "type": "any_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "cold_mild",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_worse",
+              "operator": "==",
+              "value": true
+            }
+          ]
+        }
+      ],
+      "result_text": "周郎中托人捎来一张温药方，纸上只写用量，没有问你从哪受的寒。",
+      "effects": ["clear_cold_mild", "clear_cold_worse", "gain_relation_doctor"]
+    },
+    {
+      "id": "peddler_finds_private_buyer",
+      "name": "游货郎找到暗买家",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_old_goods_line",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "relation_compare",
+          "target_id": "peddler",
+          "operator": ">=",
+          "value": 2
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "jade_buyer_clue",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "result_text": "游货郎让人带来一句暗号：残玉买家明日会在茶摊后桌等，不问价，只问来路。",
+      "effects": ["mark_met_jade_buyer", "gain_money_tiny", "gain_relation_peddler"]
+    },
+    {
+      "id": "tea_oldman_misdirects_collector",
+      "name": "茶棚老人误导催债人",
+      "weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_debt_timing",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "relation_compare",
+          "target_id": "tea_oldman",
+          "operator": ">=",
+          "value": 2
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "met_collector",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "result_text": "茶棚老人把催债人的路引向旧桥，说你今日在河边做短活。等他们折回来时，天已经黑了。",
+      "effects": ["lose_attention_small", "clear_met_collector", "gain_relation_tea_oldman"]
+    },
+    {
+      "id": "porter_leaves_short_job",
+      "name": "码头脚夫留了短活",
+      "weight": 5,
+      "conditions": [
+        {
+          "type": "relation_compare",
+          "target_id": "porter",
+          "operator": ">=",
+          "value": 2
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "type": "item_compare",
+          "target_id": "money",
+          "operator": "<=",
+          "value": 4
+        }
+      ],
+      "result_text": "码头脚夫让人捎来半日短活的钱，说你若还跑得动，明日再去渡口找他。",
+      "effects": ["gain_money_small", "gain_relation_porter"]
+    },
+    {
+      "id": "contacts_tire_of_suspicion",
+      "name": "熟人怕被你拖下水",
+      "weight": 5,
+      "conditions": [
+        {
+          "type": "stat_compare",
+          "target_id": "suspicion",
+          "operator": ">=",
+          "value": 45
+        },
+        {
+          "type": "any_of",
+          "conditions": [
+            {
+              "type": "relation_compare",
+              "target_id": "grocer",
+              "operator": ">=",
+              "value": 2
+            },
+            {
+              "type": "relation_compare",
+              "target_id": "peddler",
+              "operator": ">=",
+              "value": 2
+            },
+            {
+              "type": "relation_compare",
+              "target_id": "tea_oldman",
+              "operator": ">=",
+              "value": 2
+            }
+          ]
+        }
+      ],
+      "result_text": "你身上的疑点太重，几个熟人说话都比前几日短，谁也不想被拖进你的麻烦里。",
+      "effects": ["lose_relation_grocer", "lose_relation_peddler", "lose_relation_tea_oldman"]
+    },
+    {
       "id": "villager_gossip",
       "name": "村民议论",
       "weight": 8,
@@ -80,6 +315,128 @@
 	  ],
 	  "result_text": "村里人看你近来肯卖力干活，神情总算没先前那样提防了。",
 	  "effects": ["lose_suspicion_small"]
+    },
+    {
+      "id": "doctor_warns_about_cold",
+      "name": "周郎中点破寒症",
+      "weight": 7,
+      "conditions": [
+        {
+          "type": "relation_compare",
+          "target_id": "doctor",
+          "operator": ">=",
+          "value": 1
+        },
+        {
+          "type": "any_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "cold_mild",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "cold_worse",
+              "operator": "==",
+              "value": true
+            }
+          ]
+        }
+      ],
+      "result_text": "周郎中隔着院门听出你咳声不对，留下一句：寒症别硬扛，热汤和草药都得趁早。",
+      "effects": ["gain_herb_small", "gain_relation_doctor"]
+    },
+    {
+      "id": "grocer_prices_support_network",
+      "name": "粮铺认出互助线",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_support_network",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "relation_compare",
+          "target_id": "grocer",
+          "operator": ">=",
+          "value": 1
+        }
+      ],
+      "result_text": "粮铺掌柜看懂你递来的暗话，把粗粮袋往柜下推了推，价钱没明说，却比前街便宜。",
+      "effects": ["gain_food_small", "gain_relation_grocer"]
+    },
+    {
+      "id": "peddler_tests_old_goods_line",
+      "name": "货郎试探旧物暗价",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_old_goods_line",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "relation_compare",
+          "target_id": "peddler",
+          "operator": ">=",
+          "value": 1
+        }
+      ],
+      "result_text": "游货郎把秤砣轻轻一磕，问你是不是懂了旧物暗价。你没接话，但他已经知道下回该怎么开价。",
+      "effects": ["gain_relation_peddler", "gain_suspicion_small"]
+    },
+    {
+      "id": "tea_oldman_links_debt_route",
+      "name": "茶棚老人补上催债口风",
+      "weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_debt_timing",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "relation_compare",
+          "target_id": "tea_oldman",
+          "operator": ">=",
+          "value": 1
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "result_text": "茶棚老人没看你，只把茶碗转了半圈。你听懂了：催债跑腿明早先去渡口，再折回村口。",
+      "effects": ["lose_attention_small", "gain_relation_tea_oldman"]
+    },
+    {
+      "id": "porter_keeps_errand_open",
+      "name": "码头脚夫留短活",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "unlocked_errand_route",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "relation_compare",
+          "target_id": "porter",
+          "operator": ">=",
+          "value": 1
+        }
+      ],
+      "result_text": "码头脚夫托人带来口信：明日若还缺钱，渡口有短活，走后巷来，别让债主的人看见。",
+      "effects": ["gain_money_tiny", "gain_relation_porter", "lose_attention_small"]
     }
   ]
 }

@@ -390,11 +390,17 @@ func _pick_loot(container: Dictionary, table: Array) -> Dictionary:
 		var bad_entry := _pick_bad_loot(table)
 		if not bad_entry.is_empty():
 			return bad_entry
-	var roll := _rng.randi_range(1, 100)
+	var total := 0
+	for entry_variant in table:
+		var entry: Dictionary = entry_variant
+		total += _adjusted_loot_chance(container, entry)
+	if total <= 0:
+		return {}
+	var roll := _rng.randi_range(1, total)
 	var cursor := 0
 	for entry_variant in table:
 		var entry: Dictionary = entry_variant
-		cursor += int(entry.get("chance", 0))
+		cursor += _adjusted_loot_chance(container, entry)
 		if roll <= cursor:
 			return entry
 	return {}
@@ -412,12 +418,40 @@ func _should_force_bad_search(container: Dictionary) -> bool:
 		_:
 			chance += 1
 	if _is_favored_container(container):
-		chance -= 8
+		chance -= 8 + maxi(_omen_rank(), 0) * 3
 	if _is_forbidden_container(container):
-		chance += 12
+		chance += 12 + maxi(-_omen_rank(), 0) * 4
+	if _omen_rank() <= -2 and _container_risk(container) in ["medium", "high"]:
+		chance += 6
 	if _has_flag("old_well_watchman_deal") and _is_old_well_container(container):
 		chance -= 10
+	if _has_container_mastery(container):
+		chance -= 10
 	return _rng.randi_range(1, 100) <= clampi(chance, 0, 55)
+
+func _adjusted_loot_chance(container: Dictionary, entry: Dictionary) -> int:
+	var chance := int(entry.get("chance", 0))
+	var rank := _omen_rank()
+	if chance <= 0:
+		return 0
+	if _is_favored_container(container):
+		if _is_bad_loot(entry):
+			chance -= maxi(rank, 0) * 3
+		else:
+			chance += maxi(rank, 0) * 4
+	if _is_forbidden_container(container):
+		if _is_bad_loot(entry):
+			chance += maxi(-rank, 0) * 5
+		else:
+			chance -= maxi(-rank, 0) * 2
+	if rank <= -2 and _container_risk(container) in ["medium", "high"] and _is_bad_loot(entry):
+		chance += 5
+	if _has_container_mastery(container):
+		if _is_bad_loot(entry):
+			chance -= 6
+		else:
+			chance += 8
+	return maxi(chance, 1)
 
 func _pick_bad_loot(table: Array) -> Dictionary:
 	var bad_entries: Array[Dictionary] = []
@@ -456,6 +490,69 @@ func _is_old_well_container(container: Dictionary) -> bool:
 		"watcher_footprint",
 		"bamboo_exit_bundle"
 	]
+
+func _has_container_mastery(container: Dictionary) -> bool:
+	var container_id := str(container.get("id", ""))
+	var option_id := str(selected_option.get("id", ""))
+	var location_id := str(selected_option.get("location_id", "field"))
+	if _has_flag("deduced_old_well_route") and _is_old_well_container(container):
+		return true
+	if _has_flag("deduced_old_goods_line") and (container_id in [
+		"hidden_scale",
+		"old_goods_bundle",
+		"buyer_name_slip",
+		"jade_tea_sign",
+		"jade_buyer_table",
+		"buyer_shadow_pouch",
+		"black_lamp_counter",
+		"fence_oilcloth_bag",
+		"secret_account_book"
+	] or option_id in ["peddler_old_goods_deal", "meet_jade_buyer", "night_market_fence"]):
+		return true
+	if _has_flag("deduced_support_network") and (container_id in [
+		"shared_supper_pot",
+		"medicine_note_bundle",
+		"work_exchange_board",
+		"favor_debt_book",
+		"nosy_neighbor_window"
+	] or option_id in ["villager_mutual_aid", "village_support_network", "grocer_hidden_grain", "doctor_medicine_run"]):
+		return true
+	if _has_flag("deduced_debt_timing") and (container_id in [
+		"tea_whisper_table",
+		"debt_runner_trace",
+		"nosy_gambler_table",
+		"porter_message_bag",
+		"ferry_cargo_stack"
+	] or option_id in ["tea_debt_tip", "porter_ferry_job", "run_errand"]):
+		return true
+	if _has_flag("deduced_grave_cache") and (location_id == "graveyard" or container_id in [
+		"grave_loose_soil",
+		"ash_copper_cache",
+		"coffin_nail_gap",
+		"grave_old_trace",
+		"buried_satchel",
+		"broken_stele_cache",
+		"soldier_relic_cache",
+		"camp_marked_stone",
+		"collapsed_banner_pit",
+		"sealed_army_box",
+		"cliff_last_herb"
+	]):
+		return true
+	if _has_flag("deduced_hunter_route") and (location_id in ["forest", "mountain"] or container_id in [
+		"rabbit_fresh_tracks",
+		"rabbit_burrow",
+		"snare_grass",
+		"forest_feather_trail",
+		"pheasant_roost",
+		"hunter_snare",
+		"hunter_cache",
+		"windward_trap_spot",
+		"fresh_beast_run",
+		"deep_beast_den"
+	]):
+		return true
+	return false
 
 func _draw_identification_panel() -> void:
 	var panel_size := Vector2(minf(size.x - 80.0, 460.0), 190.0)
@@ -579,6 +676,8 @@ func _maybe_spawn_scene_event(cell: Vector2i, cell_data: Dictionary) -> bool:
 	if candidates.is_empty():
 		return false
 	var chance := 22 + int(float(time_pressure) * 0.08) + int(float(trace_pressure) * 0.10) + int(float(fatigue_pressure) * 0.06)
+	chance += maxi(-_omen_rank(), 0) * 4
+	chance -= maxi(_omen_rank(), 0) * 2
 	match str(cell_data.get("type", "path")):
 		"cave", "cliff", "thicket":
 			chance += 5
@@ -659,6 +758,101 @@ func _scene_event_candidates(cell_data: Dictionary) -> Array[Dictionary]:
 			]
 		}
 	]
+	var location_id := str(selected_option.get("location_id", "field"))
+	var option_id := str(selected_option.get("id", ""))
+	var rank := _omen_rank()
+	if rank >= 2:
+		candidates.append({
+			"id": "omen_alignment",
+			"name": "卦纹相合",
+			"verb": "顺卦",
+			"hint": "脚下泥痕和卦象里的方位竟能对上",
+			"tone": "good",
+			"outcomes": [
+				{"chance": 42, "effects": ["gain_money_tiny"], "pressure": [2, -5, -2], "text": "你按卦位折向一侧，在不起眼处捡到几枚旧钱，踪迹也被风压住。"},
+				{"chance": 34, "effects": ["gain_stamina_tiny"], "pressure": [1, -3, -5], "text": "卦象提醒你避开难走的碎石，少耗了一截脚力。"},
+				{"chance": 24, "effects": [], "pressure": [3, -2, 0], "text": "你确认这条路合卦，虽然没立刻得物，但后续搜寻更稳。"}
+			]
+		})
+	elif rank <= -2:
+		candidates.append({
+			"id": "omen_backlash",
+			"name": "凶象回咬",
+			"verb": "压卦",
+			"hint": "铜钱在袖中发冷，眼前这条路像是犯了卦忌",
+			"tone": "danger",
+			"outcomes": [
+				{"chance": 34, "effects": ["lose_stamina_small"], "pressure": [6, 4, 7], "text": "你硬着头皮压住心慌继续走，脚力被这段路拖下去不少。"},
+				{"chance": 28, "effects": ["gain_suspicion_small"], "pressure": [5, 8, 3], "text": "你绕路时留下了不该有的痕迹，回村后恐怕会有人多问。"},
+				{"chance": 38, "effects": [], "pressure": [5, 7, 4], "spawn_enemy": true, "text": "你刚想退，草木间已经有动静被你惊起。"}
+			]
+		})
+	if _has_flag("met_collector") or option_id in ["tea_debt_tip", "run_errand", "porter_ferry_job"]:
+		candidates.append({
+			"id": "collector_trace",
+			"name": "催债脚印",
+			"verb": "辨认",
+			"hint": "泥路上有一串熟悉脚印，像债主跑腿刚走过",
+			"tone": "risk",
+			"outcomes": [
+				{"chance": 38, "effects": ["lose_suspicion_small"], "pressure": [3, -6, 1], "text": "你认出催债人的脚程，提前避开村口那条明路。"},
+				{"chance": 24, "effects": ["mark_tea_debt_contact"], "pressure": [4, 2, 2], "text": "脚印拐向茶棚方向，你记下这条线，往后能打听债主动向。"},
+				{"chance": 38, "effects": ["gain_attention_small"], "pressure": [5, 7, 3], "text": "你盯着脚印看太久，被路边人顺嘴问了一句。"}
+			]
+		})
+	match location_id:
+		"graveyard":
+			candidates.append({
+				"id": "grave_paper_ash",
+				"name": "纸灰暗记",
+				"verb": "拨灰",
+				"hint": "纸灰下压着半截旧记号，像指向更深的坟地",
+				"tone": "risk",
+				"outcomes": [
+					{"chance": 34, "effects": ["mark_saw_graveyard_cache"], "pressure": [5, 5, 2], "text": "你从纸灰里认出半个地名，荒坟深处还有东西。"},
+					{"chance": 24, "effects": ["gain_old_coin_string"], "pressure": [6, 4, 3], "text": "纸灰下压着一小串旧钱，锈得很深。"},
+					{"chance": 42, "effects": ["gain_suspicion_small"], "pressure": [6, 7, 3], "text": "风卷纸灰扑到身上，翻找痕迹太明显。"}
+				]
+			})
+		"mountain", "forest":
+			candidates.append({
+				"id": "beast_old_scrape",
+				"name": "兽爪旧痕",
+				"verb": "察痕",
+				"hint": "树皮上有旧爪痕，旁边散着几撮粗毛",
+				"tone": "danger",
+				"outcomes": [
+					{"chance": 32, "effects": ["gain_rabbit_pelt"], "pressure": [4, 3, 3], "text": "你从旧巢边捡到一小张完整皮毛，能换些钱。"},
+					{"chance": 28, "effects": ["mark_hunter_trap_line"], "pressure": [5, 1, 4], "text": "爪痕让你想起猎户设伏法，往后林中行事能多一条路。"},
+					{"chance": 40, "effects": ["lose_stamina_small"], "pressure": [6, 6, 6], "spawn_enemy": true, "text": "你靠得太近，附近兽味忽然变重。"}
+				]
+			})
+		"river":
+			candidates.append({
+				"id": "river_cold_choice",
+				"name": "寒水暗包",
+				"verb": "摸取",
+				"hint": "芦苇根下压着暗包，但水冷得刺骨",
+				"tone": "risk",
+				"outcomes": [
+					{"chance": 30, "effects": ["gain_money_small"], "pressure": [7, 4, 5], "text": "暗包里有几枚干净铜钱，你赶紧揣好。"},
+					{"chance": 24, "effects": ["gain_snake_gall"], "pressure": [6, 3, 4], "text": "你没摸到钱，却在芦根旁找到一枚蛇胆。"},
+					{"chance": 46, "effects": ["mark_cold_mild", "lose_stamina_small"], "pressure": [8, 5, 7], "text": "寒水灌进袖口，寒意一路钻进骨缝。"}
+				]
+			})
+		_:
+			candidates.append({
+				"id": "neighbor_question",
+				"name": "邻人探问",
+				"verb": "应付",
+				"hint": "熟脸邻人突然问起你今天的去向",
+				"tone": "risk",
+				"outcomes": [
+					{"chance": 36, "effects": ["lose_suspicion_small"], "pressure": [3, -5, 1], "text": "你把话头带到粮价和天气上，对方很快没了追问兴致。"},
+					{"chance": 28, "effects": ["gain_money_tiny"], "pressure": [3, 2, 2], "text": "对方托你顺手带个小口信，给了几枚碎钱。"},
+					{"chance": 36, "effects": ["gain_attention_small"], "pressure": [4, 6, 2], "text": "你答得慢了半拍，对方眼神立刻多停了一会儿。"}
+				]
+			})
 	match scene_type:
 		"thicket", "slope":
 			candidates.append({
@@ -762,6 +956,8 @@ func _enemy_avoid_chance(enemy: Dictionary) -> int:
 		chance += 8
 	if _has_flag("studied_bow_manual"):
 		chance += 8
+	if _has_flag("deduced_hunter_route"):
+		chance += 8
 	return clampi(chance, 5, 88)
 
 func _enemy_injury_chance(enemy: Dictionary, avoid_chance: int) -> int:
@@ -772,6 +968,8 @@ func _enemy_injury_chance(enemy: Dictionary, avoid_chance: int) -> int:
 		chance -= 14
 	if _has_flag("studied_bow_manual"):
 		chance -= 6
+	if _has_flag("deduced_hunter_route"):
+		chance -= 5
 	return clampi(maxi(chance, avoid_chance + 8), avoid_chance + 1, 96)
 
 func _enemy_tool_hint() -> String:
@@ -782,6 +980,8 @@ func _enemy_tool_hint() -> String:
 		hints.append("黑铁短刃压住了逼近的威胁")
 	if _has_flag("studied_bow_manual"):
 		hints.append("弓谱里的设伏法帮你看懂了退路")
+	if _has_flag("deduced_hunter_route"):
+		hints.append("猎户路线已整理，兽径和伏点更容易判断")
 	return "；".join(hints)
 
 func _enemy_tool_bonus() -> int:
@@ -794,13 +994,15 @@ func _enemy_tool_bonus() -> int:
 		bonus += 16
 	if _has_flag("hunter_trap_line"):
 		bonus += 8
+	if _has_flag("deduced_hunter_route"):
+		bonus += 10
 	return bonus
 
 func _can_use_enemy_trap() -> bool:
-	return _has_equipped("old_hunter_knife") or _has_equipped("black_iron_shortblade") or _has_flag("studied_bow_manual") or _has_flag("hunter_trap_line")
+	return _has_equipped("old_hunter_knife") or _has_equipped("black_iron_shortblade") or _has_flag("studied_bow_manual") or _has_flag("hunter_trap_line") or _has_flag("deduced_hunter_route")
 
 func _enemy_trap_label(enemy_name: String) -> String:
-	if _has_flag("studied_bow_manual") or _has_flag("hunter_trap_line"):
+	if _has_flag("studied_bow_manual") or _has_flag("hunter_trap_line") or _has_flag("deduced_hunter_route"):
 		return "%s · 弓谱" % enemy_name
 	if _has_equipped("black_iron_shortblade"):
 		return "%s · 短刃" % enemy_name
@@ -847,6 +1049,11 @@ func _apply_movement_pressure(cell_data: Dictionary) -> void:
 		fatigue_delta = maxi(fatigue_delta - 3, 1)
 	if _has_equipped("tiger_bone") and scene_type in ["thicket", "cave"]:
 		trace_delta = maxi(trace_delta - 2, 0)
+	if _has_flag("deduced_hunter_route") and str(selected_option.get("location_id", "")) in ["forest", "mountain"] and scene_type in ["thicket", "slope", "cave"]:
+		trace_delta = maxi(trace_delta - 2, 0)
+		fatigue_delta = maxi(fatigue_delta - 2, 1)
+	if _has_flag("deduced_grave_cache") and str(selected_option.get("location_id", "")) == "graveyard":
+		trace_delta = maxi(trace_delta - 2, 0)
 	if pack_pressure >= 60:
 		fatigue_delta += 3
 		trace_delta += 2
@@ -860,13 +1067,17 @@ func _apply_search_pressure(container: Dictionary) -> void:
 	var trace_delta := int(container.get("trace", _default_search_trace(risk)))
 	var fatigue_delta := int(container.get("fatigue", _default_search_fatigue(risk)))
 	if _is_favored_container(container):
-		time_delta = maxi(time_delta - 3, 2)
-		trace_delta = maxi(trace_delta - 3, 0)
+		time_delta = maxi(time_delta - 3 - maxi(_omen_rank(), 0), 2)
+		trace_delta = maxi(trace_delta - 3 - maxi(_omen_rank(), 0), 0)
 	if _is_forbidden_container(container):
-		trace_delta += 6
-		fatigue_delta += 3
+		trace_delta += 6 + maxi(-_omen_rank(), 0) * 2
+		fatigue_delta += 3 + maxi(-_omen_rank(), 0)
 	if _has_equipped("ancient_bone_token") and _container_risk(container) in ["medium", "high"]:
 		trace_delta = maxi(trace_delta - 2, 0)
+	if _has_container_mastery(container):
+		time_delta = maxi(time_delta - 2, 2)
+		trace_delta = maxi(trace_delta - 4, 0)
+		fatigue_delta = maxi(fatigue_delta - 2, 1)
 	if pack_pressure >= 60:
 		fatigue_delta += 2
 	elif pack_pressure >= 35:
@@ -885,6 +1096,12 @@ func _entry_enemy_chance(cell_data: Dictionary) -> int:
 	base_chance += int(float(trace_pressure) * 0.24)
 	base_chance += int(float(time_pressure) * 0.10)
 	base_chance += int(float(pack_pressure) * 0.08)
+	base_chance += maxi(-_omen_rank(), 0) * 4
+	base_chance -= maxi(_omen_rank(), 0) * 2
+	if _has_flag("deduced_hunter_route") and str(selected_option.get("location_id", "")) in ["forest", "mountain"]:
+		base_chance -= 8
+	if _has_flag("deduced_grave_cache") and str(selected_option.get("location_id", "")) == "graveyard":
+		base_chance -= 4
 	if fatigue_pressure >= 70:
 		base_chance += 6
 	return clampi(base_chance, 0, 88)
@@ -907,6 +1124,8 @@ func _maybe_trigger_search_ambush(container: Dictionary) -> String:
 			chance += 2
 	if _is_forbidden_container(container):
 		chance += 10
+	if _has_container_mastery(container):
+		chance -= 12
 	if _rng.randi_range(1, 100) > clampi(chance, 0, 72):
 		return ""
 	current_enemy = enemies[_rng.randi_range(0, enemies.size() - 1)]
@@ -1005,6 +1224,7 @@ func _build_template_map(option_id: String) -> Dictionary:
 			"enemy_chance": int(cell_config.get("enemy_chance", 0)),
 			"color": str(cell_config.get("color", ""))
 		}
+	_apply_omen_map_variation(result)
 	return result
 
 func _container_from_config(container_id: String) -> Dictionary:
@@ -1015,6 +1235,183 @@ func _container_from_config(container_id: String) -> Dictionary:
 	var result: Dictionary = source.duplicate(true)
 	result["id"] = container_id
 	return result
+
+func _apply_omen_map_variation(result: Dictionary) -> void:
+	var rank := _omen_rank()
+	if rank >= 2:
+		var anchor := _find_branch_anchor(result)
+		var bonus_cell := _find_free_neighbor(result, anchor)
+		if bonus_cell != Vector2i(999, 999):
+			result[bonus_cell] = {
+				"type": _bonus_scene_type(),
+				"name": "卦应旁支",
+				"desc": "卦象在这里忽然变清，像是提醒你别只沿主路走。",
+				"image": "",
+				"image_path": "",
+				"containers": [_omen_bonus_container()],
+				"enemies": [],
+				"exit": false,
+				"enemy_chance": 0,
+				"color": "#28321F"
+			}
+	elif rank <= -2:
+		var danger_anchor := _find_branch_anchor(result)
+		var danger_cell := _find_free_neighbor(result, danger_anchor)
+		if danger_cell != Vector2i(999, 999):
+			result[danger_cell] = {
+				"type": _danger_scene_type(),
+				"name": "犯忌岔路",
+				"desc": "这条岔路和卦忌相冲，越安静越像藏着麻烦。",
+				"image": "",
+				"image_path": "",
+				"containers": [_omen_forbidden_container()],
+				"enemies": [_omen_enemy()],
+				"exit": false,
+				"enemy_chance": 28,
+				"color": "#321D18"
+			}
+
+func _find_branch_anchor(map_data: Dictionary) -> Vector2i:
+	for cell_variant in map_data.keys():
+		var cell: Vector2i = cell_variant
+		if not bool(map_data[cell].get("exit", false)) and cell != Vector2i.ZERO:
+			return cell
+	return Vector2i.ZERO
+
+func _find_free_neighbor(map_data: Dictionary, anchor: Vector2i) -> Vector2i:
+	var dirs: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
+	for dir in dirs:
+		var candidate := anchor + dir
+		if not map_data.has(candidate):
+			return candidate
+	return Vector2i(999, 999)
+
+func _bonus_scene_type() -> String:
+	match str(selected_option.get("location_id", "field")):
+		"river":
+			return "creek"
+		"forest":
+			return "thicket"
+		"graveyard":
+			return "cave"
+		"mountain":
+			return "slope"
+		_:
+			return "road"
+
+func _danger_scene_type() -> String:
+	match str(selected_option.get("location_id", "field")):
+		"river":
+			return "creek"
+		"forest", "mountain":
+			return "thicket"
+		"graveyard":
+			return "cliff"
+		_:
+			return "hut"
+
+func _omen_enemy() -> Dictionary:
+	match str(selected_option.get("location_id", "field")):
+		"forest":
+			return _wolf()
+		"mountain":
+			return _boar()
+		"graveyard":
+			return _wolf()
+		"river":
+			return _wolf()
+		_:
+			return _boar()
+
+func _omen_bonus_container() -> Dictionary:
+	return {
+		"id": "omen_bonus_cache",
+		"name": "卦应暗处",
+		"rarity": "uncommon",
+		"risk": "low",
+		"loot": [
+			{"chance": 30, "name": "卦中小财", "effects": ["gain_money_small"], "text": "你按卦位摸到一处干土，里面压着几枚铜钱。"},
+			{"chance": 24, "name": "【普通】苦叶草", "effects": ["gain_bitter_leaf"], "text": "草根被踩开一角，苦叶草正露在你眼前。"},
+			{"chance": 20, "name": "路边干粮", "effects": ["gain_food_small"], "text": "一小包干粮被挂在避雨处，像是没人会回来取。"},
+			{"chance": 16, "name": "清楚退路", "effects": ["lose_suspicion_small"], "text": "你记下另一条退路，回村时能少留痕迹。"},
+			{"chance": 10, "name": "看错卦位", "effects": ["lose_stamina_small"], "text": "你多绕了一段，才发现这里并非真正的应位。"}
+		]
+	}
+
+func _omen_forbidden_container() -> Dictionary:
+	return {
+		"id": "omen_forbidden_cache",
+		"name": "犯忌暗角",
+		"rarity": "rare",
+		"risk": "high",
+		"loot": [
+			{"chance": 22, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string", "gain_suspicion_small"], "text": "暗角里有旧钱串，来路却不干净。"},
+			{"chance": 14, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button", "mark_jade_buyer_clue", "gain_suspicion_small"], "text": "残玉扣卡在阴缝里，拿走时心里发寒。"},
+			{"chance": 18, "name": "受寒惊退", "effects": ["mark_cold_mild", "lose_stamina_small"], "text": "阴冷从脚底窜上来，你不得不退开。"},
+			{"chance": 24, "name": "留下痕迹", "effects": ["gain_attention_small", "gain_suspicion_small"], "text": "这里太窄，衣角和脚印都留下了痕迹。"},
+			{"chance": 22, "name": "空耗一场", "effects": ["lose_stamina_medium"], "text": "你翻到最后只有湿土和碎石，白白耗了一截体力。"}
+		]
+	}
+
+func _omen_rank() -> int:
+	var configured_grade := str(selected_option.get("fortune_grade", ""))
+	if configured_grade.is_empty():
+		configured_grade = _fortune_grade_from_score(_fortune_score())
+	match configured_grade:
+		"大吉":
+			return 3
+		"中吉":
+			return 2
+		"小吉":
+			return 1
+		"小凶":
+			return -1
+		"中凶":
+			return -2
+		"大凶":
+			return -3
+		_:
+			return 0
+
+func _fortune_score() -> int:
+	var score := 0
+	var risk := str(selected_option.get("risk_desc", ""))
+	var reward := str(selected_option.get("reward_desc", "")) + str(selected_option.get("omen_gain", ""))
+	var warning := str(selected_option.get("omen_warning", ""))
+	if risk.contains("低风险") or risk.contains("无直接"):
+		score += 2
+	if risk.contains("中风险"):
+		score -= 1
+	if risk.contains("高风险"):
+		score -= 3
+	if reward.contains("稳定") or reward.contains("粮食") or reward.contains("健康") or reward.contains("体力") or reward.contains("信任"):
+		score += 2
+	if reward.contains("高收益") or reward.contains("更高") or reward.contains("买家") or reward.contains("线索"):
+		score += 1
+	if warning.contains("受伤") or warning.contains("伤身") or warning.contains("招祸") or warning.contains("追查"):
+		score -= 2
+	if warning.contains("怀疑") or warning.contains("关注") or warning.contains("人眼"):
+		score -= 1
+	if str(weather.get("id", "")) == "rain" and str(selected_option.get("location_id", "")) in ["river", "graveyard"]:
+		score -= 1
+	if str(weather.get("id", "")) == "clear" and str(selected_option.get("location_id", "")) in ["mountain", "forest"]:
+		score += 1
+	return clampi(score, -6, 6)
+
+func _fortune_grade_from_score(score: int) -> String:
+	if score >= 5:
+		return "大吉"
+	if score >= 3:
+		return "中吉"
+	if score >= 1:
+		return "小吉"
+	if score == 0:
+		return "平"
+	if score >= -2:
+		return "小凶"
+	if score >= -4:
+		return "中凶"
+	return "大凶"
 
 func _enemy_from_config(enemy_id: String) -> Dictionary:
 	var enemies: Dictionary = exploration_config.get("enemies", {})

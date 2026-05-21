@@ -769,6 +769,176 @@
           "delta": 2
         }
       ]
+    },
+    {
+      "id": "deduced_old_goods_run",
+      "route_flag": "deduced_old_goods_line",
+      "route_tag": "旧物暗线",
+      "route_hint": "线索已整理，旧物容器更稳，城镇卖价更高",
+      "title": "按暗价门路整理旧物",
+      "omen_title": "暗秤成线",
+      "omen_text": "残玉、旧钱和货郎秤砣终于对上，一条旧物暗价线浮出水面。",
+      "omen_place": "镇外货郎暗摊",
+      "omen_gain": "旧物变现、残玉买家与更高收益",
+      "omen_warning": "暗价虽高，问来路的人也更精",
+      "location_id": "field",
+      "reward_desc": "高收益旧物，可能接残玉或军物线",
+      "risk_desc": "中风险，推断后更容易控住关注",
+      "base_weight": 8,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_old_goods_line",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "deduced_old_well_descent",
+      "route_flag": "deduced_old_well_route",
+      "route_tag": "旧井藏路",
+      "route_hint": "线索已整理，旧井搜索更少出坏结果",
+      "title": "按旧井藏路夜探井边",
+      "omen_title": "井绳三结",
+      "omen_text": "井绳、守夜人口风和竹篱退路已能合在一处，废井不再只是黑洞。",
+      "omen_place": "村后废井",
+      "omen_gain": "井边暗匣、旧物与夜市线",
+      "omen_warning": "井底有回声，贪深仍会招人",
+      "location_id": "field",
+      "reward_desc": "高收益旧物，旧井风险更可控",
+      "risk_desc": "中到高风险，推断后坏结果降低",
+      "base_weight": 8,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_old_well_route",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "deduced_support_round",
+      "route_flag": "deduced_support_network",
+      "route_tag": "互助补给",
+      "route_hint": "线索已整理，粮药补给更稳，城镇人情推进更快",
+      "title": "按互助网走粮药人情",
+      "omen_title": "灯火连户",
+      "omen_text": "粮铺、郎中和村口人情串成一圈，缺粮缺药时不必只靠冒险。",
+      "omen_place": "村镇夹巷",
+      "omen_gain": "稳定粮药、低风险工钱与信任",
+      "omen_warning": "人情拿多了也会欠账",
+      "location_id": "field",
+      "reward_desc": "稳定补给，降低怀疑和关注",
+      "risk_desc": "低风险，适合稳住状态",
+      "base_weight": 9,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_support_network",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "food",
+              "operator": "<=",
+              "value": 3
+            }
+          ],
+          "delta": 4
+        }
+      ]
+    },
+    {
+      "id": "deduced_debt_timing_run",
+      "route_flag": "deduced_debt_timing",
+      "route_tag": "催债节奏",
+      "route_hint": "线索已整理，更适合临近债期时避险",
+      "title": "按催债节奏探风避让",
+      "omen_title": "茶烟知步",
+      "omen_text": "催债人先问谁、何时进村、从哪条路走，已经能从茶烟里看出端倪。",
+      "omen_place": "镇口茶棚与旧桥",
+      "omen_gain": "避债时机、降低怀疑、稳定小钱",
+      "omen_warning": "听得太细，茶客也会记住你",
+      "location_id": "field",
+      "reward_desc": "降低催债风险，获得还债节奏",
+      "risk_desc": "低到中风险，偏策略收益",
+      "base_weight": 8,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_debt_timing",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "debt_compare",
+              "target_id": "current",
+              "operator": ">=",
+              "value": 10
+            }
+          ],
+          "delta": 3
+        }
+      ]
+    },
+    {
+      "id": "deduced_grave_cache_deep",
+      "route_flag": "deduced_grave_cache",
+      "route_tag": "荒坟旧藏",
+      "route_hint": "线索已整理，荒坟深挖收益高但仍需见好就收",
+      "title": "按荒坟旧藏深挖埋物",
+      "omen_title": "纸灰指藏",
+      "omen_text": "纸灰、旧脚印和军中暗记连成一处，荒坟深处的旧藏有了方向。",
+      "omen_place": "荒坟旧痕深处",
+      "omen_gain": "高价值旧藏与军中遗物线",
+      "omen_warning": "财重眼多，撤离前别贪最后一手",
+      "location_id": "graveyard",
+      "reward_desc": "高收益旧藏，推断后更容易控风险",
+      "risk_desc": "高风险，高收益",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_grave_cache",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "deduced_hunter_patrol",
+      "route_flag": "deduced_hunter_route",
+      "route_tag": "猎户伏兽",
+      "route_hint": "线索已整理，山林遇兽和设伏更稳",
+      "title": "按猎户伏兽路进山设伏",
+      "omen_title": "伏兽成局",
+      "omen_text": "风口、兽径和绳点都能对应，山林里不再只是硬碰运气。",
+      "omen_place": "密林伏兽径",
+      "omen_gain": "稳定肉食、皮货与遇兽优势",
+      "omen_warning": "深巢仍凶，见好就撤",
+      "location_id": "forest",
+      "reward_desc": "肉食皮货，遇兽更稳",
+      "risk_desc": "中风险，推断后战斗更可控",
+      "base_weight": 8,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_hunter_route",
+          "operator": "==",
+          "value": true
+        }
+      ]
     }
   ]
 }

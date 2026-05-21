@@ -1,6 +1,27 @@
 {
   "events": [
     {
+      "id": "repay_medium_debt",
+      "name": "凑整还出一笔债",
+      "weight": 9,
+      "conditions": [
+        {
+          "type": "item_compare",
+          "target_id": "money",
+          "operator": ">=",
+          "value": 10
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">=",
+          "value": 10
+        }
+      ],
+      "result_text": "你把钱袋里最沉的一串铜钱趁夜送出，债主的人收钱时没笑，但敲门声总算能晚几日。",
+      "effects": ["lose_money_repay_medium", "reduce_debt_medium", "mark_repaid_debt_once", "clear_met_collector"]
+    },
+    {
       "id": "repay_small_debt",
       "name": "拿铜钱还一部分债",
       "weight": 8,
@@ -63,10 +84,402 @@
       "result_text": "约定的日子已经临近，债主的人上门敲打，逼得你心头更紧。",
       "effects": ["gain_suspicion_small", "gain_attention_small", "mark_met_collector"]
 	},
-	{
-	  "id": "pressure_eases_after_repay",
-	  "name": "还债后风声暂缓",
-	  "weight": 7,
+    {
+      "id": "collector_adds_fee",
+      "name": "催债人加脚钱",
+      "weight": 8,
+      "conditions": [
+        {
+          "type": "day_compare",
+          "target_id": "current_day",
+          "operator": ">=",
+          "value": 8
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "repaid_debt_once",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "result_text": "债主跑腿把脚钱也记到账上，说再拖下去就不是铜钱能说清的事。",
+      "effects": ["increase_debt_interest", "gain_attention_small", "mark_met_collector"]
+    },
+    {
+      "id": "tea_warning_helps",
+      "name": "茶棚消息避过一催",
+      "weight": 7,
+      "conditions": [
+        {
+          "type": "day_compare",
+          "target_id": "current_day",
+          "operator": ">=",
+          "value": 6
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "tea_debt_contact",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "result_text": "茶棚老人提前漏了一句口风，你避开债主跑腿常走的村口路，今夜少惹些眼。",
+      "effects": ["lose_suspicion_small", "lose_attention_small"]
+    },
+    {
+      "id": "deduced_debt_timing_preempts_collector",
+      "name": "按催债节奏避门",
+      "weight": 11,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_debt_timing",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "met_collector",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        }
+      ],
+      "result_text": "你按线索簿里推出的催债节奏提前绕开门前路，债主跑腿扑了个空，邻人的闲眼也少了些。",
+      "effects": ["lose_suspicion_small", "lose_attention_small", "clear_met_collector", "gain_relation_tea_oldman"]
+    },
+    {
+      "id": "support_network_hides_you",
+      "name": "互助网替你遮口",
+      "weight": 9,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_support_network",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "met_collector",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "result_text": "催债跑腿在村口问起你，几户受过你帮忙的人都把话岔开，说你只是去换工。",
+      "effects": ["lose_attention_small", "clear_met_collector", "gain_relation_grocer"]
+    },
+    {
+      "id": "collector_seizes_food",
+      "name": "催债人夺走口粮",
+      "weight": 7,
+      "conditions": [
+        {
+          "type": "day_compare",
+          "target_id": "current_day",
+          "operator": ">=",
+          "value": 7
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "type": "item_compare",
+          "target_id": "money",
+          "operator": "<",
+          "value": 5
+        },
+        {
+          "type": "item_compare",
+          "target_id": "food",
+          "operator": ">=",
+          "value": 1
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_debt_timing",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "result_text": "债主跑腿没摸到铜钱，临走前把你墙角的粗粮顺走一把，嘴里还说这是利钱。",
+      "effects": ["lose_food_small", "gain_attention_small", "mark_met_collector"]
+    },
+    {
+      "id": "overdue_collector_blocks_door",
+      "name": "逾期堵门",
+      "weight": 11,
+      "conditions": [
+        {
+          "type": "day_compare",
+          "target_id": "current_day",
+          "operator": ">",
+          "value": 10
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_debt_timing",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "result_text": "债期已经过了，催债跑腿天没亮就堵在门口。你从后墙翻出去，膝盖磕得生疼，村里人也都看见了。",
+      "effects": ["lose_health_small", "gain_attention_medium", "mark_met_collector"]
+    },
+    {
+      "id": "overdue_pays_hush_money",
+      "name": "花钱压住堵门",
+      "weight": 9,
+      "conditions": [
+        {
+          "type": "day_compare",
+          "target_id": "current_day",
+          "operator": ">",
+          "value": 10
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "type": "item_compare",
+          "target_id": "money",
+          "operator": ">=",
+          "value": 3
+        }
+      ],
+      "result_text": "催债跑腿堵门时，你先塞出几枚铜钱压口风。这不算还债，只是让他们今夜别把事闹大。",
+      "effects": ["lose_money_small", "lose_attention_small", "mark_met_collector"]
+    },
+    {
+      "id": "critical_contacts_pull_back",
+      "name": "熟人避开催债麻烦",
+      "weight": 8,
+      "conditions": [
+        {
+          "type": "day_compare",
+          "target_id": "current_day",
+          "operator": ">",
+          "value": 12
+        },
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "type": "any_of",
+          "conditions": [
+            {
+              "type": "relation_compare",
+              "target_id": "grocer",
+              "operator": ">=",
+              "value": 2
+            },
+            {
+              "type": "relation_compare",
+              "target_id": "tea_oldman",
+              "operator": ">=",
+              "value": 2
+            },
+            {
+              "type": "relation_compare",
+              "target_id": "peddler",
+              "operator": ">=",
+              "value": 2
+            }
+          ]
+        }
+      ],
+      "result_text": "债主的人问到几个熟人门前，大家说话都短了。不是不想帮，是谁也不敢被你的债拖下水。",
+      "effects": ["lose_relation_grocer", "lose_relation_tea_oldman", "lose_relation_peddler", "gain_suspicion_small"]
+    },
+    {
+      "id": "old_goods_line_leaks",
+      "name": "旧物暗线走漏风声",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_old_goods_line",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "stat_compare",
+          "target_id": "village_attention",
+          "operator": ">=",
+          "value": 35
+        }
+      ],
+      "result_text": "夜里有人问起货郎暗秤的事，你没露面，但旧物线已经被几张嘴沾上了。",
+      "effects": ["gain_suspicion_small", "lose_relation_peddler"]
+    },
+    {
+      "id": "grave_cache_rumor_spreads",
+      "name": "荒坟旧藏传出闲话",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_grave_cache",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "found_hidden_stash",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "result_text": "有人在夜里提到荒坟新土，话没点你的名，却让你知道那处旧藏已经不再安静。",
+      "effects": ["gain_suspicion_small", "gain_attention_small"]
+    },
+    {
+      "id": "old_well_route_saves_steps",
+      "name": "旧井夜路少走弯",
+      "weight": 8,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_old_well_route",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "old_well_line",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "result_text": "你按线索里推出的井绳暗号绕过村口正路，夜里少被几双眼睛盯见，脚程也省了些。",
+      "effects": ["lose_suspicion_small", "gain_stamina_tiny"]
+    },
+    {
+      "id": "hunter_route_reads_beast_sign",
+      "name": "猎路看懂兽迹",
+      "weight": 8,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_hunter_route",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "stat_compare",
+          "target_id": "health",
+          "operator": "<=",
+          "value": 45
+        }
+      ],
+      "result_text": "夜风里传来兽腥，你照猎户留下的路法辨出上风口，没再硬闯，身上的伤也少受一次折腾。",
+      "effects": ["gain_stamina_tiny", "gain_relation_porter"]
+    },
+    {
+      "id": "support_network_shared_supper",
+      "name": "互助小锅分到稀饭",
+      "weight": 9,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "deduced_support_network",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "item_compare",
+          "target_id": "food",
+          "operator": "<=",
+          "value": 1
+        }
+      ],
+      "result_text": "互助线里有人在后灶留了半碗稀饭，没问你从哪来，只让你吃完把碗扣回墙根。",
+      "effects": ["gain_food_small", "gain_relation_grocer", "lose_suspicion_small"]
+    },
+    {
+      "id": "untreated_cold_deepens",
+      "name": "寒症拖成重寒",
+      "weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "cold_worse",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "cold_treated_today",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "result_text": "夜里寒意从骨缝里返上来，你咳得胸口发疼。若再拖下去，明日行动会更难撑住。",
+      "effects": ["lose_health_small", "mark_cold_severe"]
+    },
+    {
+      "id": "market_heat_returns",
+      "name": "夜市旧风声回潮",
+      "weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "black_market_fence_line",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "stat_compare",
+          "target_id": "suspicion",
+          "operator": ">=",
+          "value": 35
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "market_heat_cooled",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "result_text": "夜市暗线的风声又翻了起来，有人开始把旧物、荒坟和你的钱袋放在一起猜。",
+      "effects": ["gain_suspicion_small", "gain_attention_small"]
+    },
+    {
+      "id": "pressure_eases_after_repay",
+      "name": "还债后风声暂缓",
+      "weight": 7,
 	  "conditions": [
 	    {
 	      "type": "all_of",
