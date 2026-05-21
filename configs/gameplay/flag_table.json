@@ -106,6 +106,36 @@
 	  "default": false
     },
 	{
+	  "id": "old_well_clue",
+	  "name": "知道旧井暗藏",
+	  "default": false
+    },
+	{
+	  "id": "old_well_line",
+	  "name": "接上旧井夜路",
+	  "default": false
+    },
+	{
+	  "id": "old_well_watchman_deal",
+	  "name": "压住旧井守夜人口风",
+	  "default": false
+    },
+	{
+	  "id": "black_market_fence_line",
+	  "name": "接上夜市销赃暗线",
+	  "default": false
+    },
+	{
+	  "id": "market_heat_cooled",
+	  "name": "夜市热度压下",
+	  "default": false
+    },
+	{
+	  "id": "support_network_built",
+	  "name": "村镇互助网成形",
+	  "default": false
+    },
+	{
 	  "id": "equip_old_hunter_knife",
 	  "name": "装备旧猎刀",
 	  "default": false

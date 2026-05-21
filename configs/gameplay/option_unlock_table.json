@@ -87,6 +87,22 @@
     {
       "id": "porter_ferry_job",
       "unlocked": true
+    },
+    {
+      "id": "old_well_cache",
+      "unlocked": false
+    },
+    {
+      "id": "night_market_fence",
+      "unlocked": false
+    },
+    {
+      "id": "lay_low_after_market",
+      "unlocked": true
+    },
+    {
+      "id": "village_support_network",
+      "unlocked": true
     }
   ]
 }

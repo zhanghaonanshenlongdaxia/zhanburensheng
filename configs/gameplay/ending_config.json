@@ -15,6 +15,37 @@
       "description": "你的身子终究没撑住，在寒气和虚弱中倒下了。"
     },
     {
+      "id": "black_market_backlash",
+      "type": "fail",
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "black_market_fence_line",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "any_of",
+          "conditions": [
+            {
+              "type": "stat_compare",
+              "target_id": "suspicion",
+              "operator": ">=",
+              "value": 20
+            },
+            {
+              "type": "stat_compare",
+              "target_id": "village_attention",
+              "operator": ">=",
+              "value": 60
+            }
+          ]
+        }
+      ],
+      "title": "黑灯账册",
+      "description": "夜市暗账里有人把你的名字和旧井货写到了一起。巡夜人找上门时，连茶棚老人也不再开口。"
+    },
+    {
       "id": "suspicion_overflow",
       "type": "fail",
       "conditions": [
@@ -49,6 +80,70 @@
 	  "description": "你终究没能在期限前摆脱债务，逼债的人找上门来，退路也被堵死。"
     },
     {
+      "id": "black_market_clean_success",
+      "type": "success",
+      "conditions": [
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": "<=",
+          "value": 0
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "repaid_debt_once",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "black_market_fence_line",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "market_heat_cooled",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "title": "黑灯赎身",
+      "description": "你靠旧井和夜市把债硬生生砸平，又及时烧掉票根、压住闲话。钱来得脏，但线头暂时没咬回你身上。"
+    },
+    {
+      "id": "black_market_dirty_success",
+      "type": "success",
+      "conditions": [
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": "<=",
+          "value": 0
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "repaid_debt_once",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "black_market_fence_line",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "market_heat_cooled",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "title": "带灰的翻身钱",
+      "description": "你还清了债，钱袋却留下夜市的灰味。催债人暂时退了，暗巷里的人却知道你还会为了活路回头。"
+    },
+    {
       "id": "stash_route_success",
       "type": "success",
       "conditions": [
@@ -73,6 +168,38 @@
       ],
       "title": "险路换来翻身钱",
       "description": "你押着风险一路追到坟地旧藏，终于靠那袋翻出来的钱扛过了最难的一关。"
+    },
+    {
+      "id": "support_network_success",
+      "type": "success",
+      "conditions": [
+        {
+          "type": "debt_compare",
+          "target_id": "current",
+          "operator": "<=",
+          "value": 0
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "repaid_debt_once",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "support_network_built",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "type": "flag_compare",
+          "target_id": "black_market_fence_line",
+          "operator": "==",
+          "value": false
+        }
+      ],
+      "title": "灯火相借",
+      "description": "你没有靠脏钱翻身，而是把粮铺、药路和村口人情慢慢串成网。债还清那夜，至少还有几扇门愿意给你留缝。"
     },
     {
       "id": "steady_route_success",

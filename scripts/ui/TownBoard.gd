@@ -10,6 +10,15 @@ signal task_completed(task_id: String, effect_ids: Array, summary: String)
 signal extracted(summary: String)
 
 const CELL_SIZE := 18.0
+const CONTACT_ROW_HEIGHT := 20.0
+const TOWN_TASK_IDS: Array[String] = [
+	"grocer_supply",
+	"doctor_delivery",
+	"peddler_appraisal",
+	"tea_warning",
+	"porter_ferry_note",
+	"watchman_hush"
+]
 
 var selected_option: Dictionary = {}
 var cells: Dictionary = {}
@@ -20,18 +29,24 @@ var discovered: Dictionary = {}
 var item_defs: Dictionary = {}
 var inventory_items: Dictionary = {}
 var relation_model: RefCounted
+var active_flags: Dictionary = {}
 var resolved_task_steps: Dictionary = {}
 var _hotspots: Array[Dictionary] = []
 var _map_rects: Dictionary = {}
 var _last_log: String = ""
+var _town_background_textures: Dictionary = {}
+var _town_npc_textures: Dictionary = {}
+var _contact_scroll_offset := 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = Vector2(0.0, 330.0)
+	_load_town_assets()
 
-func configure(option: Dictionary, defs: Dictionary, items: Dictionary, relations: RefCounted = null) -> void:
+func configure(option: Dictionary, defs: Dictionary, items: Dictionary, relations: RefCounted = null, flags: Dictionary = {}) -> void:
 	selected_option = option.duplicate(true)
 	relation_model = relations
+	active_flags = flags.duplicate(true)
 	update_inventory(defs, items)
 	cells = _town_map()
 	entrance_cell = Vector2i.ZERO
@@ -49,8 +64,16 @@ func update_inventory(defs: Dictionary, items: Dictionary) -> void:
 	queue_redraw()
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+	if event is InputEventMouseButton and event.pressed:
 		var pos: Vector2 = event.position
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			if _contact_panel_rect().has_point(pos):
+				var direction := -1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0
+				_scroll_contacts(direction * CONTACT_ROW_HEIGHT)
+				accept_event()
+			return
+		if event.button_index != MOUSE_BUTTON_LEFT:
+			return
 		for cell_variant in _map_rects.keys():
 			var cell: Vector2i = cell_variant
 			var rect: Rect2 = _map_rects[cell]
@@ -81,13 +104,23 @@ func _draw_scene() -> void:
 	var cell_data: Dictionary = cells.get(current_cell, {})
 	var scene_type: String = str(cell_data.get("type", "street"))
 	draw_rect(scene_rect, _scene_color(scene_type))
-	_draw_town_texture(scene_rect, scene_type)
+	var background_texture: Texture2D = _town_background_textures.get(scene_type, null) as Texture2D
+	if background_texture == null:
+		background_texture = _town_background_textures.get("street", null) as Texture2D
+	if background_texture != null:
+		_draw_cover_texture(background_texture, scene_rect)
+	else:
+		_draw_town_texture(scene_rect, scene_type)
 	draw_rect(scene_rect, Color(0.0, 0.0, 0.0, 0.22))
+	draw_rect(Rect2(scene_rect.position, Vector2(scene_rect.size.x, 84.0)), Color(0.0, 0.0, 0.0, 0.30))
+	draw_rect(Rect2(scene_rect.position + Vector2(0.0, scene_rect.size.y - 88.0), Vector2(scene_rect.size.x, 88.0)), Color(0.0, 0.0, 0.0, 0.20))
 	draw_rect(scene_rect, Color(0.0, 0.0, 0.0, 0.38), false, 2.0)
 
 	var font := get_theme_default_font()
 	_draw_outlined_string(font, scene_rect.position + Vector2(18.0, 30.0), "乡镇 · %s" % _scene_name(scene_type), 22, Color(0.98, 0.86, 0.55, 1.0), 4, scene_rect.size.x - 36.0)
 	_draw_outlined_string(font, scene_rect.position + Vector2(18.0, 58.0), _scene_desc(scene_type), 14, Color(0.90, 0.80, 0.60, 1.0), 3, scene_rect.size.x - 36.0)
+
+	_draw_scene_npc_portraits(scene_rect, scene_type)
 
 	match scene_type:
 		"grocer":
@@ -117,6 +150,7 @@ func _draw_scene() -> void:
 			_draw_shop_hotspot(scene_rect, "找脚夫", _npc_hotspot_body("porter", "问去河对岸的路"), {"kind": "npc", "npc_id": "porter"}, 1)
 			_draw_npc_task_hotspot(scene_rect, "tea_warning", "tea_oldman", 2)
 			_draw_npc_task_hotspot(scene_rect, "porter_ferry_note", "porter", 3)
+			_draw_npc_task_hotspot(scene_rect, "watchman_hush", "tea_oldman", 4)
 		"back_alley", "sick_house", "old_bridge", "ferry":
 			_draw_task_target_hotspots(scene_rect, scene_type)
 		_:
@@ -124,6 +158,80 @@ func _draw_scene() -> void:
 
 	if current_cell == exit_cell:
 		_draw_shop_hotspot(scene_rect, "离镇返村", "结束今日城镇外出", {"kind": "extract"}, 4)
+
+func _load_town_assets() -> void:
+	for id in ["gate", "street", "grocer", "apothecary", "pawn", "tea", "back_alley", "sick_house", "old_bridge", "ferry"]:
+		_town_background_textures[id] = _load_texture_from_file("res://assets/generated/town/backgrounds/%s.jpg" % id)
+	for id in ["grocer", "doctor", "peddler", "tea_oldman", "porter"]:
+		_town_npc_textures[id] = _load_texture_from_file("res://assets/generated/town/npcs/%s.jpg" % id)
+
+func _load_texture_from_file(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var imported_texture: Texture2D = ResourceLoader.load(path) as Texture2D
+		if imported_texture != null:
+			return imported_texture
+	var image_path: String = path
+	if not FileAccess.file_exists(image_path):
+		image_path = ProjectSettings.globalize_path(path)
+	var image: Image = Image.load_from_file(image_path)
+	if image == null or image.is_empty():
+		return null
+	return ImageTexture.create_from_image(image)
+
+func _draw_cover_texture(texture: Texture2D, rect: Rect2) -> void:
+	var texture_size: Vector2 = texture.get_size()
+	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return
+	var source_rect := Rect2(Vector2.ZERO, texture_size)
+	var texture_aspect := texture_size.x / texture_size.y
+	var target_aspect := rect.size.x / maxf(rect.size.y, 1.0)
+	if texture_aspect > target_aspect:
+		var source_width := texture_size.y * target_aspect
+		source_rect.position.x = (texture_size.x - source_width) * 0.5
+		source_rect.size.x = source_width
+	else:
+		var source_height := texture_size.x / target_aspect
+		source_rect.position.y = (texture_size.y - source_height) * 0.5
+		source_rect.size.y = source_height
+	draw_texture_rect_region(texture, rect, source_rect)
+
+func _draw_scene_npc_portraits(scene_rect: Rect2, scene_type: String) -> void:
+	var npc_ids := _scene_npc_ids(scene_type)
+	if npc_ids.is_empty():
+		return
+	var font := get_theme_default_font()
+	var icon_size := 54.0
+	var gap := 8.0
+	var total_width := float(npc_ids.size()) * icon_size + float(maxi(npc_ids.size() - 1, 0)) * gap
+	var start := scene_rect.position + Vector2(scene_rect.size.x - total_width - 18.0, 20.0)
+	for index in npc_ids.size():
+		var npc_id: String = npc_ids[index]
+		var texture: Texture2D = _town_npc_textures.get(npc_id, null) as Texture2D
+		var rect := Rect2(start + Vector2(float(index) * (icon_size + gap), 0.0), Vector2(icon_size, icon_size))
+		draw_rect(rect.grow(3.0), Color(0.03, 0.025, 0.02, 0.82))
+		if texture != null:
+			_draw_cover_texture(texture, rect)
+		else:
+			draw_rect(rect, Color(0.18, 0.13, 0.08, 0.92))
+		draw_rect(rect, Color(0.96, 0.72, 0.36, 0.56), false, 1.0)
+		_draw_outlined_string(font, rect.position + Vector2(0.0, icon_size + 15.0), _npc_name(npc_id), 11, Color(0.92, 0.82, 0.62, 1.0), 2, icon_size + 18.0)
+
+func _scene_npc_ids(scene_type: String) -> Array[String]:
+	match scene_type:
+		"grocer":
+			return ["grocer"]
+		"apothecary", "sick_house":
+			return ["doctor"]
+		"pawn", "back_alley":
+			return ["peddler"]
+		"tea":
+			return ["tea_oldman", "porter"]
+		"ferry":
+			return ["porter"]
+		"old_bridge":
+			return ["tea_oldman"]
+		_:
+			return []
 
 func _draw_town_texture(rect: Rect2, scene_type: String) -> void:
 	match scene_type:
@@ -192,6 +300,8 @@ func _draw_npc_task_hotspot(scene_rect: Rect2, task_id: String, npc_id: String, 
 		return
 	if _task_active(task_id):
 		return
+	if not _task_available(task_id):
+		return
 	var title := _task_title(task_id)
 	var body := _task_body(task_id)
 	_draw_shop_hotspot(scene_rect, title, body, {"kind": "task_start", "task_id": task_id}, index)
@@ -225,24 +335,74 @@ func _draw_minimap() -> void:
 	_draw_outlined_string(font, map_origin + Vector2(0.0, 132.0), "点击相邻格移动，绿色为返村出口。", 12, Color(0.78, 0.72, 0.58, 1.0), 3, 190.0)
 
 func _draw_contact_panel() -> void:
-	var panel_origin := Vector2(size.x - 214.0, 176.0)
-	var panel_rect := Rect2(panel_origin + Vector2(-8.0, -8.0), Vector2(198.0, 92.0))
+	var panel_rect := _contact_panel_rect()
+	var panel_origin := panel_rect.position + Vector2(8.0, 8.0)
 	draw_rect(panel_rect, Color(0.025, 0.022, 0.018, 0.78))
 	draw_rect(panel_rect, Color(0.78, 0.54, 0.26, 0.28), false, 1.0)
 	var font := get_theme_default_font()
 	_draw_outlined_string(font, panel_origin + Vector2(0.0, 12.0), "镇上人脉", 14, Color(0.94, 0.84, 0.60, 1.0), 3, 160.0)
-	var entries: Array[String] = []
+	var task_text := _active_task_panel_text()
+	var entries := _contact_entries()
+	var list_top := panel_origin.y + 28.0
+	var list_bottom := panel_rect.end.y - (42.0 if not task_text.is_empty() else 24.0)
+	var list_height := maxf(list_bottom - list_top, CONTACT_ROW_HEIGHT)
+	_contact_scroll_offset = clampf(_contact_scroll_offset, 0.0, _contact_max_scroll(entries, list_height))
+	for index in entries.size():
+		var entry: Dictionary = entries[index]
+		var entry_y := list_top + float(index) * CONTACT_ROW_HEIGHT - _contact_scroll_offset
+		if entry_y < list_top or entry_y + CONTACT_ROW_HEIGHT > list_bottom:
+			continue
+		var npc_id := str(entry.get("npc_id", ""))
+		if not npc_id.is_empty():
+			var texture: Texture2D = _town_npc_textures.get(npc_id, null) as Texture2D
+			var icon_rect := Rect2(Vector2(panel_origin.x, entry_y + 1.0), Vector2(14.0, 14.0))
+			draw_rect(icon_rect.grow(1.0), Color(0.04, 0.032, 0.025, 0.92))
+			if texture != null:
+				_draw_cover_texture(texture, icon_rect)
+			draw_rect(icon_rect, Color(0.90, 0.66, 0.32, 0.45), false, 1.0)
+		var text_x := 20.0 if not npc_id.is_empty() else 0.0
+		_draw_outlined_string(font, Vector2(panel_origin.x + text_x, entry_y + 14.0), str(entry.get("text", "")), 12, Color(0.82, 0.78, 0.66, 1.0), 2, panel_rect.size.x - 18.0 - text_x)
+	var max_scroll := _contact_max_scroll(entries, list_height)
+	if max_scroll > 0.0:
+		var track := Rect2(Vector2(panel_rect.end.x - 7.0, list_top), Vector2(3.0, list_height))
+		var thumb_height := maxf(18.0, list_height * list_height / (float(entries.size()) * CONTACT_ROW_HEIGHT))
+		var thumb_y := list_top + (_contact_scroll_offset / max_scroll) * (list_height - thumb_height)
+		draw_rect(track, Color(0.11, 0.095, 0.075, 0.82))
+		draw_rect(Rect2(Vector2(track.position.x, thumb_y), Vector2(track.size.x, thumb_height)), Color(0.82, 0.62, 0.32, 0.86))
+	if not task_text.is_empty():
+		_draw_outlined_string(font, Vector2(panel_origin.x, panel_rect.end.y - 14.0), task_text, 11, Color(0.90, 0.74, 0.42, 1.0), 2, panel_rect.size.x - 16.0)
+
+func _contact_panel_rect() -> Rect2:
+	var top := 190.0
+	var bottom := size.y - 52.0
+	var height := maxf(bottom - top, 112.0)
+	return Rect2(Vector2(size.x - 222.0, top - 8.0), Vector2(214.0, height))
+
+func _contact_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
 	for npc_id in ["grocer", "doctor", "peddler", "tea_oldman", "porter"]:
 		var score := _npc_relation(npc_id)
 		if score > 0:
-			entries.append("%s %s" % [_npc_name(npc_id), _npc_relation_label(score)])
+			entries.append({
+				"npc_id": npc_id,
+				"text": "%s %s" % [_npc_name(npc_id), _npc_relation_label(score)]
+			})
 	if entries.is_empty():
-		entries.append("还没人真正认得你")
-	for index in mini(entries.size(), 4):
-		_draw_outlined_string(font, panel_origin + Vector2(0.0, 34.0 + float(index) * 15.0), entries[index], 12, Color(0.82, 0.78, 0.66, 1.0), 2, 180.0)
+		entries.append({
+			"npc_id": "",
+			"text": "还没人真正认得你"
+		})
+	return entries
+
+func _contact_max_scroll(entries: Array, list_height: float) -> float:
+	return maxf(0.0, float(entries.size()) * CONTACT_ROW_HEIGHT - list_height)
+
+func _scroll_contacts(delta: float) -> void:
+	var panel_rect := _contact_panel_rect()
 	var task_text := _active_task_panel_text()
-	if not task_text.is_empty():
-		_draw_outlined_string(font, panel_origin + Vector2(0.0, 78.0), task_text, 11, Color(0.90, 0.74, 0.42, 1.0), 2, 180.0)
+	var list_height := maxf(panel_rect.size.y - (78.0 if not task_text.is_empty() else 60.0), CONTACT_ROW_HEIGHT)
+	_contact_scroll_offset = clampf(_contact_scroll_offset + delta, 0.0, _contact_max_scroll(_contact_entries(), list_height))
+	queue_redraw()
 
 func _draw_status_band() -> void:
 	var rect := Rect2(18.0, size.y - 42.0, maxf(size.x - 36.0, 0.0), 28.0)
@@ -390,6 +550,9 @@ func _npc_name(npc_id: String) -> String:
 		_:
 			return "路人"
 
+func _has_flag(flag_id: String) -> bool:
+	return bool(active_flags.get(flag_id, false))
+
 func _npc_unlock_effects(npc_id: String) -> Array:
 	match npc_id:
 		"grocer":
@@ -426,6 +589,9 @@ func _start_task(task_id: String) -> void:
 		return
 	if relation_model.is_task_completed(task_id):
 		_set_log("这桩委托已经了结。")
+		return
+	if not _task_available(task_id):
+		_set_log("这桩事还缺一条能接上的线。")
 		return
 	relation_model.set_task_state(task_id, "active")
 	var text := _task_start_text(task_id)
@@ -466,6 +632,8 @@ func _task_title(task_id: String) -> String:
 			return "记催债口风"
 		"porter_ferry_note":
 			return "跑渡口口信"
+		"watchman_hush":
+			return "压旧井口风"
 		_:
 			return "小委托"
 
@@ -481,6 +649,8 @@ func _task_body(task_id: String) -> String:
 			return "去旧桥看脚印，回忆催债人去向"
 		"porter_ferry_note":
 			return "去渡口送口信，回来换工钱"
+		"watchman_hush":
+			return "去旧桥旁认守夜人脚印，把旧井口风压住"
 		_:
 			return "接下这桩小事"
 
@@ -496,6 +666,8 @@ func _task_turnin_body(task_id: String) -> String:
 			return "旧桥脚印看清了，回茶桌复述"
 		"porter_ferry_note":
 			return "渡口口信送完，找脚夫结钱"
+		"watchman_hush":
+			return "守夜人认了暗号，旧井这条夜路暂时稳住"
 		_:
 			return "交付委托"
 
@@ -511,6 +683,8 @@ func _task_start_text(task_id: String) -> String:
 			return "茶棚老人让你记住催债人的脚程，回头别说是他讲的。"
 		"porter_ferry_note":
 			return "码头脚夫塞给你一封口信，让你跑完再回来结钱。"
+		"watchman_hush":
+			return "茶棚老人把茶碗推到暗处：旧井边有个守夜人见过绳结，你去旧桥下认清他的脚印，别让他先开口。"
 		_:
 			return "你接下一桩小委托。"
 
@@ -526,6 +700,8 @@ func _task_complete_text(task_id: String) -> String:
 			return "你把债主动向记清，茶棚老人点点头，让你这两日少走村口。"
 		"porter_ferry_note":
 			return "口信送到，脚夫按约给了工钱，还分你一点干粮。"
+		"watchman_hush":
+			return "你在旧桥下拿准守夜人的口风：他只认井绳三结，不认你的脸。旧井夜路暂时可以走。"
 		_:
 			return "你交付了委托。"
 
@@ -541,6 +717,8 @@ func _task_reward_effects(task_id: String) -> Array:
 			return ["lose_suspicion_small", "clear_met_collector", "mark_tea_debt_contact"]
 		"porter_ferry_note":
 			return ["gain_money_small", "gain_food_small", "mark_porter_ferry_contact"]
+		"watchman_hush":
+			return ["lose_suspicion_small", "mark_old_well_line", "mark_old_well_watchman_deal", "unlock_old_well_cache", "unlock_night_market_fence"]
 		_:
 			return []
 
@@ -571,6 +749,8 @@ func _task_step_effects(task_id: String) -> Array:
 			return ["lose_suspicion_small"]
 		"porter_ferry_note":
 			return ["mark_cold_mild"]
+		"watchman_hush":
+			return ["gain_attention_small"]
 		_:
 			return []
 
@@ -586,6 +766,8 @@ func _task_step_text(task_id: String) -> String:
 			return "你在旧桥看清催债人的脚印，确认他们今天绕了远路。"
 		"porter_ferry_note":
 			return "你踩着渡口湿泥送口信，冷水灌进鞋里，寒意往上爬。"
+		"watchman_hush":
+			return "你绕到旧桥桥洞下等人，听见桥面有脚步停了一瞬。"
 		_:
 			return ""
 
@@ -593,7 +775,7 @@ func _active_tasks_for_scene(scene_type: String) -> Array[String]:
 	var result: Array[String] = []
 	if relation_model == null:
 		return result
-	for task_id in ["grocer_supply", "doctor_delivery", "peddler_appraisal", "tea_warning", "porter_ferry_note"]:
+	for task_id in TOWN_TASK_IDS:
 		if relation_model.is_task_active(task_id) and _task_target_scene(task_id) == scene_type:
 			result.append(task_id)
 	return result
@@ -606,6 +788,8 @@ func _task_target_scene(task_id: String) -> String:
 			return "sick_house"
 		"tea_warning":
 			return "old_bridge"
+		"watchman_hush":
+			return "old_bridge"
 		"porter_ferry_note":
 			return "ferry"
 		_:
@@ -614,10 +798,15 @@ func _task_target_scene(task_id: String) -> String:
 func _active_task_panel_text() -> String:
 	if relation_model == null:
 		return ""
-	for task_id in ["grocer_supply", "doctor_delivery", "peddler_appraisal", "tea_warning", "porter_ferry_note"]:
+	for task_id in TOWN_TASK_IDS:
 		if relation_model.is_task_active(task_id):
 			return "委托：%s -> %s" % [_task_title(task_id), _scene_name(_task_target_scene(task_id))]
 	return ""
+
+func _task_available(task_id: String) -> bool:
+	if task_id == "watchman_hush":
+		return (_has_flag("old_well_clue") or _has_flag("old_well_line")) and not _has_flag("old_well_watchman_deal")
+	return true
 
 func _scene_idle_action_text(scene_type: String) -> String:
 	match scene_type:
@@ -666,6 +855,8 @@ func _npc_line(npc_id: String, score: int) -> String:
 				return "游货郎笑了一下：你带来的东西不像寻常农户捡的，我压价，但也替你挡闲话。"
 			return "游货郎扫了一眼你的包袱：空手来，空手回，倒也安全。"
 		"tea_oldman":
+			if _has_flag("old_well_clue") and score >= 2:
+				return "茶棚老人把茶沫拨到碗边：旧井那事别在桌上说。你若真要摸这条夜路，先去旧桥认守夜人的鞋印。"
 			if score >= 3:
 				return "茶棚老人敲敲桌沿：王怀安催债前会先找里正问话，你若要还钱，别挑他上门那天。"
 			if score >= 2:

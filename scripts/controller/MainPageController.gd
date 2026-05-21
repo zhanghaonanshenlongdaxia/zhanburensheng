@@ -4,6 +4,7 @@ extends Control
 const ExplorationBoardScript := preload("res://scripts/ui/ExplorationBoard.gd")
 const TownBoardScript := preload("res://scripts/ui/TownBoard.gd")
 const OptionCardBackdropScript := preload("res://scripts/ui/OptionCardBackdrop.gd")
+const ClueBoardScript := preload("res://scripts/ui/ClueBoard.gd")
 
 @onready var day_label: Label = $MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/TopRow/DayLabel
 @onready var weather_label: Label = $MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/TopRow/WeatherLabel
@@ -50,12 +51,19 @@ var _inventory_resource_list: VBoxContainer
 var _inventory_loot_grid: GridContainer
 var _inventory_empty_label: Label
 var _inventory_button: Button
+var _clue_button: Button
 var _town_button: Button
+var _clue_overlay: PanelContainer
+var _clue_board: Control
 var _feedback_layer: Control
 var _feedback_bubble_index: int = 0
 var _player_state_rich: RichTextLabel
 var _inventory_rich: RichTextLabel
 var _selection_rich: RichTextLabel
+var _status_scroll: ScrollContainer
+var _status_scroll_content: VBoxContainer
+var _result_scroll: ScrollContainer
+var _result_scroll_content: VBoxContainer
 var _item_icon_textures: Dictionary = {}
 var _option_backdrops: Array = []
 
@@ -64,6 +72,7 @@ func _ready() -> void:
 	_ensure_exploration_board()
 	_ensure_town_board()
 	_ensure_inventory_overlay()
+	_ensure_clue_overlay()
 	_ensure_sidebar_buttons()
 	_ensure_feedback_layer()
 	_ensure_option_backdrops()
@@ -76,6 +85,7 @@ func _ready() -> void:
 			_app = root.get_node("App") as App
 	for i in option_buttons.size():
 		option_buttons[i].pressed.connect(_on_option_pressed.bind(i))
+		option_rich_labels[i].gui_input.connect(_on_option_text_gui_input.bind(i))
 	next_day_button.pressed.connect(_on_next_day_pressed)
 	resized.connect(_apply_responsive_layout)
 	next_day_button.visible = false
@@ -307,6 +317,83 @@ func _ensure_inventory_overlay() -> void:
 	_inventory_content.add_theme_color_override("default_color", Color(0.78, 0.72, 0.58, 1.0))
 	root.add_child(_inventory_content)
 
+func _ensure_clue_overlay() -> void:
+	if _clue_overlay != null:
+		return
+	_clue_overlay = PanelContainer.new()
+	_clue_overlay.name = "ClueOverlay"
+	_clue_overlay.visible = false
+	_clue_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_clue_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_clue_overlay.z_index = 42
+	_clue_overlay.add_theme_stylebox_override("panel", _make_panel_style(
+		Color(0.030, 0.027, 0.024, 1.0),
+		Color(0.76, 0.56, 0.28, 0.90),
+		0,
+		0
+	))
+	add_child(_clue_overlay)
+	move_child(_clue_overlay, get_child_count() - 1)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_clue_overlay.add_child(center)
+
+	var board_panel := PanelContainer.new()
+	board_panel.name = "CluePanel"
+	board_panel.custom_minimum_size = Vector2(940.0, 620.0)
+	board_panel.add_theme_stylebox_override("panel", _make_inventory_bag_style())
+	center.add_child(board_panel)
+
+	var board_margin := MarginContainer.new()
+	board_margin.add_theme_constant_override("margin_left", 22)
+	board_margin.add_theme_constant_override("margin_top", 18)
+	board_margin.add_theme_constant_override("margin_right", 22)
+	board_margin.add_theme_constant_override("margin_bottom", 22)
+	board_panel.add_child(board_margin)
+
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	board_margin.add_child(root)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 12)
+	root.add_child(header)
+
+	var title_box := VBoxContainer.new()
+	title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title_box)
+
+	var title := Label.new()
+	title.text = "线索簿"
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color(0.96, 0.86, 0.62, 1.0))
+	title_box.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "把见过的人、旧物、暗路和传闻摆在一起，缺口也会说话。"
+	subtitle.add_theme_font_size_override("font_size", 13)
+	subtitle.add_theme_color_override("font_color", Color(0.70, 0.62, 0.48, 1.0))
+	title_box.add_child(subtitle)
+
+	var close_button := Button.new()
+	close_button.text = "关闭"
+	close_button.custom_minimum_size = Vector2(96, 36)
+	_apply_solid_button_style(close_button)
+	close_button.pressed.connect(func() -> void:
+		_clue_overlay.visible = false
+	)
+	header.add_child(close_button)
+
+	var stitch := HSeparator.new()
+	stitch.add_theme_color_override("separator", Color(0.76, 0.56, 0.28, 0.55))
+	root.add_child(stitch)
+
+	_clue_board = ClueBoardScript.new()
+	_clue_board.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_clue_board.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(_clue_board)
+
 func _ensure_sidebar_buttons() -> void:
 	var existing := get_node_or_null("QuickActionBar") as HBoxContainer
 	if existing != null:
@@ -319,7 +406,7 @@ func _ensure_sidebar_buttons() -> void:
 	var row := HBoxContainer.new()
 	row.name = "QuickActionBar"
 	row.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	row.offset_left = -250.0
+	row.offset_left = -374.0
 	row.offset_top = 18.0
 	row.offset_right = -18.0
 	row.offset_bottom = 54.0
@@ -331,6 +418,10 @@ func _ensure_sidebar_buttons() -> void:
 	_inventory_button = _make_sidebar_button("背包")
 	_inventory_button.pressed.connect(_on_inventory_button_pressed)
 	row.add_child(_inventory_button)
+
+	_clue_button = _make_sidebar_button("线索")
+	_clue_button.pressed.connect(_on_clue_button_pressed)
+	row.add_child(_clue_button)
 
 	_town_button = _make_sidebar_button("去城镇")
 	_town_button.pressed.connect(_on_town_button_pressed)
@@ -374,6 +465,8 @@ func _make_sidebar_button(text: String) -> Button:
 func _sync_quick_action_buttons() -> void:
 	if _inventory_button != null:
 		_inventory_button.disabled = _app == null
+	if _clue_button != null:
+		_clue_button.disabled = _app == null
 	if _town_button != null:
 		_town_button.disabled = _app == null or _interaction_mode != "fortune"
 
@@ -381,6 +474,8 @@ func _ensure_rich_text_replacements() -> void:
 	_player_state_rich = _create_rich_replacement(player_state_label)
 	_inventory_rich = _create_rich_replacement(inventory_label)
 	_selection_rich = _create_rich_replacement(selection_label)
+	_ensure_status_scroll_area()
+	_ensure_result_scroll_area()
 
 func _create_rich_replacement(source: Label) -> RichTextLabel:
 	var existing := source.get_parent().get_node_or_null("%sRich" % source.name) as RichTextLabel
@@ -404,6 +499,80 @@ func _create_rich_replacement(source: Label) -> RichTextLabel:
 	parent.add_child(rich)
 	parent.move_child(rich, index + 1)
 	return rich
+
+func _ensure_status_scroll_area() -> void:
+	var stats_vbox := _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack/StatsPanel/MarginContainer/StatsVBox") as VBoxContainer
+	if stats_vbox == null:
+		return
+	_status_scroll = stats_vbox.get_node_or_null("StatusScroll") as ScrollContainer
+	if _status_scroll == null:
+		_status_scroll = ScrollContainer.new()
+		_status_scroll.name = "StatusScroll"
+		_status_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_status_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_status_scroll.follow_focus = true
+		_status_scroll.clip_contents = true
+		_status_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_status_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		stats_vbox.add_child(_status_scroll)
+		stats_vbox.move_child(_status_scroll, mini(1, stats_vbox.get_child_count() - 1))
+	_status_scroll_content = _status_scroll.get_node_or_null("StatusScrollContent") as VBoxContainer
+	if _status_scroll_content == null:
+		_status_scroll_content = VBoxContainer.new()
+		_status_scroll_content.name = "StatusScrollContent"
+		_status_scroll_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_status_scroll_content.add_theme_constant_override("separation", 10)
+		_status_scroll.add_child(_status_scroll_content)
+	for node in [player_state_label, _player_state_rich, inventory_label, _inventory_rich]:
+		if node == null or node.get_parent() == _status_scroll_content:
+			continue
+		if node.get_parent() != null:
+			node.get_parent().remove_child(node)
+		_status_scroll_content.add_child(node)
+	for rich in [_player_state_rich, _inventory_rich]:
+		if rich == null:
+			continue
+		rich.fit_content = true
+		rich.scroll_active = false
+		rich.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rich.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rich.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+
+func _ensure_result_scroll_area() -> void:
+	var result_vbox := _get_main_node("RootColumn/ResultPanel/MarginContainer/ResultVBox") as VBoxContainer
+	if result_vbox == null:
+		return
+	_result_scroll = result_vbox.get_node_or_null("ResultScroll") as ScrollContainer
+	if _result_scroll == null:
+		_result_scroll = ScrollContainer.new()
+		_result_scroll.name = "ResultScroll"
+		_result_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_result_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		_result_scroll.follow_focus = true
+		_result_scroll.clip_contents = true
+		_result_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_result_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		result_vbox.add_child(_result_scroll)
+		var next_button_index := next_day_button.get_index() if next_day_button != null else result_vbox.get_child_count() - 1
+		result_vbox.move_child(_result_scroll, maxi(1, next_button_index))
+	_result_scroll_content = _result_scroll.get_node_or_null("ResultScrollContent") as VBoxContainer
+	if _result_scroll_content == null:
+		_result_scroll_content = VBoxContainer.new()
+		_result_scroll_content.name = "ResultScrollContent"
+		_result_scroll_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_result_scroll.add_child(_result_scroll_content)
+	for node in [selection_label, _selection_rich]:
+		if node == null or node.get_parent() == _result_scroll_content:
+			continue
+		if node.get_parent() != null:
+			node.get_parent().remove_child(node)
+		_result_scroll_content.add_child(node)
+	if _selection_rich != null:
+		_selection_rich.fit_content = true
+		_selection_rich.scroll_active = false
+		_selection_rich.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_selection_rich.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_selection_rich.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 func _apply_visual_polish() -> void:
 	var background: ColorRect = get_node_or_null("Background") as ColorRect
@@ -465,7 +634,9 @@ func _apply_visual_polish() -> void:
 	for option_label in option_rich_labels:
 		option_label.add_theme_color_override("default_color", Color(0.83, 0.80, 0.70, 1.0))
 		option_label.fit_content = false
-		option_label.scroll_active = false
+		option_label.scroll_active = true
+		option_label.mouse_filter = Control.MOUSE_FILTER_PASS
+		option_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 func _make_panel_style(bg: Color, border: Color, radius: int, shadow_size: int) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
@@ -574,6 +745,12 @@ func _set_content_row_margins(button: Button, horizontal: float, vertical: float
 	row.offset_top = vertical
 	row.offset_right = -horizontal
 	row.offset_bottom = -vertical
+
+func _on_option_text_gui_input(event: InputEvent, index: int) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if index >= 0 and index < option_buttons.size() and option_buttons[index].visible and not option_buttons[index].disabled:
+			_on_option_pressed(index)
+			accept_event()
 
 func _set_panel_style(path: NodePath, style: StyleBoxFlat) -> void:
 	var panel: PanelContainer = _get_main_node(str(path).trim_prefix("MainMargin/")) as PanelContainer
@@ -1078,6 +1255,7 @@ func _on_day_started(payload: Dictionary) -> void:
 			button.text = ""
 			option_label.bbcode_enabled = true
 			option_label.text = _build_option_markup(option, weather)
+			option_label.scroll_to_line(0)
 			option_illustration.set_context(
 				str(option.get("location_id", "field")),
 				str(option.get("risk_desc", "")),
@@ -1435,6 +1613,19 @@ func _on_inventory_button_pressed() -> void:
 	move_child(_inventory_overlay, get_child_count() - 1)
 	_inventory_overlay.visible = true
 
+func _on_clue_button_pressed() -> void:
+	if _app == null:
+		return
+	_refresh_clue_overlay()
+	move_child(_clue_overlay, get_child_count() - 1)
+	_clue_overlay.visible = true
+
+func _refresh_clue_overlay() -> void:
+	if _app == null or _clue_board == null:
+		return
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	_clue_board.set_flags(flag_model.flags)
+
 func _on_town_button_pressed() -> void:
 	if _app == null:
 		return
@@ -1514,7 +1705,8 @@ func _show_town_board(selected: Dictionary) -> void:
 	_town_board.visible = true
 	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
 	var relation_model: RefCounted = _app.architecture.get_model(&"relation")
-	_town_board.configure(selected, inventory_model.item_defs, inventory_model.items, relation_model)
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	_town_board.configure(selected, inventory_model.item_defs, inventory_model.items, relation_model, flag_model.flags)
 	scene_illustration.set_context(
 		str(_current_weather.get("id", "clear")),
 		"daytime",
@@ -1737,8 +1929,12 @@ func _get_route_hint() -> String:
 		return "当前路线：残玉有暗买家，后续可去茶摊碰线"
 	if flag_model.get_flag("met_jade_buyer"):
 		return "当前路线：已接上残玉买家，旧玉旧物可换更隐秘的收益"
+	if flag_model.get_flag("black_market_fence_line"):
+		return "当前路线：夜市暗线已接上，高值旧物能更快变现但很招眼"
 	if flag_model.get_flag("peddler_old_goods_contact"):
 		return "当前路线：货郎旧物暗线已打开，可把旧物换成更高收益"
+	if flag_model.get_flag("support_network_built"):
+		return "当前路线：村镇互助网已成形，低风险粮药和人情更稳定"
 	if flag_model.get_flag("grocer_grain_contact"):
 		return "当前路线：粮铺后门已熟，缺粮时可走暗粮线"
 	if flag_model.get_flag("doctor_medicine_contact"):
@@ -1747,6 +1943,12 @@ func _get_route_hint() -> String:
 		return "当前路线：茶棚能探债主动向，适合规避催债风险"
 	if flag_model.get_flag("porter_ferry_contact"):
 		return "当前路线：渡口脚夫给了零活，稳定小钱但注意湿寒"
+	if flag_model.get_flag("old_well_watchman_deal"):
+		return "当前路线：旧井守夜人口风已压住，夜探收益更稳但仍会招眼"
+	if flag_model.get_flag("old_well_line"):
+		return "当前路线：旧井夜路已经接上，能摸高值旧物但非常招眼"
+	if flag_model.get_flag("old_well_clue"):
+		return "当前路线：村后废井有暗藏线索，可夜探但要准备退路"
 	if flag_model.get_flag("hunter_trap_line"):
 		return "当前路线：猎户设伏门路成形，密林肉食线更稳定"
 	if flag_model.get_flag("villager_aid_line"):
@@ -1802,6 +2004,8 @@ func _get_consequence_echoes() -> Array[String]:
 		echoes.append("护身旧物已佩，能压住一部分疑心和惊惧")
 	if flag_model.get_flag("earned_villager_trust") or flag_model.get_flag("villager_aid_line"):
 		echoes.append("村人信任能转成低风险粮钱")
+	if flag_model.get_flag("support_network_built"):
+		echoes.append("村镇互助网能稳定补粮药")
 	if flag_model.get_flag("grocer_grain_contact"):
 		echoes.append("粮铺后门能稳定补粮")
 	if flag_model.get_flag("doctor_medicine_contact"):
@@ -1812,6 +2016,15 @@ func _get_consequence_echoes() -> Array[String]:
 		echoes.append("茶棚消息能避开催债人")
 	if flag_model.get_flag("porter_ferry_contact"):
 		echoes.append("渡口零活能换稳定工钱")
+	if flag_model.get_flag("old_well_clue"):
+		if flag_model.get_flag("old_well_watchman_deal"):
+			echoes.append("旧井守夜人口风暂时压住")
+		else:
+			echoes.append("旧井暗号可去茶棚接守夜人口风")
+	if flag_model.get_flag("black_market_fence_line"):
+		echoes.append("夜市暗线可承接高值旧物")
+	if flag_model.get_flag("market_heat_cooled"):
+		echoes.append("夜市风声被压下过，热度高时可继续避风头")
 	if player_model.get_stat("village_attention") >= 35:
 		echoes.append("村中关注偏高，卖贵重物更易惹眼")
 	if player_model.get_stat("suspicion") >= 35:
@@ -1840,6 +2053,8 @@ func _get_stage_goal() -> String:
 		return "先治寒症：药草、清露苔、苦叶草都能压住恶化"
 	if day_model.current_day >= debt_model.get_value("due_day") - 1:
 		return "催债临近：优先把战利品变现还债"
+	if flag_model.get_flag("black_market_fence_line") and (player_model.get_stat("village_attention") >= 40 or player_model.get_stat("suspicion") >= 40):
+		return "先避风头：去灰巷清夜市痕迹，别让高收益线反噬"
 	if flag_model.get_flag("soldier_relic_clue"):
 		return "可冲高收益：追旧营军中遗物，注意怀疑和关注"
 	if flag_model.get_flag("jade_buyer_clue") and inventory_model.get_amount("broken_jade_button") > 0:
@@ -1851,8 +2066,20 @@ func _get_stage_goal() -> String:
 		return "走暗粮线：先把粮食库存补到安全线"
 	if flag_model.get_flag("doctor_medicine_contact") and (flag_model.get_flag("cold_mild") or flag_model.get_flag("cold_worse")):
 		return "走药路：用周郎中的方子处理寒症"
+	if flag_model.get_flag("support_network_built"):
+		return "走互助网：用干净人情稳住粮药和怀疑"
+	if flag_model.get_flag("grocer_grain_contact") or flag_model.get_flag("doctor_medicine_contact") or flag_model.get_flag("villager_aid_line"):
+		return "串互助网：把粮铺、药路和村口人情接成稳定补给"
+	if flag_model.get_flag("black_market_fence_line"):
+		return "走夜市暗线：把旧井和残玉货快速变现，注意关注值"
 	if flag_model.get_flag("peddler_old_goods_contact"):
 		return "走旧物暗线：把战利品变现，少在明处露财"
+	if flag_model.get_flag("old_well_watchman_deal"):
+		return "旧井已稳一层：可夜探旧井，或去夜市暗巷销货"
+	if flag_model.get_flag("old_well_clue") and not flag_model.get_flag("old_well_watchman_deal"):
+		return "去茶棚接旧井口风：先压住守夜人，再夜探旧井"
+	if flag_model.get_flag("old_well_clue"):
+		return "旧井夜探：收益高但会涨怀疑，最好带够体力并见好就收"
 	if flag_model.get_flag("tea_debt_contact"):
 		return "去茶棚探风：确认债主动向再决定还钱或避让"
 	if flag_model.get_flag("porter_ferry_contact"):
@@ -1879,7 +2106,7 @@ func _equipment_stage_goal(inventory_model: InventoryModel, flag_model: FlagMode
 func _active_town_task_summary(relation_model: RefCounted) -> String:
 	if relation_model == null:
 		return ""
-	for task_id in ["grocer_supply", "doctor_delivery", "peddler_appraisal", "tea_warning", "porter_ferry_note"]:
+	for task_id in ["grocer_supply", "doctor_delivery", "peddler_appraisal", "tea_warning", "porter_ferry_note", "watchman_hush"]:
 		if relation_model.is_task_active(task_id):
 			return "城镇委托待交：%s" % _town_task_goal_name(task_id)
 	return ""
@@ -1896,6 +2123,8 @@ func _town_task_goal_name(task_id: String) -> String:
 			return "去旧桥确认催债脚印"
 		"porter_ferry_note":
 			return "去河渡口送脚夫口信"
+		"watchman_hush":
+			return "去旧桥压住旧井守夜人口风"
 		_:
 			return "回城镇交委托"
 
@@ -1916,6 +2145,10 @@ func _get_warning_summary(player_model: PlayerModel, inventory_model: InventoryM
 		warnings.append("染寒未治")
 	if debt_model.get_value("current") > 0 and day_model.current_day >= debt_model.get_value("due_day") - 2:
 		warnings.append("临近催债")
+	if player_model.get_stat("village_attention") >= 45:
+		warnings.append("村中关注过高")
+	if player_model.get_stat("suspicion") >= 45:
+		warnings.append("怀疑接近失控")
 	return " / ".join(warnings)
 
 func _is_route_flag(flag_id: String) -> bool:
@@ -1931,6 +2164,12 @@ func _is_route_flag(flag_id: String) -> bool:
 		"peddler_old_goods_contact",
 		"tea_debt_contact",
 		"porter_ferry_contact",
+		"old_well_clue",
+		"old_well_line",
+		"old_well_watchman_deal",
+		"black_market_fence_line",
+		"market_heat_cooled",
+		"support_network_built",
 		"earned_villager_trust",
 		"unlocked_errand_route",
 		"saw_graveyard_cache",
@@ -1946,6 +2185,8 @@ func _get_end_of_day_outlook() -> String:
 		return "今夜总结：债已经清了，只等一个收束结局。"
 	if day_model.current_day >= debt_model.get_value("due_day") - 1:
 		return "今夜总结：离催债只差临门一脚，接下来要优先保住还债能力。"
+	if _get_route_hint().contains("夜市暗线"):
+		return "今夜总结：夜市能快速换钱，但热度会反噬；关注高时要先清痕迹。"
 	if _get_route_hint().contains("跑腿门路"):
 		return "今夜总结：稳健路线已成型，接下来重心是持续攒钱。"
 	if _get_route_hint().contains("坟地线索"):
@@ -2362,6 +2603,9 @@ func _apply_responsive_layout() -> void:
 	var stats_panel: PanelContainer = _get_main_node("RootColumn/TopLayout/Sidebar/SidebarStack/StatsPanel") as PanelContainer
 	if stats_panel != null:
 		stats_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		stats_panel.custom_minimum_size.y = 286.0 if very_short else (348.0 if cramped else (390.0 if compact else 430.0))
+	if _status_scroll != null:
+		_status_scroll.custom_minimum_size.y = 210.0 if very_short else (270.0 if cramped else (308.0 if compact else 344.0))
 	main_stage.add_theme_constant_override("separation", 8 if cramped else (12 if compact else 16))
 	_set_panel_margins("RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer", 12 if cramped else 18)
 	_set_panel_margins("RootColumn/TopLayout/Sidebar/SidebarStack/StatsPanel/MarginContainer", 12 if cramped else 18)
@@ -2373,7 +2617,9 @@ func _apply_responsive_layout() -> void:
 		_exploration_board.custom_minimum_size.y = 300.0 if very_short else (330.0 if cramped else 380.0)
 	if _town_board != null:
 		_town_board.custom_minimum_size.y = 300.0 if very_short else (330.0 if cramped else 380.0)
-	result_panel.custom_minimum_size.y = 76.0 if very_short else (96.0 if short_window else 140.0)
+	result_panel.custom_minimum_size.y = 92.0 if very_short else (118.0 if short_window else 158.0)
+	if _result_scroll != null:
+		_result_scroll.custom_minimum_size.y = 34.0 if very_short else (54.0 if short_window else 86.0)
 	scene_illustration.clip_contents = true
 	scene_illustration.custom_minimum_size.y = 104.0 if very_short else (122.0 if tiny else (136.0 if cramped else (172.0 if compact else 210.0)))
 	for button in option_buttons:
@@ -2381,7 +2627,9 @@ func _apply_responsive_layout() -> void:
 		_set_content_row_margins(button, 10.0 if cramped else 14.0, 8.0 if cramped else 12.0)
 	for option_label in option_rich_labels:
 		option_label.fit_content = false
-		option_label.scroll_active = false
+		option_label.scroll_active = true
+		option_label.mouse_filter = Control.MOUSE_FILTER_PASS
+		option_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		option_label.add_theme_font_size_override("normal_font_size", 13 if _compact_option_markup else 15)
 	for option_illustration in option_illustrations:
 		var icon_size: float = 50.0 if very_short else (56.0 if cramped else 82.0)

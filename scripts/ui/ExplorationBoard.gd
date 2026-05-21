@@ -415,6 +415,8 @@ func _should_force_bad_search(container: Dictionary) -> bool:
 		chance -= 8
 	if _is_forbidden_container(container):
 		chance += 12
+	if _has_flag("old_well_watchman_deal") and _is_old_well_container(container):
+		chance -= 10
 	return _rng.randi_range(1, 100) <= clampi(chance, 0, 55)
 
 func _pick_bad_loot(table: Array) -> Dictionary:
@@ -433,9 +435,27 @@ func _is_bad_loot(entry: Dictionary) -> bool:
 		return true
 	for effect_variant in effects:
 		var effect_id := str(effect_variant)
-		if effect_id.begins_with("lose_") or effect_id.begins_with("gain_suspicion") or effect_id.begins_with("gain_attention") or effect_id.begins_with("mark_cold"):
+		if _is_harmful_loss_effect(effect_id) or effect_id.begins_with("gain_suspicion") or effect_id.begins_with("gain_attention") or effect_id.begins_with("mark_cold"):
 			return true
 	return false
+
+func _is_harmful_loss_effect(effect_id: String) -> bool:
+	return effect_id.begins_with("lose_health") \
+		or effect_id.begins_with("lose_stamina") \
+		or effect_id.begins_with("lose_money") \
+		or effect_id.begins_with("lose_food") \
+		or effect_id.begins_with("lose_herb") \
+		or effect_id.begins_with("lose_meat")
+
+func _is_old_well_container(container: Dictionary) -> bool:
+	var container_id := str(container.get("id", ""))
+	return container_id in [
+		"well_rope_mark",
+		"well_side_crack",
+		"well_bottom_cache",
+		"watcher_footprint",
+		"bamboo_exit_bundle"
+	]
 
 func _draw_identification_panel() -> void:
 	var panel_size := Vector2(minf(size.x - 80.0, 460.0), 190.0)

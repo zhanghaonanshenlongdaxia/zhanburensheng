@@ -322,10 +322,10 @@ script = ExtResource("3_option_art")
 [node name="OptionText" type="RichTextLabel" parent="MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox/OptionButton1/ContentRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-mouse_filter = 2
+size_flags_vertical = 3
+mouse_filter = 1
 bbcode_enabled = true
-fit_content = true
-scroll_active = false
+scroll_active = true
 
 [node name="OptionButton2" type="Button" parent="MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox"]
 clip_contents = true
@@ -362,10 +362,10 @@ script = ExtResource("3_option_art")
 [node name="OptionText" type="RichTextLabel" parent="MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox/OptionButton2/ContentRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-mouse_filter = 2
+size_flags_vertical = 3
+mouse_filter = 1
 bbcode_enabled = true
-fit_content = true
-scroll_active = false
+scroll_active = true
 
 [node name="OptionButton3" type="Button" parent="MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox"]
 clip_contents = true
@@ -402,10 +402,10 @@ script = ExtResource("3_option_art")
 [node name="OptionText" type="RichTextLabel" parent="MainMargin/RootColumn/TopLayout/MainStage/ChoicesPanel/MarginContainer/ChoicesVBox/OptionButton3/ContentRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-mouse_filter = 2
+size_flags_vertical = 3
+mouse_filter = 1
 bbcode_enabled = true
-fit_content = true
-scroll_active = false
+scroll_active = true
 
 [node name="ResultPanel" type="PanelContainer" parent="MainMargin/RootColumn"]
 custom_minimum_size = Vector2(0, 184)

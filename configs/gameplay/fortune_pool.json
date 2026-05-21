@@ -544,6 +544,231 @@
           "value": true
         }
       ]
+    },
+    {
+      "id": "old_well_cache",
+      "title": "循旧井暗号夜探藏物",
+      "omen_title": "井阴藏响",
+      "omen_text": "井沿苔黑，夜风从石缝里带出铜钱轻响。",
+      "omen_place": "村后废井",
+      "omen_gain": "旧物、暗钱与更深线索",
+      "omen_warning": "夜路留脚印，井下声响会招人",
+      "location_id": "field",
+      "reward_desc": "高收益旧物，可能推进旧井线",
+      "risk_desc": "高风险，容易提升怀疑与关注",
+      "base_weight": 5,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "old_well_clue",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "weather_tag_compare",
+              "target_id": "weather",
+              "operator": "==",
+              "value": "wet"
+            }
+          ],
+          "delta": -2
+        },
+        {
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "old_hunter_knife",
+              "operator": ">=",
+              "value": 1
+            }
+          ],
+          "delta": 2
+        }
+      ]
+    },
+    {
+      "id": "night_market_fence",
+      "title": "去夜市暗巷销旧井货",
+      "omen_title": "黑灯吞货",
+      "omen_text": "旧物见不得光，黑灯下有人收，也有人记账。",
+      "omen_place": "镇后夜市",
+      "omen_gain": "高额铜钱，压低旧物来路",
+      "omen_warning": "暗市会套话，巡夜人也会查脚印",
+      "location_id": "field",
+      "reward_desc": "高收益变现，可能降低怀疑",
+      "risk_desc": "高风险，容易提升关注",
+      "base_weight": 4,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "old_well_watchman_deal",
+          "operator": "==",
+          "value": true
+        }
+      ],
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "peddler_old_goods_contact",
+              "operator": "==",
+              "value": true
+            }
+          ],
+          "delta": 2
+        },
+        {
+          "conditions": [
+            {
+              "type": "stat_compare",
+              "target_id": "village_attention",
+              "operator": ">=",
+              "value": 35
+            }
+          ],
+          "delta": -2
+        }
+      ]
+    },
+    {
+      "id": "lay_low_after_market",
+      "title": "避开风声清掉夜市痕迹",
+      "omen_title": "灰线藏身",
+      "omen_text": "钱袋沉了，脚印也重了。该把几条线烧断，让闲话找不到头。",
+      "omen_place": "镇外灰巷",
+      "omen_gain": "降低关注和怀疑，稳住暗线",
+      "omen_warning": "要耗体力和小钱，清痕时也可能被反盯",
+      "location_id": "field",
+      "reward_desc": "压热度，降低后续风险",
+      "risk_desc": "中风险，收益偏策略",
+      "base_weight": 8,
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "black_market_fence_line",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "any_of",
+              "conditions": [
+                {
+                  "type": "stat_compare",
+                  "target_id": "village_attention",
+                  "operator": ">=",
+                  "value": 28
+                },
+                {
+                  "type": "stat_compare",
+                  "target_id": "suspicion",
+                  "operator": ">=",
+                  "value": 28
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "stat_compare",
+              "target_id": "village_attention",
+              "operator": ">=",
+              "value": 45
+            }
+          ],
+          "delta": 4
+        },
+        {
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "money",
+              "operator": ">=",
+              "value": 8
+            }
+          ],
+          "delta": 2
+        }
+      ]
+    },
+    {
+      "id": "village_support_network",
+      "title": "串起粮药人情互助网",
+      "omen_title": "灯火相借",
+      "omen_text": "一盏灯照不远，几户人家连起来，夜路就没那么黑。",
+      "omen_place": "村镇夹巷",
+      "omen_gain": "稳定粮药、人情与低风险支持",
+      "omen_warning": "人情不能乱拿，失信会反伤关系",
+      "location_id": "field",
+      "reward_desc": "稳健补给，降低关注和怀疑",
+      "risk_desc": "低风险，收益偏长期",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "any_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "grocer_grain_contact",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "doctor_medicine_contact",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "villager_aid_line",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "earned_villager_trust",
+              "operator": "==",
+              "value": true
+            }
+          ]
+        }
+      ],
+      "weight_modifiers": [
+        {
+          "conditions": [
+            {
+              "type": "stat_compare",
+              "target_id": "suspicion",
+              "operator": ">=",
+              "value": 28
+            }
+          ],
+          "delta": 3
+        },
+        {
+          "conditions": [
+            {
+              "type": "item_compare",
+              "target_id": "food",
+              "operator": "<=",
+              "value": 2
+            }
+          ],
+          "delta": 2
+        }
+      ]
     }
   ]
 }

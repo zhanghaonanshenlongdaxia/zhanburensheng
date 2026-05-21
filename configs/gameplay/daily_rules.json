@@ -37,6 +37,30 @@
       "effects": ["lose_food_daily"]
     },
     {
+      "id": "support_network_emergency_food",
+      "name": "互助网救急粮",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "support_network_built",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "item_compare",
+              "target_id": "food",
+              "operator": "<=",
+              "value": 0
+            }
+          ]
+        }
+      ],
+      "effects": ["gain_food_small", "lose_suspicion_small"]
+    },
+    {
       "id": "eat_meat_recover",
       "name": "吃肉补身",
       "conditions": [
@@ -271,6 +295,30 @@
         }
       ],
       "effects": ["lose_stamina_small", "clear_cold_mild", "mark_cold_worse"]
+    },
+    {
+      "id": "black_market_heat_penalty",
+      "name": "夜市热度扩散",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "flag_compare",
+              "target_id": "black_market_fence_line",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "stat_compare",
+              "target_id": "village_attention",
+              "operator": ">=",
+              "value": 45
+            }
+          ]
+        }
+      ],
+      "effects": ["gain_suspicion_small"]
     }
   ]
 }

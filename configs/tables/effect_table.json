@@ -127,6 +127,18 @@
       "value": 4
     },
     {
+      "id": "lose_attention_small",
+      "type": "stat_delta",
+      "target_id": "village_attention",
+      "value": -4
+    },
+    {
+      "id": "lose_attention_medium",
+      "type": "stat_delta",
+      "target_id": "village_attention",
+      "value": -7
+    },
+    {
       "id": "mark_cold_mild",
       "type": "set_flag",
       "target_id": "cold_mild",
@@ -304,6 +316,54 @@
       "id": "mark_porter_ferry_contact",
       "type": "set_flag",
       "target_id": "porter_ferry_contact",
+      "value": true
+    },
+    {
+      "id": "mark_old_well_clue",
+      "type": "set_flag",
+      "target_id": "old_well_clue",
+      "value": true
+    },
+    {
+      "id": "mark_old_well_line",
+      "type": "set_flag",
+      "target_id": "old_well_line",
+      "value": true
+    },
+    {
+      "id": "mark_old_well_watchman_deal",
+      "type": "set_flag",
+      "target_id": "old_well_watchman_deal",
+      "value": true
+    },
+    {
+      "id": "mark_black_market_fence_line",
+      "type": "set_flag",
+      "target_id": "black_market_fence_line",
+      "value": true
+    },
+    {
+      "id": "mark_market_heat_cooled",
+      "type": "set_flag",
+      "target_id": "market_heat_cooled",
+      "value": true
+    },
+    {
+      "id": "mark_support_network_built",
+      "type": "set_flag",
+      "target_id": "support_network_built",
+      "value": true
+    },
+    {
+      "id": "unlock_old_well_cache",
+      "type": "unlock_option",
+      "target_id": "old_well_cache",
+      "value": true
+    },
+    {
+      "id": "unlock_night_market_fence",
+      "type": "unlock_option",
+      "target_id": "night_market_fence",
       "value": true
     },
     {
