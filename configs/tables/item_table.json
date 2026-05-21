@@ -88,7 +88,12 @@
       "group": "herb",
       "rarity": "common",
       "sell_value": 2,
-      "description": "常见止血草，药性弱但容易辨认。"
+      "description": "常见止血草，药性弱但容易辨认。",
+      "use": {
+        "label": "嚼叶止血",
+        "effects": ["lose_bitter_leaf", "gain_health_tiny"],
+        "text": "你嚼碎苦叶草压在伤口上，苦味冲鼻，血总算慢下来。"
+      }
     },
     {
       "id": "dry_tuber",
@@ -98,7 +103,12 @@
       "group": "food",
       "rarity": "common",
       "sell_value": 2,
-      "description": "能充饥，味涩，乱世里也算粮。"
+      "description": "能充饥，味涩，乱世里也算粮。",
+      "use": {
+        "label": "烤成干粮",
+        "effects": ["lose_dry_tuber", "gain_food_small"],
+        "text": "你把山薯根烤干收好，味涩，但能顶一顿粮。"
+      }
     },
     {
       "id": "rabbit_pelt",
@@ -128,7 +138,12 @@
       "group": "herb",
       "rarity": "fine",
       "sell_value": 6,
-      "description": "根须泛红，能治外伤，也容易被郎中收走。"
+      "description": "根须泛红，能治外伤，也容易被郎中收走。",
+      "use": {
+        "label": "捣根敷伤",
+        "effects": ["lose_bloodroot", "gain_health_small", "clear_cold_mild"],
+        "text": "赤根草药性比寻常草强，伤口热痛被压住，轻寒也散了些。"
+      }
     },
     {
       "id": "clear_moss",
@@ -138,7 +153,12 @@
       "group": "herb",
       "rarity": "fine",
       "sell_value": 7,
-      "description": "多长在溪边阴石上，可退热。"
+      "description": "多长在溪边阴石上，可退热。",
+      "use": {
+        "label": "煎苔退寒",
+        "effects": ["lose_clear_moss", "clear_cold_mild", "clear_cold_worse", "gain_stamina_tiny"],
+        "text": "清露苔煎出淡青药汁，寒热退下去，身上轻了些。"
+      }
     },
     {
       "id": "boar_tusk",
@@ -168,7 +188,12 @@
       "group": "herb",
       "rarity": "rare",
       "sell_value": 18,
-      "description": "年份不深，但已远胜寻常草药。"
+      "description": "年份不深，但已远胜寻常草药。",
+      "use": {
+        "label": "含参回气",
+        "effects": ["lose_mountain_ginseng", "gain_health_small", "gain_stamina_small", "clear_cold_mild", "clear_cold_worse"],
+        "text": "小山参入口回甘，虚冷的气息被压下去，手脚重新有了劲。"
+      }
     },
     {
       "id": "snake_gall",
@@ -178,7 +203,12 @@
       "group": "animal",
       "rarity": "rare",
       "sell_value": 16,
-      "description": "腥苦难闻，懂药的人会出价。"
+      "description": "腥苦难闻，懂药的人会出价。",
+      "use": {
+        "label": "吞胆解热",
+        "effects": ["lose_snake_gall", "clear_cold_worse", "gain_health_tiny"],
+        "text": "蛇胆腥苦得让人反胃，但寒热交替的症状缓下来了。"
+      }
     },
     {
       "id": "broken_jade_button",
@@ -188,7 +218,12 @@
       "group": "old_object",
       "rarity": "rare",
       "sell_value": 22,
-      "description": "只剩半片，仍能看出原本不是村里物件。"
+      "description": "只剩半片，仍能看出原本不是村里物件。",
+      "use": {
+        "label": "细看纹路",
+        "effects": ["mark_jade_buyer_clue"],
+        "text": "你借光看清玉扣背面的旧纹，想起镇上茶摊有人提过收这类残玉的买家。"
+      }
     },
     {
       "id": "old_hunter_knife",
@@ -198,7 +233,8 @@
       "group": "tool",
       "rarity": "rare",
       "sell_value": 20,
-      "description": "刃口有缺，修一修还能防身。"
+      "description": "刃口有缺，修一修还能防身。",
+      "passive": "装备到武器槽后，遭遇野兽时更容易逼退对方，少受伤。"
     },
     {
       "id": "purple_lingzhi",
@@ -208,7 +244,12 @@
       "group": "herb",
       "rarity": "precious",
       "sell_value": 55,
-      "description": "崖壁阴处偶生，药铺会压价，但一定想要。"
+      "description": "崖壁阴处偶生，药铺会压价，但一定想要。",
+      "use": {
+        "label": "服芝吊命",
+        "effects": ["lose_purple_lingzhi", "gain_health_small", "clear_cold_mild", "clear_cold_worse", "clear_cold_severe"],
+        "text": "紫芝药味厚重，寒症被压下去，胸口那口冷气终于散了。"
+      }
     },
     {
       "id": "wolf_pelt_complete",
@@ -218,7 +259,8 @@
       "group": "animal",
       "rarity": "precious",
       "sell_value": 48,
-      "description": "保暖、防风，拿到镇上更好卖。"
+      "description": "保暖、防风，拿到镇上更好卖。",
+      "passive": "披上后，溪水、崖风等寒湿场景更不容易拖垮体力。"
     },
     {
       "id": "silver_hairpin_bent",
@@ -238,7 +280,12 @@
       "group": "manual",
       "rarity": "precious",
       "sell_value": 45,
-      "description": "缺页很多，但仍记着几种设伏和拉弓法。"
+      "description": "缺页很多，但仍记着几种设伏和拉弓法。",
+      "use": {
+        "label": "研读弓谱",
+        "effects": ["lose_remnant_bow_manual", "mark_studied_bow_manual"],
+        "text": "你读完残缺弓谱，里面的设伏法不完整，却足够让你以后看懂猎户留下的机关。"
+      }
     },
     {
       "id": "hundred_year_ginseng",
@@ -248,7 +295,12 @@
       "group": "herb",
       "rarity": "legendary",
       "sell_value": 180,
-      "description": "足以让镇上药铺翻脸争抢的救命药。"
+      "description": "足以让镇上药铺翻脸争抢的救命药。",
+      "use": {
+        "label": "服参救命",
+        "effects": ["lose_hundred_year_ginseng", "gain_health_small", "gain_health_small", "gain_stamina_small", "clear_cold_mild", "clear_cold_worse", "clear_cold_severe"],
+        "text": "百年山参药力凶猛，像从死门口把你硬拽回来。"
+      }
     },
     {
       "id": "tiger_bone",
@@ -258,7 +310,8 @@
       "group": "animal",
       "rarity": "legendary",
       "sell_value": 160,
-      "description": "猎户口中的硬货，来路必须藏好。"
+      "description": "猎户口中的硬货，来路必须藏好。",
+      "passive": "佩在身上后，林中和洞穴里更能压住惊惧和踪迹。"
     },
     {
       "id": "soldier_hidden_seal",
@@ -268,7 +321,12 @@
       "group": "old_object",
       "rarity": "legendary",
       "sell_value": 140,
-      "description": "可能牵出一条逃兵藏物线，也可能招祸。"
+      "description": "可能牵出一条逃兵藏物线，也可能招祸。",
+      "use": {
+        "label": "辨认私印",
+        "effects": ["mark_soldier_relic_clue", "gain_attention_small"],
+        "text": "私印边角有军中暗记。你知道它能牵出更深的遗藏，也知道这东西会引来目光。"
+      }
     },
     {
       "id": "black_iron_shortblade",
@@ -278,7 +336,8 @@
       "group": "weapon",
       "rarity": "legendary",
       "sell_value": 150,
-      "description": "不像民间铁匠能打出的东西。"
+      "description": "不像民间铁匠能打出的东西。",
+      "passive": "装备到武器槽后，正面逼退威胁更强，但也更像会招祸的东西。"
     },
     {
       "id": "blood_reishi",
@@ -308,7 +367,8 @@
       "group": "relic",
       "rarity": "mythic",
       "sell_value": 500,
-      "description": "非金非玉，刻着没人认得的旧纹。"
+      "description": "非金非玉，刻着没人认得的旧纹。",
+      "passive": "佩在身上后，翻找高风险旧物时更能压住痕迹。"
     }
   ]
 }

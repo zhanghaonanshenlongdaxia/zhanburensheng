@@ -49,6 +49,86 @@
 	  "id": "cold_treated_today",
 	  "name": "今日已经用药",
 	  "default": false
+    },
+	{
+	  "id": "studied_bow_manual",
+	  "name": "读过残缺弓谱",
+	  "default": false
+    },
+	{
+	  "id": "jade_buyer_clue",
+	  "name": "知道残玉买家",
+	  "default": false
+    },
+	{
+	  "id": "soldier_relic_clue",
+	  "name": "发现军中遗物线索",
+	  "default": false
+    },
+	{
+	  "id": "met_jade_buyer",
+	  "name": "见过残玉买家",
+	  "default": false
+    },
+	{
+	  "id": "hunter_trap_line",
+	  "name": "掌握猎户设伏门路",
+	  "default": false
+    },
+	{
+	  "id": "villager_aid_line",
+	  "name": "村人互助有了门路",
+	  "default": false
+    },
+	{
+	  "id": "grocer_grain_contact",
+	  "name": "粮铺后门熟人",
+	  "default": false
+    },
+	{
+	  "id": "doctor_medicine_contact",
+	  "name": "周郎中药路熟人",
+	  "default": false
+    },
+	{
+	  "id": "peddler_old_goods_contact",
+	  "name": "货郎旧物暗线",
+	  "default": false
+    },
+	{
+	  "id": "tea_debt_contact",
+	  "name": "茶棚债讯熟人",
+	  "default": false
+    },
+	{
+	  "id": "porter_ferry_contact",
+	  "name": "渡口脚夫熟人",
+	  "default": false
+    },
+	{
+	  "id": "equip_old_hunter_knife",
+	  "name": "装备旧猎刀",
+	  "default": false
+    },
+	{
+	  "id": "equip_black_iron_shortblade",
+	  "name": "装备黑铁短刃",
+	  "default": false
+    },
+	{
+	  "id": "equip_wolf_pelt_complete",
+	  "name": "披完整狼皮",
+	  "default": false
+    },
+	{
+	  "id": "equip_tiger_bone",
+	  "name": "佩山君骨",
+	  "default": false
+    },
+	{
+	  "id": "equip_ancient_bone_token",
+	  "name": "佩古骨令",
+	  "default": false
     }
   ]
 }

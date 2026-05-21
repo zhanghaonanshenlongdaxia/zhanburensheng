@@ -3,6 +3,7 @@ extends Control
 
 const ExplorationBoardScript := preload("res://scripts/ui/ExplorationBoard.gd")
 const TownBoardScript := preload("res://scripts/ui/TownBoard.gd")
+const OptionCardBackdropScript := preload("res://scripts/ui/OptionCardBackdrop.gd")
 
 @onready var day_label: Label = $MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/TopRow/DayLabel
 @onready var weather_label: Label = $MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/TopRow/WeatherLabel
@@ -55,6 +56,8 @@ var _feedback_bubble_index: int = 0
 var _player_state_rich: RichTextLabel
 var _inventory_rich: RichTextLabel
 var _selection_rich: RichTextLabel
+var _item_icon_textures: Dictionary = {}
+var _option_backdrops: Array = []
 
 func _ready() -> void:
 	_ensure_scroll_viewport()
@@ -63,6 +66,7 @@ func _ready() -> void:
 	_ensure_inventory_overlay()
 	_ensure_sidebar_buttons()
 	_ensure_feedback_layer()
+	_ensure_option_backdrops()
 	_ensure_rich_text_replacements()
 	_apply_visual_polish()
 	_app = get_tree().get_first_node_in_group("app") as App
@@ -138,6 +142,9 @@ func _ensure_town_board() -> void:
 	_town_board.log_changed.connect(_on_town_log_changed)
 	_town_board.buy_requested.connect(_on_town_buy_requested)
 	_town_board.sell_requested.connect(_on_town_sell_requested)
+	_town_board.contact_unlocked.connect(_on_town_contact_unlocked)
+	_town_board.task_started.connect(_on_town_task_started)
+	_town_board.task_completed.connect(_on_town_task_completed)
 	_town_board.extracted.connect(_on_town_extracted)
 
 func _ensure_inventory_overlay() -> void:
@@ -339,6 +346,20 @@ func _ensure_feedback_layer() -> void:
 	_feedback_layer.z_index = 80
 	add_child(_feedback_layer)
 	move_child(_feedback_layer, get_child_count() - 1)
+
+func _ensure_option_backdrops() -> void:
+	_option_backdrops.clear()
+	for index in option_buttons.size():
+		var button := option_buttons[index]
+		var backdrop = button.get_node_or_null("OptionCardBackdrop")
+		if backdrop == null:
+			backdrop = OptionCardBackdropScript.new()
+			backdrop.name = "OptionCardBackdrop"
+			backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+			backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			button.add_child(backdrop)
+			button.move_child(backdrop, 0)
+		_option_backdrops.append(backdrop)
 
 func _make_sidebar_button(text: String) -> Button:
 	var button := Button.new()
@@ -734,13 +755,13 @@ func _feedback_from_effect(effect: Dictionary) -> Dictionary:
 				"scar": target_id == "health" and value < 0
 			}
 		"set_flag":
-			if not target_id.begins_with("cold_"):
+			if not target_id.begins_with("cold_") and not _is_route_flag(target_id):
 				return {}
 			return {
-				"text": "状态 %s" % _flag_display_name(target_id),
-				"color": Color(0.72, 0.52, 0.92, 1.0),
+				"text": "线索 %s" % _flag_display_name(target_id) if _is_route_flag(target_id) else "状态 %s" % _flag_display_name(target_id),
+				"color": Color(0.90, 0.70, 0.35, 1.0) if _is_route_flag(target_id) else Color(0.72, 0.52, 0.92, 1.0),
 				"fly_to_bag": false,
-				"shake": true,
+				"shake": not _is_route_flag(target_id),
 				"scar": target_id == "cold_severe"
 			}
 		"clear_flag":
@@ -1049,6 +1070,7 @@ func _on_day_started(payload: Dictionary) -> void:
 		var button: Button = option_buttons[index]
 		var option_label: RichTextLabel = option_rich_labels[index]
 		var option_illustration: OptionIllustration = option_illustrations[index]
+		var option_backdrop = _option_backdrops[index] if index < _option_backdrops.size() else null
 		if index < options.size():
 			var option: Dictionary = options[index]
 			button.visible = true
@@ -1061,9 +1083,17 @@ func _on_day_started(payload: Dictionary) -> void:
 				str(option.get("risk_desc", "")),
 				str(option.get("reward_desc", ""))
 			)
+			if option_backdrop != null:
+				option_backdrop.visible = true
+				option_backdrop.set_context(
+					str(option.get("location_id", "field")),
+					str(option.get("risk_desc", ""))
+				)
 		else:
 			button.visible = false
 			option_label.text = ""
+			if option_backdrop != null:
+				option_backdrop.visible = false
 	next_day_button.visible = false
 	next_day_button.disabled = true
 	_set_selection_text("目标：活到还清债务为止\n%s\n请选择今日行动（当前欠债：%d）" % [
@@ -1128,6 +1158,64 @@ func _clear_children(node: Node) -> void:
 		node.remove_child(child)
 		child.queue_free()
 
+func _make_inventory_icon_node(item_id: String, tint: Color, icon_size: float = 42.0, fallback_group: String = "") -> Control:
+	var frame := PanelContainer.new()
+	frame.custom_minimum_size = Vector2(icon_size, icon_size)
+	frame.add_theme_stylebox_override("panel", _make_inventory_slot_style(tint, Color(0.026, 0.023, 0.020, 1.0)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 3)
+	margin.add_theme_constant_override("margin_top", 3)
+	margin.add_theme_constant_override("margin_right", 3)
+	margin.add_theme_constant_override("margin_bottom", 3)
+	frame.add_child(margin)
+
+	var texture := _item_icon_texture(item_id)
+	if texture != null:
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(icon_size - 6.0, icon_size - 6.0)
+		icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		margin.add_child(icon)
+		icon.texture = texture
+		return frame
+
+	var fallback := Label.new()
+	fallback.text = _inventory_icon(fallback_group)
+	if fallback.text.is_empty():
+		fallback.text = item_id.substr(0, 1)
+	fallback.custom_minimum_size = Vector2(icon_size - 6.0, icon_size - 6.0)
+	fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	fallback.add_theme_font_size_override("font_size", int(icon_size * 0.52))
+	fallback.add_theme_color_override("font_color", tint)
+	margin.add_child(fallback)
+	return frame
+
+func _item_icon_texture(item_id: String) -> Texture2D:
+	if item_id.is_empty():
+		return null
+	if _item_icon_textures.has(item_id):
+		return _item_icon_textures[item_id] as Texture2D
+	var texture := _load_texture_from_file("res://assets/generated/ui/items/%s.jpg" % item_id)
+	_item_icon_textures[item_id] = texture
+	return texture
+
+func _load_texture_from_file(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var imported_texture: Texture2D = ResourceLoader.load(path) as Texture2D
+		if imported_texture != null:
+			return imported_texture
+	var image_path: String = path
+	if not FileAccess.file_exists(image_path):
+		image_path = ProjectSettings.globalize_path(path)
+	var image: Image = Image.load_from_file(image_path)
+	if image == null or image.is_empty():
+		return null
+	return ImageTexture.create_from_image(image)
+
 func _make_inventory_resource_row(name: String, amount: int, item_id: String) -> Control:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(0.0, 58.0)
@@ -1144,14 +1232,7 @@ func _make_inventory_resource_row(name: String, amount: int, item_id: String) ->
 	row.add_theme_constant_override("separation", 10)
 	margin.add_child(row)
 
-	var seal := Label.new()
-	seal.text = name.substr(0, 1)
-	seal.custom_minimum_size = Vector2(34.0, 34.0)
-	seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	seal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	seal.add_theme_font_size_override("font_size", 20)
-	seal.add_theme_color_override("font_color", _resource_color(item_id))
-	row.add_child(seal)
+	row.add_child(_make_inventory_icon_node(item_id, _resource_color(item_id), 38.0))
 
 	var text_box := VBoxContainer.new()
 	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1194,14 +1275,7 @@ func _make_inventory_slot(entry: Dictionary) -> Control:
 	top.add_theme_constant_override("separation", 8)
 	root.add_child(top)
 
-	var icon := Label.new()
-	icon.text = _inventory_icon(str(entry.get("group", "")))
-	icon.custom_minimum_size = Vector2(34.0, 30.0)
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	icon.add_theme_font_size_override("font_size", 22)
-	icon.add_theme_color_override("font_color", rarity_color)
-	top.add_child(icon)
+	top.add_child(_make_inventory_icon_node(str(entry.get("id", "")), rarity_color, 42.0, str(entry.get("group", ""))))
 
 	var title := RichTextLabel.new()
 	title.bbcode_enabled = true
@@ -1230,7 +1304,129 @@ func _make_inventory_slot(entry: Dictionary) -> Control:
 	desc.add_theme_font_size_override("font_size", 12)
 	desc.add_theme_color_override("font_color", Color(0.66, 0.61, 0.50, 1.0))
 	root.add_child(desc)
+
+	var passive_text := str(entry.get("passive", ""))
+	if not passive_text.is_empty():
+		var passive := Label.new()
+		passive.text = "被动：%s" % passive_text
+		passive.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		passive.add_theme_font_size_override("font_size", 12)
+		passive.add_theme_color_override("font_color", Color(0.72, 0.82, 0.56, 1.0))
+		root.add_child(passive)
+
+	var equip_slot := _equipment_slot(str(entry.get("id", "")))
+	if not equip_slot.is_empty():
+		var equip_button := Button.new()
+		equip_button.text = "卸下" if _is_item_equipped(str(entry.get("id", ""))) else "装备"
+		equip_button.custom_minimum_size = Vector2(0.0, 30.0)
+		equip_button.focus_mode = Control.FOCUS_NONE
+		_apply_solid_button_style(equip_button)
+		equip_button.pressed.connect(_on_inventory_toggle_equip.bind(str(entry.get("id", ""))))
+		root.add_child(equip_button)
+
+	var use_config: Dictionary = entry.get("use", {})
+	if not use_config.is_empty():
+		var use_button := Button.new()
+		use_button.text = str(use_config.get("label", "使用"))
+		use_button.custom_minimum_size = Vector2(0.0, 30.0)
+		use_button.focus_mode = Control.FOCUS_NONE
+		_apply_solid_button_style(use_button)
+		use_button.pressed.connect(_on_inventory_use_item.bind(str(entry.get("id", ""))))
+		root.add_child(use_button)
 	return panel
+
+func _on_inventory_use_item(item_id: String) -> void:
+	if _app == null or item_id.is_empty():
+		return
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	if inventory_model.get_amount(item_id) <= 0:
+		_set_selection_text("包里已经没有这件东西。\n%s" % _get_progress_summary())
+		_refresh_inventory_overlay()
+		return
+	var definition: Dictionary = inventory_model.item_defs.get(item_id, {})
+	var use_config: Dictionary = definition.get("use", {})
+	if use_config.is_empty():
+		return
+	var effect_ids: Array = use_config.get("effects", [])
+	var effect_system: EffectSystem = _app.architecture.get_system(&"effect")
+	var applied_effects: Array = effect_system.apply_effects(effect_ids)
+	_play_effect_feedback(applied_effects)
+	_set_selection_text("%s\n%s" % [str(use_config.get("text", "你使用了%s。" % str(definition.get("name", item_id)))), _get_progress_summary()])
+	_refresh_inventory_overlay()
+	_refresh_status()
+
+func _on_inventory_toggle_equip(item_id: String) -> void:
+	if _app == null or item_id.is_empty():
+		return
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	if inventory_model.get_amount(item_id) <= 0:
+		_set_selection_text("包里已经没有这件装备。\n%s" % _get_progress_summary())
+		_refresh_inventory_overlay()
+		return
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	var slot := _equipment_slot(item_id)
+	if slot.is_empty():
+		return
+	if _is_item_equipped(item_id):
+		flag_model.set_flag(_equipment_flag(item_id), false)
+		_set_selection_text("你卸下%s。\n%s" % [_item_display_name(item_id), _get_progress_summary()])
+	else:
+		for other_id in _equipment_items_for_slot(slot):
+			flag_model.set_flag(_equipment_flag(other_id), false)
+		flag_model.set_flag(_equipment_flag(item_id), true)
+		_set_selection_text("你装备%s。\n%s" % [_item_display_name(item_id), _get_progress_summary()])
+	_sync_active_board_context()
+	_refresh_inventory_overlay()
+	_refresh_status()
+
+func _sync_active_board_context() -> void:
+	if _app == null:
+		return
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	if _exploration_board != null and _exploration_board.visible:
+		_exploration_board.update_context(inventory_model.items, flag_model.flags)
+
+func _clear_equipment_if_missing(item_id: String) -> void:
+	if _app == null or _equipment_slot(item_id).is_empty():
+		return
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	if inventory_model.get_amount(item_id) > 0:
+		return
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	flag_model.set_flag(_equipment_flag(item_id), false)
+	_sync_active_board_context()
+
+func _is_item_equipped(item_id: String) -> bool:
+	if _app == null:
+		return false
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	return flag_model.get_flag(_equipment_flag(item_id))
+
+func _equipment_flag(item_id: String) -> String:
+	return "equip_%s" % item_id
+
+func _equipment_slot(item_id: String) -> String:
+	match item_id:
+		"old_hunter_knife", "black_iron_shortblade":
+			return "weapon"
+		"wolf_pelt_complete":
+			return "cloak"
+		"tiger_bone", "ancient_bone_token":
+			return "charm"
+		_:
+			return ""
+
+func _equipment_items_for_slot(slot: String) -> Array[String]:
+	match slot:
+		"weapon":
+			return ["old_hunter_knife", "black_iron_shortblade"]
+		"cloak":
+			return ["wolf_pelt_complete"]
+		"charm":
+			return ["tiger_bone", "ancient_bone_token"]
+		_:
+			return []
 
 func _on_inventory_button_pressed() -> void:
 	if _app == null:
@@ -1291,14 +1487,19 @@ func _show_exploration_board(selected: Dictionary) -> void:
 	_exploration_board.visible = true
 	if _town_board != null:
 		_town_board.visible = false
-	_exploration_board.configure(selected, _current_weather)
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	_exploration_board.configure(selected, _current_weather, inventory_model.items, flag_model.flags)
 	scene_illustration.set_context(
 		str(_current_weather.get("id", "clear")),
 		"daytime",
 		str(selected.get("location_id", "field"))
 	)
-	_set_selection_text("已定卦：%s\n卦象只给方向。你需要从入口出发，在格子地图中搜索、应对危险，并找到出口撤离。\n%s" % [
+	var verdict := _fortune_verdict(selected, _current_weather)
+	_set_selection_text("已定卦：%s  【%s】%s\n卦象只给方向。你需要从入口出发，在格子地图中搜索、应对危险，并找到出口撤离。\n%s" % [
 		str(selected.get("omen_title", selected.get("title", "未知卦象"))),
+		str(verdict.get("grade", "平")),
+		str(verdict.get("text", "")),
 		_get_route_hint()
 	])
 
@@ -1312,7 +1513,8 @@ func _show_town_board(selected: Dictionary) -> void:
 		_exploration_board.visible = false
 	_town_board.visible = true
 	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
-	_town_board.configure(selected, inventory_model.item_defs, inventory_model.items)
+	var relation_model: RefCounted = _app.architecture.get_model(&"relation")
+	_town_board.configure(selected, inventory_model.item_defs, inventory_model.items, relation_model)
 	scene_illustration.set_context(
 		str(_current_weather.get("id", "clear")),
 		"daytime",
@@ -1378,12 +1580,27 @@ func _on_town_sell_requested(item_id: String, value: int, summary: String) -> vo
 		return
 	inventory_model.add_item(item_id, -1)
 	inventory_model.add_item("money", value)
+	_clear_equipment_if_missing(item_id)
 	_town_board.update_inventory(inventory_model.item_defs, inventory_model.items)
 	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
 	_play_manual_item_feedback([
 		{"id": item_id, "value": -1},
 		{"id": "money", "value": value}
 	])
+	_refresh_status()
+
+func _on_town_contact_unlocked(effect_ids: Array, summary: String) -> void:
+	_apply_exploration_effects(effect_ids)
+	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
+	_refresh_status()
+
+func _on_town_task_started(_task_id: String, summary: String) -> void:
+	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
+	_refresh_status()
+
+func _on_town_task_completed(_task_id: String, effect_ids: Array, summary: String) -> void:
+	_apply_exploration_effects(effect_ids)
+	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
 	_refresh_status()
 
 func _on_town_extracted(summary: String) -> void:
@@ -1479,6 +1696,7 @@ func _refresh_status() -> void:
 	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
 	var debt_model: DebtModel = _app.architecture.get_model(&"debt")
 	var day_model: DayCycleModel = _app.architecture.get_model(&"day_cycle")
+	var relation_model: RefCounted = _app.architecture.get_model(&"relation")
 	var stat_order: Array = _ui_config.get("player_stat_order", [])
 	var inventory_order: Array = _ui_config.get("inventory_item_order", [])
 	var player_text: String = _format_display_entries(player_model.get_display_value_map(stat_order))
@@ -1489,8 +1707,12 @@ func _refresh_status() -> void:
 		player_display_text += "\n警示：%s" % warning_text
 	if not flag_text.is_empty():
 		player_display_text += "\n标记：%s" % flag_text
+	var relation_text := _format_display_entries(relation_model.get_display_entries())
+	if not relation_text.is_empty():
+		player_display_text += "\n人脉：%s" % relation_text
 	_set_rich_text(_player_state_rich, player_state_label, player_display_text)
 	var special_inventory_text: String = _get_special_inventory_summary(inventory_model)
+	var equipment_text := _get_equipment_summary()
 	var inventory_display_text: String = "%s\n阶段：%s    欠债：%d/%d    催债日：%d\n%s" % [
 		_format_display_entries(inventory_model.get_display_value_map(inventory_order)),
 		day_model.current_phase,
@@ -1499,6 +1721,8 @@ func _refresh_status() -> void:
 		debt_model.get_value("due_day"),
 		_get_progress_summary()
 	]
+	if not equipment_text.is_empty():
+		inventory_display_text += "\n装备：%s" % equipment_text
 	if not special_inventory_text.is_empty():
 		inventory_display_text += "\n战利品：%s" % special_inventory_text
 	_set_rich_text(_inventory_rich, inventory_label, inventory_display_text)
@@ -1507,6 +1731,26 @@ func _get_route_hint() -> String:
 	if _app == null:
 		return "路线未定"
 	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	if flag_model.get_flag("soldier_relic_clue"):
+		return "当前路线：私印暗记已经对上旧营地，可追军中遗物但风险很高"
+	if flag_model.get_flag("jade_buyer_clue") and not flag_model.get_flag("met_jade_buyer"):
+		return "当前路线：残玉有暗买家，后续可去茶摊碰线"
+	if flag_model.get_flag("met_jade_buyer"):
+		return "当前路线：已接上残玉买家，旧玉旧物可换更隐秘的收益"
+	if flag_model.get_flag("peddler_old_goods_contact"):
+		return "当前路线：货郎旧物暗线已打开，可把旧物换成更高收益"
+	if flag_model.get_flag("grocer_grain_contact"):
+		return "当前路线：粮铺后门已熟，缺粮时可走暗粮线"
+	if flag_model.get_flag("doctor_medicine_contact"):
+		return "当前路线：周郎中药路已熟，治寒和换药更稳定"
+	if flag_model.get_flag("tea_debt_contact"):
+		return "当前路线：茶棚能探债主动向，适合规避催债风险"
+	if flag_model.get_flag("porter_ferry_contact"):
+		return "当前路线：渡口脚夫给了零活，稳定小钱但注意湿寒"
+	if flag_model.get_flag("hunter_trap_line"):
+		return "当前路线：猎户设伏门路成形，密林肉食线更稳定"
+	if flag_model.get_flag("villager_aid_line"):
+		return "当前路线：村人互助线已接上，可换粮食与小工钱"
 	if flag_model.get_flag("found_hidden_stash"):
 		return "当前路线：坟地线索已兑现，适合尽快转化收益还债"
 	if flag_model.get_flag("unlocked_errand_route"):
@@ -1524,7 +1768,136 @@ func _get_progress_summary() -> String:
 	var current_debt: int = debt_model.get_value("current")
 	var initial_debt: int = maxi(debt_model.get_value("initial"), 1)
 	var repaid: int = maxi(initial_debt - current_debt, 0)
-	return "还债进度：%d/%d    %s" % [repaid, initial_debt, _get_route_hint()]
+	var echoes := _get_consequence_echoes()
+	if echoes.is_empty():
+		return "还债进度：%d/%d    %s\n阶段目标：%s" % [repaid, initial_debt, _get_route_hint(), _get_stage_goal()]
+	return "还债进度：%d/%d    %s\n阶段目标：%s\n回响：%s" % [repaid, initial_debt, _get_route_hint(), _get_stage_goal(), " / ".join(echoes)]
+
+func _get_consequence_echoes() -> Array[String]:
+	var echoes: Array[String] = []
+	if _app == null:
+		return echoes
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	var player_model: PlayerModel = _app.architecture.get_model(&"player")
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	if flag_model.get_flag("cold_severe"):
+		echoes.append("重寒会持续伤身，必须尽快治")
+	elif flag_model.get_flag("cold_worse"):
+		echoes.append("寒症正在加重，药草或清露苔能救急")
+	elif flag_model.get_flag("cold_mild"):
+		echoes.append("染寒未清，拖到夜里可能恶化")
+	if flag_model.get_flag("jade_buyer_clue") and inventory_model.get_amount("broken_jade_button") > 0:
+		echoes.append("残玉扣可引出茶摊买家")
+	if flag_model.get_flag("soldier_relic_clue") and inventory_model.get_amount("soldier_hidden_seal") > 0:
+		echoes.append("逃兵私印指向旧营土垒")
+	if flag_model.get_flag("studied_bow_manual"):
+		echoes.append("弓谱会提高遭遇野兽时的脱身机会")
+	if flag_model.get_flag("equip_old_hunter_knife"):
+		echoes.append("旧猎刀已装备，遇兽更容易脱身")
+	if flag_model.get_flag("equip_black_iron_shortblade"):
+		echoes.append("黑铁短刃已装备，逼退威胁更强但更惹眼")
+	if flag_model.get_flag("equip_wolf_pelt_complete"):
+		echoes.append("完整狼皮已披，水边和寒地更稳")
+	if flag_model.get_flag("equip_tiger_bone") or flag_model.get_flag("equip_ancient_bone_token"):
+		echoes.append("护身旧物已佩，能压住一部分疑心和惊惧")
+	if flag_model.get_flag("earned_villager_trust") or flag_model.get_flag("villager_aid_line"):
+		echoes.append("村人信任能转成低风险粮钱")
+	if flag_model.get_flag("grocer_grain_contact"):
+		echoes.append("粮铺后门能稳定补粮")
+	if flag_model.get_flag("doctor_medicine_contact"):
+		echoes.append("周郎中药路能压寒症")
+	if flag_model.get_flag("peddler_old_goods_contact"):
+		echoes.append("货郎暗线能提高旧物收益")
+	if flag_model.get_flag("tea_debt_contact"):
+		echoes.append("茶棚消息能避开催债人")
+	if flag_model.get_flag("porter_ferry_contact"):
+		echoes.append("渡口零活能换稳定工钱")
+	if player_model.get_stat("village_attention") >= 35:
+		echoes.append("村中关注偏高，卖贵重物更易惹眼")
+	if player_model.get_stat("suspicion") >= 35:
+		echoes.append("怀疑偏高，接下来应少走犯忌路线")
+	return echoes
+
+func _get_stage_goal() -> String:
+	if _app == null:
+		return "活过今天"
+	var debt_model: DebtModel = _app.architecture.get_model(&"debt")
+	var day_model: DayCycleModel = _app.architecture.get_model(&"day_cycle")
+	var player_model: PlayerModel = _app.architecture.get_model(&"player")
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	var relation_model: RefCounted = _app.architecture.get_model(&"relation")
+	if debt_model.get_value("current") <= 0:
+		return "债务已清，等待最终收束"
+	var active_task := _active_town_task_summary(relation_model)
+	if not active_task.is_empty():
+		return active_task
+	if player_model.get_stat("health") <= 14:
+		return "先保命：买药、用药或避开高风险探索"
+	if inventory_model.get_amount("food") <= 1:
+		return "先补粮：去城镇买粮，或走低风险粮食线"
+	if flag_model.get_flag("cold_worse") or flag_model.get_flag("cold_severe"):
+		return "先治寒症：药草、清露苔、苦叶草都能压住恶化"
+	if day_model.current_day >= debt_model.get_value("due_day") - 1:
+		return "催债临近：优先把战利品变现还债"
+	if flag_model.get_flag("soldier_relic_clue"):
+		return "可冲高收益：追旧营军中遗物，注意怀疑和关注"
+	if flag_model.get_flag("jade_buyer_clue") and inventory_model.get_amount("broken_jade_button") > 0:
+		return "去接残玉买家：把残玉扣变成更高收益"
+	var equipment_goal := _equipment_stage_goal(inventory_model, flag_model)
+	if not equipment_goal.is_empty():
+		return equipment_goal
+	if flag_model.get_flag("grocer_grain_contact") and inventory_model.get_amount("food") <= 3:
+		return "走暗粮线：先把粮食库存补到安全线"
+	if flag_model.get_flag("doctor_medicine_contact") and (flag_model.get_flag("cold_mild") or flag_model.get_flag("cold_worse")):
+		return "走药路：用周郎中的方子处理寒症"
+	if flag_model.get_flag("peddler_old_goods_contact"):
+		return "走旧物暗线：把战利品变现，少在明处露财"
+	if flag_model.get_flag("tea_debt_contact"):
+		return "去茶棚探风：确认债主动向再决定还钱或避让"
+	if flag_model.get_flag("porter_ferry_contact"):
+		return "接渡口零活：稳拿小钱，同时防寒"
+	if flag_model.get_flag("studied_bow_manual") or flag_model.get_flag("hunter_trap_line"):
+		return "走猎户线：用设伏稳定拿肉食和皮货"
+	if flag_model.get_flag("earned_villager_trust") or flag_model.get_flag("villager_aid_line"):
+		return "走互助线：低风险换粮和小钱，稳住节奏"
+	return "建立路线：先找一条可重复赚钱或补给的门路"
+
+func _equipment_stage_goal(inventory_model: InventoryModel, flag_model: FlagModel) -> String:
+	if inventory_model.get_amount("black_iron_shortblade") > 0 and not flag_model.get_flag("equip_black_iron_shortblade"):
+		return "整理装备：黑铁短刃可装备，能提高正面应对威胁的把握"
+	if inventory_model.get_amount("old_hunter_knife") > 0 and not flag_model.get_flag("equip_old_hunter_knife") and not flag_model.get_flag("equip_black_iron_shortblade"):
+		return "整理装备：旧猎刀可装备，外出遇兽更稳"
+	if inventory_model.get_amount("wolf_pelt_complete") > 0 and not flag_model.get_flag("equip_wolf_pelt_complete"):
+		return "整理装备：完整狼皮可披，水边和寒地更稳"
+	if inventory_model.get_amount("ancient_bone_token") > 0 and not flag_model.get_flag("equip_ancient_bone_token"):
+		return "整理装备：古骨令可佩，翻找旧物时更压得住痕迹"
+	if inventory_model.get_amount("tiger_bone") > 0 and not flag_model.get_flag("equip_tiger_bone") and not flag_model.get_flag("equip_ancient_bone_token"):
+		return "整理装备：山君骨可佩，林中和洞穴行动更稳"
+	return ""
+
+func _active_town_task_summary(relation_model: RefCounted) -> String:
+	if relation_model == null:
+		return ""
+	for task_id in ["grocer_supply", "doctor_delivery", "peddler_appraisal", "tea_warning", "porter_ferry_note"]:
+		if relation_model.is_task_active(task_id):
+			return "城镇委托待交：%s" % _town_task_goal_name(task_id)
+	return ""
+
+func _town_task_goal_name(task_id: String) -> String:
+	match task_id:
+		"grocer_supply":
+			return "去后巷暗仓搬粮并交付"
+		"doctor_delivery":
+			return "去病家门前送急药包"
+		"peddler_appraisal":
+			return "去后巷试旧物暗价"
+		"tea_warning":
+			return "去旧桥确认催债脚印"
+		"porter_ferry_note":
+			return "去河渡口送脚夫口信"
+		_:
+			return "回城镇交委托"
 
 func _get_warning_summary(player_model: PlayerModel, inventory_model: InventoryModel, debt_model: DebtModel, day_model: DayCycleModel) -> String:
 	var warnings: Array[String] = []
@@ -1544,6 +1917,25 @@ func _get_warning_summary(player_model: PlayerModel, inventory_model: InventoryM
 	if debt_model.get_value("current") > 0 and day_model.current_day >= debt_model.get_value("due_day") - 2:
 		warnings.append("临近催债")
 	return " / ".join(warnings)
+
+func _is_route_flag(flag_id: String) -> bool:
+	return flag_id in [
+		"studied_bow_manual",
+		"jade_buyer_clue",
+		"soldier_relic_clue",
+		"met_jade_buyer",
+		"hunter_trap_line",
+		"villager_aid_line",
+		"grocer_grain_contact",
+		"doctor_medicine_contact",
+		"peddler_old_goods_contact",
+		"tea_debt_contact",
+		"porter_ferry_contact",
+		"earned_villager_trust",
+		"unlocked_errand_route",
+		"saw_graveyard_cache",
+		"found_hidden_stash"
+	]
 
 func _get_end_of_day_outlook() -> String:
 	if _app == null:
@@ -1587,6 +1979,17 @@ func _get_special_inventory_summary(inventory_model: InventoryModel) -> String:
 		])
 		if entries.size() >= 6:
 			break
+	return "，".join(entries)
+
+func _get_equipment_summary() -> String:
+	if _app == null:
+		return ""
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	var entries: Array[String] = []
+	for item_id in ["old_hunter_knife", "black_iron_shortblade", "wolf_pelt_complete", "tiger_bone", "ancient_bone_token"]:
+		if flag_model.get_flag(_equipment_flag(item_id)) and inventory_model.get_amount(item_id) > 0:
+			entries.append(_item_display_name(item_id))
 	return "，".join(entries)
 
 func _rarity_prefix(rarity_id: String) -> String:
@@ -1711,9 +2114,11 @@ func _build_option_markup(option: Dictionary, weather: Dictionary) -> String:
 	var omen_warning: String = str(option.get("omen_warning", option.get("risk_desc", "-")))
 	var risk_desc: String = _style_risk_text(str(option.get("risk_desc", "-")))
 	var title_markup: String = _style_title_text(title, str(option.get("location_id", "field")), str(option.get("risk_desc", "")), str(weather.get("id", "clear")))
+	var fortune_mark: String = _build_fortune_mark(option, weather)
 	if _compact_option_markup:
 		var compact_lines: Array[String] = [
 			title_markup,
+			fortune_mark,
 			"[font_size=13][color=#B9AD8D]%s[/color][/font_size]" % omen_text,
 			"[font_size=12][color=#A97B3E]所指[/color]  [color=#D7CFBB]%s[/color]    [pulse freq=1.2 color=#F0C15A ease=-2.0][color=#A97B3E]可得[/color][/pulse]  [color=#D7CFBB]%s[/color][/font_size]" % [omen_place, omen_gain],
 			"[font_size=12][shake rate=12.0 level=2 connected=1][color=#7E8190]忌[/color]  [color=#CDBFA0]%s[/color][/shake][/font_size]" % omen_warning
@@ -1721,11 +2126,144 @@ func _build_option_markup(option: Dictionary, weather: Dictionary) -> String:
 		return String.chr(10).join(compact_lines)
 	var lines: Array[String] = [
 		title_markup,
+		fortune_mark,
 		"[font_size=14][color=#B9AD8D]%s[/color][/font_size]" % omen_text,
 		"[font_size=14][color=#A97B3E]所指[/color]  [color=#D7CFBB]%s[/color]    [pulse freq=1.2 color=#F0C15A ease=-2.0][color=#A97B3E]可得[/color][/pulse]  [color=#D7CFBB]%s[/color][/font_size]" % [omen_place, omen_gain],
 		"[font_size=13][shake rate=12.0 level=2 connected=1][color=#7E8190]忌[/color]  [color=#CDBFA0]%s[/color][/shake]    %s[/font_size]" % [omen_warning, risk_desc]
 	]
 	return String.chr(10).join(lines)
+
+func _build_fortune_mark(option: Dictionary, weather: Dictionary) -> String:
+	var verdict: Dictionary = _fortune_verdict(option, weather)
+	var grade := str(verdict.get("grade", "平"))
+	var text := str(verdict.get("text", "吉凶相抵，取舍在人。"))
+	var color := str(verdict.get("color", "#D8CFAE"))
+	var effect_open := "[pulse freq=1.1 color=%s ease=-2.0]" % color if _fortune_score_grade_rank(grade) > 0 else ""
+	var effect_close := "[/pulse]" if not effect_open.is_empty() else ""
+	if grade.contains("凶"):
+		effect_open = "[shake rate=10.0 level=2 connected=1]"
+		effect_close = "[/shake]"
+	return "[font_size=13]%s[color=%s][b]%s[/b][/color]%s  [color=#B9AD8D]%s[/color][/font_size]" % [
+		effect_open,
+		color,
+		grade,
+		effect_close,
+		text
+	]
+
+func _fortune_verdict(option: Dictionary, weather: Dictionary) -> Dictionary:
+	var configured_grade := str(option.get("fortune_grade", ""))
+	if not configured_grade.is_empty():
+		return {
+			"grade": configured_grade,
+			"text": str(option.get("fortune_text", _fortune_text_for_grade(configured_grade, option))),
+			"color": _fortune_grade_color(configured_grade)
+		}
+	var score := _fortune_score(option, weather)
+	var grade := _fortune_grade_from_score(score)
+	return {
+		"grade": grade,
+		"text": _fortune_text_for_grade(grade, option),
+		"color": _fortune_grade_color(grade)
+	}
+
+func _fortune_score(option: Dictionary, weather: Dictionary) -> int:
+	var score := 0
+	var risk := str(option.get("risk_desc", ""))
+	var reward := str(option.get("reward_desc", "")) + str(option.get("omen_gain", ""))
+	var warning := str(option.get("omen_warning", ""))
+	if risk.contains("低风险") or risk.contains("无直接"):
+		score += 2
+	if risk.contains("中风险"):
+		score -= 1
+	if risk.contains("高风险"):
+		score -= 3
+	if reward.contains("稳定") or reward.contains("粮食") or reward.contains("健康") or reward.contains("体力") or reward.contains("信任"):
+		score += 2
+	if reward.contains("高收益") or reward.contains("更高") or reward.contains("买家") or reward.contains("线索"):
+		score += 1
+	if reward.contains("传说") or reward.contains("神话"):
+		score += 2
+	if warning.contains("受伤") or warning.contains("伤身") or warning.contains("招祸") or warning.contains("追查"):
+		score -= 2
+	if warning.contains("怀疑") or warning.contains("关注") or warning.contains("人眼"):
+		score -= 1
+	if str(option.get("id", "")).contains("rest") or str(option.get("id", "")).contains("use_herb"):
+		score += 1
+	if int(option.get("base_weight", 1)) >= 9:
+		score += 1
+	if str(weather.get("id", "")) == "rain" and str(option.get("location_id", "")) in ["river", "graveyard"]:
+		score -= 1
+	if str(weather.get("id", "")) == "clear" and str(option.get("location_id", "")) in ["mountain", "forest"]:
+		score += 1
+	return clampi(score, -6, 6)
+
+func _fortune_grade_from_score(score: int) -> String:
+	if score >= 5:
+		return "大吉"
+	if score >= 3:
+		return "中吉"
+	if score >= 1:
+		return "小吉"
+	if score == 0:
+		return "平"
+	if score >= -2:
+		return "小凶"
+	if score >= -4:
+		return "中凶"
+	return "大凶"
+
+func _fortune_score_grade_rank(grade: String) -> int:
+	match grade:
+		"大吉":
+			return 3
+		"中吉":
+			return 2
+		"小吉":
+			return 1
+		"小凶":
+			return -1
+		"中凶":
+			return -2
+		"大凶":
+			return -3
+		_:
+			return 0
+
+func _fortune_grade_color(grade: String) -> String:
+	match grade:
+		"大吉":
+			return "#F0C15A"
+		"中吉":
+			return "#DDBD72"
+		"小吉":
+			return "#9DCA72"
+		"小凶":
+			return "#DCA347"
+		"中凶":
+			return "#D46E58"
+		"大凶":
+			return "#E25A4F"
+		_:
+			return "#D8CFAE"
+
+func _fortune_text_for_grade(grade: String, option: Dictionary) -> String:
+	var place := str(option.get("omen_place", _location_name(str(option.get("location_id", "field")))))
+	match grade:
+		"大吉":
+			return "%s有厚利，应果断取之。" % place
+		"中吉":
+			return "%s有利可图，守卦而行。" % place
+		"小吉":
+			return "小有所得，忌贪多。"
+		"小凶":
+			return "利中带损，须见好就收。"
+		"中凶":
+			return "有险伏在路上，备好退路。"
+		"大凶":
+			return "凶象压顶，非急需不宜入局。"
+		_:
+			return "吉凶相抵，取舍在人。"
 
 func _location_name(location_id: String) -> String:
 	match location_id:
@@ -1848,5 +2386,8 @@ func _apply_responsive_layout() -> void:
 	for option_illustration in option_illustrations:
 		var icon_size: float = 50.0 if very_short else (56.0 if cramped else 82.0)
 		option_illustration.custom_minimum_size = Vector2(icon_size, icon_size)
+	for option_backdrop in _option_backdrops:
+		var backdrop_inset: float = 160.0 if tiny else (190.0 if cramped else 230.0)
+		option_backdrop.set_layout_inset(backdrop_inset)
 	main_margin.scale = Vector2.ONE
 	main_margin.pivot_offset = Vector2.ZERO

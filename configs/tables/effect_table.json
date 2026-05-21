@@ -49,6 +49,12 @@
       "value": 1
     },
     {
+      "id": "gain_food_medium",
+      "type": "item_delta",
+      "target_id": "food",
+      "value": 2
+    },
+    {
       "id": "gain_money_medium",
       "type": "item_delta",
       "target_id": "money",
@@ -173,6 +179,192 @@
       "type": "item_delta",
       "target_id": "food",
       "value": -1
+    },
+    {
+      "id": "lose_food_small",
+      "type": "item_delta",
+      "target_id": "food",
+      "value": -1
+    },
+    {
+      "id": "lose_bitter_leaf",
+      "type": "item_delta",
+      "target_id": "bitter_leaf",
+      "value": -1
+    },
+    {
+      "id": "lose_dry_tuber",
+      "type": "item_delta",
+      "target_id": "dry_tuber",
+      "value": -1
+    },
+    {
+      "id": "lose_clear_moss",
+      "type": "item_delta",
+      "target_id": "clear_moss",
+      "value": -1
+    },
+    {
+      "id": "lose_bloodroot",
+      "type": "item_delta",
+      "target_id": "bloodroot",
+      "value": -1
+    },
+    {
+      "id": "lose_mountain_ginseng",
+      "type": "item_delta",
+      "target_id": "mountain_ginseng",
+      "value": -1
+    },
+    {
+      "id": "lose_snake_gall",
+      "type": "item_delta",
+      "target_id": "snake_gall",
+      "value": -1
+    },
+    {
+      "id": "lose_purple_lingzhi",
+      "type": "item_delta",
+      "target_id": "purple_lingzhi",
+      "value": -1
+    },
+    {
+      "id": "lose_hundred_year_ginseng",
+      "type": "item_delta",
+      "target_id": "hundred_year_ginseng",
+      "value": -1
+    },
+    {
+      "id": "lose_remnant_bow_manual",
+      "type": "item_delta",
+      "target_id": "remnant_bow_manual",
+      "value": -1
+    },
+    {
+      "id": "mark_studied_bow_manual",
+      "type": "set_flag",
+      "target_id": "studied_bow_manual",
+      "value": true
+    },
+    {
+      "id": "mark_jade_buyer_clue",
+      "type": "set_flag",
+      "target_id": "jade_buyer_clue",
+      "value": true
+    },
+    {
+      "id": "mark_soldier_relic_clue",
+      "type": "set_flag",
+      "target_id": "soldier_relic_clue",
+      "value": true
+    },
+    {
+      "id": "mark_met_jade_buyer",
+      "type": "set_flag",
+      "target_id": "met_jade_buyer",
+      "value": true
+    },
+    {
+      "id": "mark_hunter_trap_line",
+      "type": "set_flag",
+      "target_id": "hunter_trap_line",
+      "value": true
+    },
+    {
+      "id": "mark_villager_aid_line",
+      "type": "set_flag",
+      "target_id": "villager_aid_line",
+      "value": true
+    },
+    {
+      "id": "mark_grocer_grain_contact",
+      "type": "set_flag",
+      "target_id": "grocer_grain_contact",
+      "value": true
+    },
+    {
+      "id": "mark_doctor_medicine_contact",
+      "type": "set_flag",
+      "target_id": "doctor_medicine_contact",
+      "value": true
+    },
+    {
+      "id": "mark_peddler_old_goods_contact",
+      "type": "set_flag",
+      "target_id": "peddler_old_goods_contact",
+      "value": true
+    },
+    {
+      "id": "mark_tea_debt_contact",
+      "type": "set_flag",
+      "target_id": "tea_debt_contact",
+      "value": true
+    },
+    {
+      "id": "mark_porter_ferry_contact",
+      "type": "set_flag",
+      "target_id": "porter_ferry_contact",
+      "value": true
+    },
+    {
+      "id": "mark_equip_old_hunter_knife",
+      "type": "set_flag",
+      "target_id": "equip_old_hunter_knife",
+      "value": true
+    },
+    {
+      "id": "clear_equip_old_hunter_knife",
+      "type": "clear_flag",
+      "target_id": "equip_old_hunter_knife",
+      "value": false
+    },
+    {
+      "id": "mark_equip_black_iron_shortblade",
+      "type": "set_flag",
+      "target_id": "equip_black_iron_shortblade",
+      "value": true
+    },
+    {
+      "id": "clear_equip_black_iron_shortblade",
+      "type": "clear_flag",
+      "target_id": "equip_black_iron_shortblade",
+      "value": false
+    },
+    {
+      "id": "mark_equip_wolf_pelt_complete",
+      "type": "set_flag",
+      "target_id": "equip_wolf_pelt_complete",
+      "value": true
+    },
+    {
+      "id": "clear_equip_wolf_pelt_complete",
+      "type": "clear_flag",
+      "target_id": "equip_wolf_pelt_complete",
+      "value": false
+    },
+    {
+      "id": "mark_equip_tiger_bone",
+      "type": "set_flag",
+      "target_id": "equip_tiger_bone",
+      "value": true
+    },
+    {
+      "id": "clear_equip_tiger_bone",
+      "type": "clear_flag",
+      "target_id": "equip_tiger_bone",
+      "value": false
+    },
+    {
+      "id": "mark_equip_ancient_bone_token",
+      "type": "set_flag",
+      "target_id": "equip_ancient_bone_token",
+      "value": true
+    },
+    {
+      "id": "clear_equip_ancient_bone_token",
+      "type": "clear_flag",
+      "target_id": "equip_ancient_bone_token",
+      "value": false
     },
     {
       "id": "lose_health_starving",

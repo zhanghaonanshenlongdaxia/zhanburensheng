@@ -355,6 +355,195 @@
           ]
         }
       ]
+    },
+    {
+      "id": "meet_jade_buyer",
+      "title": "循残玉纹路找买家",
+      "omen_title": "缺玉引路",
+      "omen_text": "半片残玉在袖中发凉，镇上有人认得这种旧纹。",
+      "omen_place": "镇外茶摊",
+      "omen_gain": "高价出手与新买家",
+      "omen_warning": "买家眼深，容易被反探来路",
+      "location_id": "field",
+      "reward_desc": "铜钱，可能打开旧物买家线",
+      "risk_desc": "中风险，可能提升关注",
+      "base_weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "jade_buyer_clue",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "trace_soldier_relic",
+      "title": "按私印暗记追军中遗物",
+      "omen_title": "残印指兵",
+      "omen_text": "私印边角的暗记不是装饰，像是在指向旧营地。",
+      "omen_place": "荒坟外旧营土垒",
+      "omen_gain": "军中遗物与更大线索",
+      "omen_warning": "越接近旧兵物，越容易招来人眼",
+      "location_id": "graveyard",
+      "reward_desc": "高价值遗物，推进军中线",
+      "risk_desc": "高风险，怀疑与关注都会上升",
+      "base_weight": 5,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "soldier_relic_clue",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "set_hunter_trap",
+      "title": "照弓谱去林中设伏",
+      "omen_title": "弦影伏兽",
+      "omen_text": "残缺弓谱里有旧猎户的设伏法，林中兽径正可一试。",
+      "omen_place": "密林兽径",
+      "omen_gain": "肉食、皮货，降低野兽风险",
+      "omen_warning": "设伏失手，反被兽路拖住",
+      "location_id": "forest",
+      "reward_desc": "稳定肉食，可能得皮货",
+      "risk_desc": "中风险，懂弓谱后更稳",
+      "base_weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "studied_bow_manual",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "villager_mutual_aid",
+      "title": "借村人信任换互助",
+      "omen_title": "邻火相照",
+      "omen_text": "柴门里有人记得你帮过忙，一点人情可以换来活路。",
+      "omen_place": "村口互助人家",
+      "omen_gain": "粮食、工钱与稳定关系",
+      "omen_warning": "人情用重了，也会欠下别的债",
+      "location_id": "field",
+      "reward_desc": "粮食/铜钱，推进互助线",
+      "risk_desc": "低风险，但可能增加关注",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "earned_villager_trust",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "grocer_hidden_grain",
+      "title": "走粮铺后门买压潮粮",
+      "omen_title": "仓门留缝",
+      "omen_text": "粮铺后门有一线暗光，熟人留下的话能换成实在口粮。",
+      "omen_place": "镇后粮巷",
+      "omen_gain": "稳定粮食，可能少花铜钱",
+      "omen_warning": "暗粮不宜声张，买多了仍会惹眼",
+      "location_id": "field",
+      "reward_desc": "粮食补给，低风险",
+      "risk_desc": "低风险，但可能增加关注",
+      "base_weight": 8,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "grocer_grain_contact",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "doctor_medicine_run",
+      "title": "替周郎中送药换方子",
+      "omen_title": "青囊过巷",
+      "omen_text": "药香压在纸包里，送到该送的人手上，能换来治寒的门路。",
+      "omen_place": "镇边药巷",
+      "omen_gain": "药材、治寒、少量工钱",
+      "omen_warning": "药路有人记脸，不能多问病家隐事",
+      "location_id": "field",
+      "reward_desc": "药材/健康，稳定治寒",
+      "risk_desc": "低到中风险，可能被人记住",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "doctor_medicine_contact",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "peddler_old_goods_deal",
+      "title": "让游货郎暗卖旧物",
+      "omen_title": "暗秤量旧",
+      "omen_text": "旧物不能摆到明处，暗秤一压，铜钱和风险一起落袋。",
+      "omen_place": "镇外货郎暗摊",
+      "omen_gain": "更高旧物收益",
+      "omen_warning": "货郎能挡闲话，也能记住你的来路",
+      "location_id": "field",
+      "reward_desc": "旧物变现，可能引出旧物线",
+      "risk_desc": "中风险，关注可能上升",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "peddler_old_goods_contact",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "tea_debt_tip",
+      "title": "去茶棚打听债主动向",
+      "omen_title": "茶烟避债",
+      "omen_text": "茶棚烟气里藏着催债人的脚步，早知道一日，便多一日活路。",
+      "omen_place": "镇口茶棚",
+      "omen_gain": "降低怀疑，获得还债时机",
+      "omen_warning": "听得太细，也会被茶客记住",
+      "location_id": "field",
+      "reward_desc": "降低风险，少量铜钱",
+      "risk_desc": "低风险，偏策略收益",
+      "base_weight": 6,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "tea_debt_contact",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "porter_ferry_job",
+      "title": "接脚夫渡口零活",
+      "omen_title": "渡口短财",
+      "omen_text": "渡口有急活，脚程和眼色都值钱，只是水边寒重。",
+      "omen_place": "河渡口",
+      "omen_gain": "稳定工钱，可能带回物资",
+      "omen_warning": "湿脚受寒，夜路容易被翻包",
+      "location_id": "river",
+      "reward_desc": "稳定铜钱/粮食",
+      "risk_desc": "中风险，可能受寒",
+      "base_weight": 7,
+      "conditions": [
+        {
+          "type": "flag_compare",
+          "target_id": "porter_ferry_contact",
+          "operator": "==",
+          "value": true
+        }
+      ]
     }
   ]
 }

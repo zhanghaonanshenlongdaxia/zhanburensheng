@@ -5,6 +5,7 @@ signal log_changed(text: String)
 signal loot_found(effect_ids: Array, summary: String)
 signal danger_resolved(effect_ids: Array, summary: String)
 signal extracted(summary: String)
+signal inventory_context_requested()
 
 const CELL_SIZE := 18.0
 const MAP_PADDING := 14.0
@@ -12,6 +13,8 @@ const PRESSURE_MAX := 100
 
 var selected_option: Dictionary = {}
 var weather: Dictionary = {}
+var inventory_items: Dictionary = {}
+var active_flags: Dictionary = {}
 var cells: Dictionary = {}
 var current_cell: Vector2i = Vector2i.ZERO
 var entrance_cell: Vector2i = Vector2i.ZERO
@@ -19,11 +22,14 @@ var exit_cell: Vector2i = Vector2i.ZERO
 var discovered: Dictionary = {}
 var searched_containers: Dictionary = {}
 var current_enemy: Dictionary = {}
+var active_scene_event: Dictionary = {}
+var resolved_scene_events: Dictionary = {}
 var active_identification: Dictionary = {}
 var exploration_config: Dictionary = {}
 var time_pressure := 0
 var trace_pressure := 0
 var fatigue_pressure := 0
+var pack_pressure := 0
 var _hotspots: Array[Dictionary] = []
 var _map_rects: Dictionary = {}
 var _identification_button_rect: Rect2 = Rect2()
@@ -37,9 +43,11 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(0.0, 320.0)
 	_load_exploration_config()
 
-func configure(option: Dictionary, current_weather: Dictionary) -> void:
+func configure(option: Dictionary, current_weather: Dictionary, current_inventory: Dictionary = {}, current_flags: Dictionary = {}) -> void:
 	selected_option = option.duplicate(true)
 	weather = current_weather.duplicate(true)
+	inventory_items = current_inventory.duplicate(true)
+	active_flags = current_flags.duplicate(true)
 	cells = _build_map(str(selected_option.get("id", "")), str(selected_option.get("location_id", "field")))
 	_load_scene_textures()
 	entrance_cell = Vector2i.ZERO
@@ -48,11 +56,18 @@ func configure(option: Dictionary, current_weather: Dictionary) -> void:
 	discovered.clear()
 	searched_containers.clear()
 	current_enemy.clear()
+	active_scene_event.clear()
+	resolved_scene_events.clear()
 	active_identification.clear()
 	_reset_pressure()
 	_discover_around(current_cell)
 	_enter_cell(current_cell)
 	_set_log("%s%s。右上角小地图标出已探明的地形，必须找到出口才能撤离。" % [_intro_text(), _omen_brief()])
+	queue_redraw()
+
+func update_context(current_inventory: Dictionary, current_flags: Dictionary) -> void:
+	inventory_items = current_inventory.duplicate(true)
+	active_flags = current_flags.duplicate(true)
 	queue_redraw()
 
 func _gui_input(event: InputEvent) -> void:
@@ -107,9 +122,20 @@ func _draw_scene(board: Rect2) -> void:
 	_draw_outlined_string(font, scene_rect.position + Vector2(18.0, 78.0), _omen_brief(), 13, Color(0.70, 0.90, 0.72, 1.0), 3, scene_rect.size.x - 36.0)
 
 	if not current_enemy.is_empty():
-		var enemy_rect := Rect2(scene_rect.position + Vector2(scene_rect.size.x * 0.58, scene_rect.size.y * 0.42), Vector2(150.0, 58.0))
-		_draw_hotspot(enemy_rect, "应对威胁", str(current_enemy.get("name", "野兽")), Color(0.56, 0.17, 0.12, 0.88), {"kind": "enemy"})
+		var enemy_name := str(current_enemy.get("name", "野兽"))
+		var enemy_origin := scene_rect.position + Vector2(scene_rect.size.x * 0.56, scene_rect.size.y * 0.34)
+		_draw_hotspot(Rect2(enemy_origin, Vector2(156.0, 54.0)), "藏身绕行", "%s · 稳" % enemy_name, Color(0.36, 0.24, 0.13, 0.90), {"kind": "enemy", "action": "avoid"})
+		_draw_hotspot(Rect2(enemy_origin + Vector2(0.0, 62.0), Vector2(156.0, 54.0)), "正面逼退", "%s · 快" % enemy_name, Color(0.56, 0.17, 0.12, 0.90), {"kind": "enemy", "action": "drive"})
+		if _can_use_enemy_trap():
+			_draw_hotspot(Rect2(enemy_origin + Vector2(0.0, 124.0), Vector2(156.0, 54.0)), "设伏牵制", _enemy_trap_label(enemy_name), Color(0.24, 0.36, 0.18, 0.90), {"kind": "enemy", "action": "trap"})
 		return
+
+	if not active_scene_event.is_empty():
+		var event_rect := Rect2(scene_rect.position + Vector2(scene_rect.size.x * 0.62, scene_rect.size.y * 0.30), Vector2(156.0, 58.0))
+		_draw_hotspot(event_rect, str(active_scene_event.get("verb", "察看")), str(active_scene_event.get("name", "异样")), _scene_event_color(active_scene_event), {
+			"kind": "scene_event",
+			"event": active_scene_event
+		})
 
 	var containers: Array = cell_data.get("containers", [])
 	var positions: Array[Vector2] = [
@@ -263,7 +289,7 @@ func _draw_minimap() -> void:
 
 func _draw_pressure_panel() -> void:
 	var panel_origin := Vector2(size.x - 214.0, 176.0)
-	var panel_rect := Rect2(panel_origin + Vector2(-8.0, -8.0), Vector2(198.0, 88.0))
+	var panel_rect := Rect2(panel_origin + Vector2(-8.0, -8.0), Vector2(198.0, 108.0))
 	draw_rect(panel_rect, Color(0.025, 0.022, 0.018, 0.78))
 	draw_rect(panel_rect, Color(0.78, 0.54, 0.26, 0.28), false, 1.0)
 	var font := get_theme_default_font()
@@ -271,6 +297,7 @@ func _draw_pressure_panel() -> void:
 	_draw_pressure_bar(panel_origin + Vector2(0.0, 25.0), "天色", time_pressure, Color(0.86, 0.58, 0.30, 1.0))
 	_draw_pressure_bar(panel_origin + Vector2(0.0, 45.0), "踪迹", trace_pressure, Color(0.68, 0.38, 0.30, 1.0))
 	_draw_pressure_bar(panel_origin + Vector2(0.0, 65.0), "劳累", fatigue_pressure, Color(0.44, 0.62, 0.48, 1.0))
+	_draw_pressure_bar(panel_origin + Vector2(0.0, 85.0), "行囊", pack_pressure, Color(0.78, 0.65, 0.40, 1.0))
 
 func _draw_pressure_bar(origin: Vector2, label: String, value: int, color: Color) -> void:
 	var font := get_theme_default_font()
@@ -312,12 +339,15 @@ func _try_move_to(cell: Vector2i) -> void:
 
 func _enter_cell(cell: Vector2i) -> void:
 	current_enemy.clear()
+	active_scene_event.clear()
 	var cell_data: Dictionary = cells.get(cell, {})
 	var enemies: Array = cell_data.get("enemies", [])
 	var enemy_chance := _entry_enemy_chance(cell_data)
 	if not enemies.is_empty() and _rng.randi_range(1, 100) <= enemy_chance:
 		current_enemy = enemies[_rng.randi_range(0, enemies.size() - 1)]
 		_set_log("你踏入%s，惊动了%s。%s" % [_cell_scene_name(cell_data), str(current_enemy.get("name", "野兽")), _pressure_hint()])
+	elif _maybe_spawn_scene_event(cell, cell_data):
+		_set_log("你来到%s，%s。%s" % [_cell_scene_name(cell_data), str(active_scene_event.get("hint", "附近有些异样")), _pressure_hint()])
 	else:
 		_set_log("你来到%s，四下寻找卦象里的痕迹。%s" % [_cell_scene_name(cell_data), _pressure_hint()])
 
@@ -326,7 +356,9 @@ func _activate_hotspot(hotspot: Dictionary) -> void:
 		"container":
 			_search_container(hotspot)
 		"enemy":
-			_resolve_enemy()
+			_resolve_enemy(str(hotspot.get("action", "avoid")))
+		"scene_event":
+			_resolve_scene_event(hotspot)
 		"extract":
 			extracted.emit(_build_extract_summary())
 
@@ -369,6 +401,7 @@ func _pick_loot(container: Dictionary, table: Array) -> Dictionary:
 
 func _should_force_bad_search(container: Dictionary) -> bool:
 	var chance := int(float(time_pressure) * 0.08) + int(float(trace_pressure) * 0.12) + int(float(fatigue_pressure) * 0.10)
+	chance += int(float(pack_pressure) * 0.08)
 	match _container_risk(container):
 		"high":
 			chance += 12
@@ -446,6 +479,10 @@ func _advance_identification() -> void:
 	var container: Dictionary = active_identification.get("container", {})
 	var effect_ids: Array = picked.get("effects", [])
 	var text := "鉴定：%s。%s" % [str(picked.get("name", "未知物")), str(picked.get("text", ""))]
+	var pack_delta := _loot_pack_pressure(picked)
+	if pack_delta > 0:
+		pack_pressure = clampi(pack_pressure + pack_delta, 0, PRESSURE_MAX)
+		text = "%s\n%s" % [text, _pack_gain_text(pack_delta)]
 	active_identification.clear()
 	var ambush_text := _maybe_trigger_search_ambush(container)
 	if not ambush_text.is_empty():
@@ -454,31 +491,315 @@ func _advance_identification() -> void:
 	loot_found.emit(effect_ids, text)
 	queue_redraw()
 
-func _resolve_enemy() -> void:
+func _resolve_enemy(action: String = "avoid") -> void:
 	if current_enemy.is_empty():
 		return
 	var name := str(current_enemy.get("name", "野兽"))
 	var roll := _rng.randi_range(1, 100)
 	var effect_ids: Array = []
 	var text := ""
-	if roll <= int(current_enemy.get("avoid_chance", 45)):
-		effect_ids = ["lose_stamina_small"]
-		text = "你压低身形绕开%s，耗了些体力，总算没被缠上。" % name
-	elif roll <= int(current_enemy.get("injury_chance", 78)):
-		effect_ids = ["lose_stamina_medium", "lose_health_small"]
-		text = "%s突然扑近，你勉强脱身，但身上添了伤。" % name
-	else:
-		effect_ids = ["lose_stamina_medium", "gain_attention_small"]
-		text = "你弄出不小动静才逼退%s，这动静可能会被人记住。" % name
+	var avoid_chance := _enemy_avoid_chance(current_enemy)
+	var injury_chance := _enemy_injury_chance(current_enemy, avoid_chance)
+	match action:
+		"drive":
+			_add_pressure(2, 8, 6)
+			var drive_success := clampi(58 + (_enemy_tool_bonus() / 2) - int(float(fatigue_pressure) * 0.08), 18, 86)
+			if roll <= drive_success:
+				effect_ids = ["lose_stamina_small", "gain_attention_small"]
+				text = "你抓起石块和断枝正面逼退%s，动静不小，但很快打开了路。%s" % [name, _enemy_tool_hint()]
+			else:
+				effect_ids = ["lose_stamina_medium", "lose_health_small", "gain_attention_small"]
+				if _has_equipped("old_hunter_knife") or _has_equipped("black_iron_shortblade"):
+					effect_ids = ["lose_stamina_medium", "gain_attention_small"]
+					text = "%s扑近时，你用手中兵刃顶开一线，没被咬实，但动静传得很远。" % name
+				else:
+					text = "%s被激怒后猛冲过来，你硬退几步才脱身，身上添了伤。" % name
+		"trap":
+			_add_pressure(7, 3, 5)
+			var trap_success := clampi(44 + _enemy_tool_bonus() - int(float(time_pressure) * 0.06), 15, 90)
+			if roll <= trap_success:
+				effect_ids = ["gain_meat_small"]
+				if name == "山君" or name == "黑熊":
+					effect_ids = ["gain_stamina_tiny"]
+					text = "你照弓谱借地势设了个假口，%s被牵开片刻。你没敢贪，只趁机稳住气息离开。" % name
+				else:
+					text = "你照弓谱和旧猎刀的路数布了个急套，%s被牵住，你顺手得了些肉食。" % name
+			elif roll <= trap_success + 22:
+				effect_ids = ["lose_stamina_small"]
+				text = "你设伏慢了半拍，只够把%s引偏。没受伤，但这一番折腾很耗体力。" % name
+			else:
+				effect_ids = ["lose_stamina_medium", "lose_health_small"]
+				text = "伏点没压住，%s反从侧面冲出，你被迫翻滚避开，擦出一身伤。" % name
+		_:
+			_add_pressure(6, -2, 7)
+			if roll <= avoid_chance:
+				effect_ids = ["lose_stamina_small"]
+				text = "你压低身形绕开%s，耗了些体力，总算没被缠上。%s" % [name, _enemy_tool_hint()]
+			elif roll <= injury_chance:
+				effect_ids = ["lose_stamina_medium", "lose_health_small"]
+				if _has_equipped("old_hunter_knife") or _has_equipped("black_iron_shortblade"):
+					effect_ids = ["lose_stamina_medium"]
+					text = "%s突然扑近，你用手中兵刃逼出一线退路，没被咬实，但体力耗得很厉害。" % name
+				else:
+					text = "%s突然扑近，你勉强脱身，但身上添了伤。" % name
+			else:
+				effect_ids = ["lose_stamina_medium", "gain_attention_small"]
+				text = "你弄出不小动静才逼退%s，这动静可能会被人记住。%s" % [name, _enemy_tool_hint()]
 	current_enemy.clear()
 	_set_log(text)
 	danger_resolved.emit(effect_ids, text)
 	queue_redraw()
 
+func _maybe_spawn_scene_event(cell: Vector2i, cell_data: Dictionary) -> bool:
+	if cell == entrance_cell:
+		return false
+	if resolved_scene_events.has(_scene_event_cell_key(cell)):
+		return false
+	var candidates := _scene_event_candidates(cell_data)
+	if candidates.is_empty():
+		return false
+	var chance := 22 + int(float(time_pressure) * 0.08) + int(float(trace_pressure) * 0.10) + int(float(fatigue_pressure) * 0.06)
+	match str(cell_data.get("type", "path")):
+		"cave", "cliff", "thicket":
+			chance += 5
+		"creek":
+			chance += 3
+	if _rng.randi_range(1, 100) > clampi(chance, 8, 52):
+		return false
+	active_scene_event = candidates[_rng.randi_range(0, candidates.size() - 1)].duplicate(true)
+	active_scene_event["cell"] = cell
+	return true
+
+func _resolve_scene_event(hotspot: Dictionary) -> void:
+	var event: Dictionary = hotspot.get("event", active_scene_event)
+	if event.is_empty():
+		return
+	var cell: Vector2i = event.get("cell", current_cell)
+	resolved_scene_events[_scene_event_cell_key(cell)] = true
+	active_scene_event.clear()
+	var outcome := _pick_scene_event_outcome(event)
+	var pressure: Array = outcome.get("pressure", [])
+	if pressure.size() >= 3:
+		_add_pressure(int(pressure[0]), int(pressure[1]), int(pressure[2]))
+	var effect_ids: Array = outcome.get("effects", [])
+	var text := str(outcome.get("text", "你处理了这处异样，继续赶路。"))
+	if bool(outcome.get("spawn_enemy", false)):
+		var enemies: Array = cells.get(current_cell, {}).get("enemies", [])
+		if not enemies.is_empty():
+			current_enemy = enemies[_rng.randi_range(0, enemies.size() - 1)]
+			text = "%s\n%s被动静引来，得先处理威胁。" % [text, str(current_enemy.get("name", "野兽"))]
+	_set_log(text)
+	danger_resolved.emit(effect_ids, text)
+	queue_redraw()
+
+func _pick_scene_event_outcome(event: Dictionary) -> Dictionary:
+	var outcomes: Array = event.get("outcomes", [])
+	if outcomes.is_empty():
+		return {}
+	var total := 0
+	for outcome_variant in outcomes:
+		var outcome: Dictionary = outcome_variant
+		total += int(outcome.get("chance", 0))
+	if total <= 0:
+		return outcomes[0]
+	var roll := _rng.randi_range(1, total)
+	var cursor := 0
+	for outcome_variant in outcomes:
+		var outcome: Dictionary = outcome_variant
+		cursor += int(outcome.get("chance", 0))
+		if roll <= cursor:
+			return outcome
+	return outcomes.back()
+
+func _scene_event_candidates(cell_data: Dictionary) -> Array[Dictionary]:
+	var scene_type := str(cell_data.get("type", "path"))
+	var candidates: Array[Dictionary] = [
+		{
+			"id": "fresh_trace",
+			"name": "新折枝",
+			"verb": "辨路",
+			"hint": "路边有一截刚断的新枝，断口还湿着",
+			"tone": "good",
+			"outcomes": [
+				{"chance": 58, "effects": ["lose_suspicion_small"], "pressure": [2, -4, 0], "text": "你顺着折枝确认了来路，脚步放轻，留下的痕迹少了些。"},
+				{"chance": 28, "effects": ["gain_stamina_tiny"], "pressure": [1, 0, -4], "text": "折枝旁有块避风石，你短歇片刻，腿脚缓过一点。"},
+				{"chance": 14, "effects": [], "pressure": [4, 3, 2], "text": "你盯着断枝看了太久，最后发现只是旧兽径，白白耽误了些时间。"}
+			]
+		},
+		{
+			"id": "distant_steps",
+			"name": "远处脚步",
+			"verb": "听声",
+			"hint": "远处像有脚步踩过碎草，时近时远",
+			"tone": "danger",
+			"outcomes": [
+				{"chance": 45, "effects": ["lose_suspicion_small"], "pressure": [3, -6, 1], "text": "你伏低听清方向，绕开了那串脚步，也把自己的踪迹压了下去。"},
+				{"chance": 35, "effects": ["gain_attention_small"], "pressure": [3, 5, 2], "text": "你退得急，踩断枯枝，远处那人或那东西似乎停了一下。"},
+				{"chance": 20, "effects": ["lose_stamina_small"], "pressure": [5, 2, 5], "text": "你绕了一个大圈才甩开脚步，体力被拖下去一截。"}
+			]
+		}
+	]
+	match scene_type:
+		"thicket", "slope":
+			candidates.append({
+				"id": "herb_scent",
+				"name": "苦香药气",
+				"verb": "寻味",
+				"hint": "风里有一缕苦香，像是草药被踩裂后的气味",
+				"tone": "good",
+				"outcomes": [
+					{"chance": 44, "effects": ["gain_bitter_leaf"], "pressure": [4, 2, 3], "text": "你顺着苦香拨开草根，采到一小把苦叶草。"},
+					{"chance": 26, "effects": ["gain_herb_small"], "pressure": [5, 2, 4], "text": "你没找到整株药，却收了些能晒干入药的碎叶。"},
+					{"chance": 30, "effects": ["lose_stamina_small"], "pressure": [6, 3, 6], "text": "香气把你引进乱藤，钻出来时衣袖被扯破，脚力也耗了。"}
+				]
+			})
+		"creek":
+			candidates.append({
+				"id": "cold_water",
+				"name": "冰冷浅水",
+				"verb": "试探",
+				"hint": "浅水下有东西反光，但水寒得刺骨",
+				"tone": "risk",
+				"outcomes": [
+					{"chance": 34, "effects": ["gain_rusty_copper_piece", "gain_money_tiny"], "pressure": [6, 2, 4], "text": "你咬牙从浅水里摸出几片锈铜，手指冻得发僵。"},
+					{"chance": 28, "effects": ["gain_clear_moss"], "pressure": [5, 2, 3], "text": "你没有贪深水，只刮下石背阴处的清露苔。"},
+					{"chance": 38, "effects": ["mark_cold_mild", "lose_stamina_small"], "pressure": [7, 3, 6], "text": "你在水里摸了太久，寒意顺着小腿往上钻，回去得尽快用药压住。"}
+				]
+			})
+		"cave":
+			candidates.append({
+				"id": "cave_echo",
+				"name": "洞中回声",
+				"verb": "屏息",
+				"hint": "洞里传回两次回声，第二次不像你的脚步",
+				"tone": "danger",
+				"outcomes": [
+					{"chance": 42, "effects": [], "pressure": [4, -3, 1], "text": "你屏住呼吸等回声散尽，判断出洞里有条能避开的侧缝。"},
+					{"chance": 34, "effects": ["lose_stamina_small"], "pressure": [7, 5, 6], "text": "你贴着洞壁退开，碎石滚落，虽没出事，却被吓出一身冷汗。"},
+					{"chance": 24, "effects": ["gain_attention_small"], "pressure": [5, 8, 3], "spawn_enemy": true, "text": "你刚挪步，洞深处忽然有低响回应。"}
+				]
+			})
+		"cliff":
+			candidates.append({
+				"id": "loose_ledge",
+				"name": "松动崖沿",
+				"verb": "攀取",
+				"hint": "崖沿有株药草，下面的土却已经松了",
+				"tone": "risk",
+				"outcomes": [
+					{"chance": 28, "effects": ["gain_bloodroot"], "pressure": [8, 3, 7], "text": "你贴着崖面稳住重心，硬是取下那株赤根草。"},
+					{"chance": 22, "effects": ["gain_mountain_ginseng"], "pressure": [10, 4, 8], "text": "险处竟藏着一支小山参，你不敢久留，连泥一起收走。"},
+					{"chance": 50, "effects": ["lose_stamina_medium", "lose_health_small"], "pressure": [8, 6, 9], "text": "崖土忽然塌了一块，你抓住石缝才没滑下去，手臂被碎石划开。"}
+				]
+			})
+		"road", "village", "hut", "stove":
+			candidates.append({
+				"id": "stranger_shadow",
+				"name": "陌生影子",
+				"verb": "靠近",
+				"hint": "破墙后晃过一个影子，像人在避你",
+				"tone": "risk",
+				"outcomes": [
+					{"chance": 34, "effects": ["gain_money_tiny"], "pressure": [4, 3, 1], "text": "你没追人，只在墙根捡到几枚被慌乱落下的铜钱。"},
+					{"chance": 36, "effects": ["lose_suspicion_small"], "pressure": [4, -5, 2], "text": "你故意走反方向，影子也没再跟上，村里的疑心少了些。"},
+					{"chance": 30, "effects": ["gain_attention_small"], "pressure": [5, 6, 2], "text": "你追近半步，那影子立刻跑远，这事多半会被人传出去。"}
+				]
+			})
+		_:
+			pass
+	if cell_data.get("enemies", []).size() > 0:
+		candidates.append({
+			"id": "animal_warning",
+			"name": "兽类警声",
+			"verb": "避险",
+			"hint": "草里忽然静了一瞬，像有什么东西正盯着这边",
+			"tone": "danger",
+			"outcomes": [
+				{"chance": 46, "effects": ["lose_stamina_small"], "pressure": [5, 1, 5], "text": "你退到下风处绕行，避开了可能的扑击，但耗了不少脚力。"},
+				{"chance": 28, "effects": [], "pressure": [3, -4, 1], "text": "你看懂了草叶倒伏的方向，提前换路，没有留下明显动静。"},
+				{"chance": 26, "effects": ["gain_attention_small"], "pressure": [4, 7, 3], "spawn_enemy": true, "text": "你刚想后退，草里的东西已经听见你的动静。"}
+			]
+		})
+	return candidates
+
+func _scene_event_cell_key(cell: Vector2i) -> String:
+	return "%d,%d" % [cell.x, cell.y]
+
+func _scene_event_color(event: Dictionary) -> Color:
+	match str(event.get("tone", "risk")):
+		"good":
+			return Color(0.22, 0.38, 0.24, 0.92)
+		"danger":
+			return Color(0.47, 0.17, 0.13, 0.92)
+		_:
+			return Color(0.42, 0.28, 0.13, 0.92)
+
+func _enemy_avoid_chance(enemy: Dictionary) -> int:
+	var chance := int(enemy.get("avoid_chance", 45))
+	if _has_equipped("old_hunter_knife"):
+		chance += 14
+	if _has_equipped("black_iron_shortblade"):
+		chance += 8
+	if _has_flag("studied_bow_manual"):
+		chance += 8
+	return clampi(chance, 5, 88)
+
+func _enemy_injury_chance(enemy: Dictionary, avoid_chance: int) -> int:
+	var chance := int(enemy.get("injury_chance", 78))
+	if _has_equipped("old_hunter_knife"):
+		chance -= 10
+	if _has_equipped("black_iron_shortblade"):
+		chance -= 14
+	if _has_flag("studied_bow_manual"):
+		chance -= 6
+	return clampi(maxi(chance, avoid_chance + 8), avoid_chance + 1, 96)
+
+func _enemy_tool_hint() -> String:
+	var hints: Array[String] = []
+	if _has_equipped("old_hunter_knife"):
+		hints.append("旧猎刀让野物不敢贴得太死")
+	if _has_equipped("black_iron_shortblade"):
+		hints.append("黑铁短刃压住了逼近的威胁")
+	if _has_flag("studied_bow_manual"):
+		hints.append("弓谱里的设伏法帮你看懂了退路")
+	return "；".join(hints)
+
+func _enemy_tool_bonus() -> int:
+	var bonus := 0
+	if _has_equipped("old_hunter_knife"):
+		bonus += 14
+	if _has_equipped("black_iron_shortblade"):
+		bonus += 20
+	if _has_flag("studied_bow_manual"):
+		bonus += 16
+	if _has_flag("hunter_trap_line"):
+		bonus += 8
+	return bonus
+
+func _can_use_enemy_trap() -> bool:
+	return _has_equipped("old_hunter_knife") or _has_equipped("black_iron_shortblade") or _has_flag("studied_bow_manual") or _has_flag("hunter_trap_line")
+
+func _enemy_trap_label(enemy_name: String) -> String:
+	if _has_flag("studied_bow_manual") or _has_flag("hunter_trap_line"):
+		return "%s · 弓谱" % enemy_name
+	if _has_equipped("black_iron_shortblade"):
+		return "%s · 短刃" % enemy_name
+	return "%s · 猎刀" % enemy_name
+
+func _has_item(item_id: String) -> bool:
+	return int(inventory_items.get(item_id, 0)) > 0
+
+func _has_equipped(item_id: String) -> bool:
+	return _has_item(item_id) and _has_flag("equip_%s" % item_id)
+
+func _has_flag(flag_id: String) -> bool:
+	return bool(active_flags.get(flag_id, false))
+
 func _reset_pressure() -> void:
 	time_pressure = 0
 	trace_pressure = 0
 	fatigue_pressure = 0
+	pack_pressure = 0
 
 func _apply_movement_pressure(cell_data: Dictionary) -> void:
 	var scene_type := str(cell_data.get("type", "path"))
@@ -502,6 +823,15 @@ func _apply_movement_pressure(cell_data: Dictionary) -> void:
 			time_delta = 4
 			trace_delta = 1
 			fatigue_delta = 3
+	if _has_equipped("wolf_pelt_complete") and scene_type in ["creek", "cliff"]:
+		fatigue_delta = maxi(fatigue_delta - 3, 1)
+	if _has_equipped("tiger_bone") and scene_type in ["thicket", "cave"]:
+		trace_delta = maxi(trace_delta - 2, 0)
+	if pack_pressure >= 60:
+		fatigue_delta += 3
+		trace_delta += 2
+	elif pack_pressure >= 35:
+		fatigue_delta += 2
 	_add_pressure(time_delta, trace_delta, fatigue_delta)
 
 func _apply_search_pressure(container: Dictionary) -> void:
@@ -515,6 +845,12 @@ func _apply_search_pressure(container: Dictionary) -> void:
 	if _is_forbidden_container(container):
 		trace_delta += 6
 		fatigue_delta += 3
+	if _has_equipped("ancient_bone_token") and _container_risk(container) in ["medium", "high"]:
+		trace_delta = maxi(trace_delta - 2, 0)
+	if pack_pressure >= 60:
+		fatigue_delta += 2
+	elif pack_pressure >= 35:
+		time_delta += 2
 	_add_pressure(time_delta, trace_delta, fatigue_delta)
 
 func _add_pressure(time_delta: int, trace_delta: int, fatigue_delta: int) -> void:
@@ -528,6 +864,7 @@ func _entry_enemy_chance(cell_data: Dictionary) -> int:
 		return 0
 	base_chance += int(float(trace_pressure) * 0.24)
 	base_chance += int(float(time_pressure) * 0.10)
+	base_chance += int(float(pack_pressure) * 0.08)
 	if fatigue_pressure >= 70:
 		base_chance += 6
 	return clampi(base_chance, 0, 88)
@@ -540,6 +877,7 @@ func _maybe_trigger_search_ambush(container: Dictionary) -> String:
 	if enemies.is_empty():
 		return ""
 	var chance := int(float(trace_pressure) * 0.16)
+	chance += int(float(pack_pressure) * 0.06)
 	match _container_risk(container):
 		"high":
 			chance += 11
@@ -561,6 +899,10 @@ func _pressure_hint() -> String:
 		return "天色压低，继续深入会越来越难脱身。"
 	if fatigue_pressure >= 80:
 		return "腿脚发沉，之后应对危险会更吃力。"
+	if pack_pressure >= 80:
+		return "包袱压肩，撤离和应对危险都会变慢。"
+	if pack_pressure >= 55:
+		return "行囊渐沉，再贪搜会拖慢脚步。"
 	return ""
 
 func _search_pressure_hint(container: Dictionary) -> String:
@@ -586,8 +928,17 @@ func _build_extract_summary() -> String:
 	var template: Dictionary = _current_template()
 	var extract_text: String = str(template.get("extract_text", ""))
 	if not extract_text.is_empty():
-		return extract_text
-	return "你从%s的出口撤回村里。今日卦象到此收束，带回多少东西，全看路上搜到了什么。" % _location_name()
+		return "%s%s" % [extract_text, _pack_extract_suffix()]
+	return "你从%s的出口撤回村里。今日卦象到此收束，带回多少东西，全看路上搜到了什么。%s" % [_location_name(), _pack_extract_suffix()]
+
+func _pack_extract_suffix() -> String:
+	if pack_pressure >= 75:
+		return " 包袱重得勒肩，幸好赶在拖不动前撤了出来。"
+	if pack_pressure >= 45:
+		return " 包袱有些沉，你一路都在压着脚步。"
+	if pack_pressure > 0:
+		return " 包里有些收获，还不至于拖慢撤离。"
+	return ""
 
 func _build_map(option_id: String, location_id: String) -> Dictionary:
 	var template_map: Dictionary = _build_template_map(option_id)
@@ -661,7 +1012,8 @@ func _mountain_map() -> Dictionary:
 		Vector2i(2, -1): _cell("cave", [_cache_container()], [_bear(), _tiger()], false, 36),
 		Vector2i(3, -1): _cell("creek", [_creek_container()], [], true),
 		Vector2i(0, 1): _cell("creek", [_creek_container()], [], false),
-		Vector2i(1, 1): _cell("path", [_trace_container()], [], false)
+		Vector2i(1, 1): _cell("path", [_trace_container()], [], false),
+		Vector2i(2, 1): _cell("cliff", [_eagle_nest_container()], [_wolf()], false, 20)
 	}
 
 func _forest_map() -> Dictionary:
@@ -670,7 +1022,9 @@ func _forest_map() -> Dictionary:
 		Vector2i(1, 0): _cell("thicket", [_herb_container("forest_herb")], [_wolf()], false, 34),
 		Vector2i(2, 0): _cell("thicket", [_trace_container()], [_boar()], false, 38),
 		Vector2i(2, -1): _cell("cave", [_cache_container()], [_bear(), _tiger()], false, 30),
-		Vector2i(3, -1): _cell("creek", [_creek_container()], [], true)
+		Vector2i(3, -1): _cell("creek", [_creek_container()], [], true),
+		Vector2i(1, 1): _cell("thicket", [_snare_container()], [_wolf()], false, 24),
+		Vector2i(2, 1): _cell("slope", [_fallen_tree_container()], [_boar()], false, 26)
 	}
 
 func _river_map() -> Dictionary:
@@ -678,7 +1032,9 @@ func _river_map() -> Dictionary:
 		Vector2i(0, 0): _cell("path", [_trace_container()], [], false),
 		Vector2i(1, 0): _cell("creek", [_creek_container()], [], false),
 		Vector2i(2, 0): _cell("creek", [_cache_container()], [], true),
-		Vector2i(1, -1): _cell("thicket", [_herb_container("wet_herb")], [_wolf()], false, 18)
+		Vector2i(1, -1): _cell("thicket", [_herb_container("wet_herb")], [_wolf()], false, 18),
+		Vector2i(2, -1): _cell("creek", [_reed_pool_container()], [], false),
+		Vector2i(0, 1): _cell("road", [_fisher_basket_container()], [], false)
 	}
 
 func _graveyard_map() -> Dictionary:
@@ -686,7 +1042,9 @@ func _graveyard_map() -> Dictionary:
 		Vector2i(0, 0): _cell("path", [_trace_container()], [], false),
 		Vector2i(1, 0): _cell("thicket", [_cache_container()], [], false),
 		Vector2i(2, 0): _cell("cave", [_cache_container(), _old_herb_container()], [_wolf()], false, 32),
-		Vector2i(2, 1): _cell("cliff", [_trace_container()], [], true)
+		Vector2i(2, 1): _cell("cliff", [_trace_container()], [], true),
+		Vector2i(1, -1): _cell("path", [_burnt_paper_container()], [], false),
+		Vector2i(3, 0): _cell("cave", [_sealed_jar_container()], [_wolf()], false, 28)
 	}
 
 func _field_map() -> Dictionary:
@@ -694,7 +1052,9 @@ func _field_map() -> Dictionary:
 		Vector2i(0, 0): _cell("path", [_trace_container()], [], false),
 		Vector2i(1, 0): _cell("thicket", [_herb_container("field_herb")], [], false),
 		Vector2i(2, 0): _cell("creek", [_creek_container()], [], true),
-		Vector2i(1, 1): _cell("slope", [_cache_container()], [], false)
+		Vector2i(1, 1): _cell("slope", [_cache_container()], [], false),
+		Vector2i(0, 1): _cell("hut", [_abandoned_hut_container()], [], false),
+		Vector2i(2, 1): _cell("road", [_market_trace_container()], [], false)
 	}
 
 func _cell(scene_type: String, containers: Array, enemies: Array, is_exit: bool, enemy_chance: int = 0) -> Dictionary:
@@ -782,6 +1142,123 @@ func _trace_container() -> Dictionary:
 		]
 	}
 
+func _eagle_nest_container() -> Dictionary:
+	return {
+		"id": "eagle_nest",
+		"name": "崖上旧巢",
+		"rarity": "rare",
+		"loot": [
+			{"chance": 28, "name": "【优质】野禽羽", "effects": ["gain_rabbit_pelt", "gain_money_tiny"], "text": "旧巢里压着完整羽片，货郎会收。"},
+			{"chance": 20, "name": "【稀有】小山参", "effects": ["gain_mountain_ginseng"], "text": "巢下石缝里竟卡着一支小山参。"},
+			{"chance": 12, "name": "【珍贵】弯折银簪", "effects": ["gain_silver_hairpin_bent", "gain_suspicion_small"], "text": "银簪被叼到巢中，来路多半不干净。"},
+			{"chance": 40, "name": "踏空碎石", "effects": ["lose_stamina_medium", "lose_health_small"], "text": "你伸手太深，脚下碎石一滑，手臂被崖壁蹭开。"}
+		]
+	}
+
+func _snare_container() -> Dictionary:
+	return {
+		"id": "old_snare",
+		"name": "旧绳套",
+		"rarity": "uncommon",
+		"loot": [
+			{"chance": 34, "name": "套中野兔", "effects": ["gain_meat_small", "gain_rabbit_pelt"], "text": "旧绳套还没坏，竟套住一只小兽。"},
+			{"chance": 22, "name": "【优质】野猪獠牙", "effects": ["gain_boar_tusk"], "text": "绳套旁有断獠牙，像是野猪挣脱时留下的。"},
+			{"chance": 24, "name": "空绳结", "effects": [], "text": "绳结已经松了，附近只有踩乱的草。"},
+			{"chance": 20, "name": "绳套反抽", "effects": ["lose_health_small"], "text": "你解绳时被反抽一下，手背火辣辣地疼。"}
+		]
+	}
+
+func _fallen_tree_container() -> Dictionary:
+	return {
+		"id": "fallen_tree",
+		"name": "倒木根洞",
+		"rarity": "uncommon",
+		"loot": [
+			{"chance": 28, "name": "【普通】苦叶草", "effects": ["gain_bitter_leaf"], "text": "根洞阴处长着苦叶草。"},
+			{"chance": 22, "name": "【优质】赤根草", "effects": ["gain_bloodroot"], "text": "树根压住一截赤根草，药性还在。"},
+			{"chance": 20, "name": "藏粮小包", "effects": ["gain_food_small", "gain_suspicion_small"], "text": "有人把粗粮藏在根洞里，拿走会惹人疑心。"},
+			{"chance": 30, "name": "腐木塌陷", "effects": ["lose_stamina_small"], "text": "腐木踩塌，灰尘呛得你退了出来。"}
+		]
+	}
+
+func _reed_pool_container() -> Dictionary:
+	return {
+		"id": "reed_pool",
+		"name": "芦苇浅滩",
+		"rarity": "uncommon",
+		"loot": [
+			{"chance": 28, "name": "【优质】清露苔", "effects": ["gain_clear_moss"], "text": "湿石边长着一片清露苔。"},
+			{"chance": 22, "name": "【稀有】蛇胆", "effects": ["gain_snake_gall"], "text": "芦根旁有蛇迹，你找到一枚还能入药的蛇胆。"},
+			{"chance": 18, "name": "冲来的旧钱", "effects": ["gain_old_coin_string"], "text": "旧钱串被水草缠住，锈得发黑。"},
+			{"chance": 32, "name": "湿脚受寒", "effects": ["mark_cold_mild", "lose_stamina_small"], "text": "你踩进冷水，寒意顺着脚心往上爬。"}
+		]
+	}
+
+func _fisher_basket_container() -> Dictionary:
+	return {
+		"id": "fisher_basket",
+		"name": "破鱼篓",
+		"rarity": "common",
+		"loot": [
+			{"chance": 34, "name": "小鱼干", "effects": ["gain_food_small"], "text": "鱼篓里还有几条晒硬的小鱼，勉强能充饥。"},
+			{"chance": 24, "name": "碎铜钱", "effects": ["gain_money_tiny"], "text": "篓底卡着几枚碎铜钱。"},
+			{"chance": 18, "name": "【普通】苦叶草", "effects": ["gain_bitter_leaf"], "text": "有人用苦叶草压着鱼腥味。"},
+			{"chance": 24, "name": "腥水空篓", "effects": ["lose_stamina_small"], "text": "篓里只有腥水，你翻得一手湿臭。"}
+		]
+	}
+
+func _burnt_paper_container() -> Dictionary:
+	return {
+		"id": "burnt_paper",
+		"name": "烧残纸灰",
+		"rarity": "uncommon",
+		"loot": [
+			{"chance": 32, "name": "半截暗记", "effects": ["mark_saw_graveyard_cache"], "text": "纸灰里留着半个地名，像是指向荒坟深处。"},
+			{"chance": 24, "name": "【普通】锈铜片", "effects": ["gain_rusty_copper_piece"], "text": "纸灰下压着几片锈铜。"},
+			{"chance": 16, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button", "gain_suspicion_small"], "text": "残玉扣混在纸灰里，像被人急着掩埋。"},
+			{"chance": 28, "name": "纸灰迷眼", "effects": ["lose_stamina_small", "gain_suspicion_small"], "text": "风卷纸灰扑面，你咳了半天，还留下明显翻找痕迹。"}
+		]
+	}
+
+func _sealed_jar_container() -> Dictionary:
+	return {
+		"id": "sealed_jar",
+		"name": "封泥旧罐",
+		"rarity": "rare",
+		"loot": [
+			{"chance": 26, "name": "【优质】旧钱串", "effects": ["gain_old_coin_string", "gain_money_small"], "text": "旧罐里包着一串发黑旧钱。"},
+			{"chance": 18, "name": "【稀有】残玉扣", "effects": ["gain_broken_jade_button"], "text": "封泥下藏着半片玉扣。"},
+			{"chance": 8, "name": "【传说】逃兵私印", "effects": ["gain_soldier_hidden_seal", "gain_suspicion_small"], "text": "私印压在罐底，沉得不像好东西。"},
+			{"chance": 48, "name": "阴湿黑泥", "effects": ["mark_cold_mild", "lose_stamina_small"], "text": "罐里全是阴湿黑泥，寒气和霉味一起扑出来。"}
+		]
+	}
+
+func _abandoned_hut_container() -> Dictionary:
+	return {
+		"id": "abandoned_hut",
+		"name": "废屋灶角",
+		"rarity": "common",
+		"loot": [
+			{"chance": 30, "name": "半袋粗粮", "effects": ["gain_food_small"], "text": "灶角藏着半袋潮粮，挑一挑还能吃。"},
+			{"chance": 22, "name": "旧药包", "effects": ["gain_herb_small"], "text": "药包受潮不轻，但还能救急。"},
+			{"chance": 18, "name": "几枚铜钱", "effects": ["gain_money_tiny"], "text": "灶灰里埋着几枚铜钱。"},
+			{"chance": 30, "name": "塌灰呛咳", "effects": ["lose_stamina_small"], "text": "灶灰塌了一片，你咳得眼泪都出来了。"}
+		]
+	}
+
+func _market_trace_container() -> Dictionary:
+	return {
+		"id": "market_trace",
+		"name": "车辙旧痕",
+		"rarity": "common",
+		"loot": [
+			{"chance": 28, "name": "遗落粗粮", "effects": ["gain_food_small"], "text": "车辙边撒落一些粗粮，被泥裹住还没坏。"},
+			{"chance": 24, "name": "碎铜钱", "effects": ["gain_money_tiny"], "text": "你在车辙坑里抠出几枚铜钱。"},
+			{"chance": 18, "name": "货郎记号", "effects": ["mark_jade_buyer_clue"], "text": "路边刻着货郎暗号，和残玉买家的说法对得上。"},
+			{"chance": 30, "name": "白走一段", "effects": ["lose_stamina_small"], "text": "车辙一路绕回旧道，你白走一段。"}
+		]
+	}
+
 func _boar() -> Dictionary:
 	return {"name": "大野猪", "avoid_chance": 44, "injury_chance": 82}
 
@@ -832,6 +1309,47 @@ func _rarity_from_loot(loot: Dictionary) -> String:
 	if name.begins_with("【优质】"):
 		return "fine"
 	return "common"
+
+func _loot_pack_pressure(loot: Dictionary) -> int:
+	var effects: Array = loot.get("effects", [])
+	if effects.is_empty():
+		return 0
+	var pressure := 0
+	match _rarity_from_loot(loot):
+		"fine":
+			pressure += 5
+		"rare":
+			pressure += 8
+		"precious":
+			pressure += 12
+		"legendary":
+			pressure += 18
+		"mythic":
+			pressure += 24
+		_:
+			pressure += 3
+	for effect_variant in effects:
+		var effect_id := str(effect_variant)
+		if not effect_id.begins_with("gain_"):
+			continue
+		if effect_id.contains("money") or effect_id.contains("bitter_leaf") or effect_id.contains("clear_moss"):
+			pressure += 1
+		elif effect_id.contains("food") or effect_id.contains("meat") or effect_id.contains("pelt"):
+			pressure += 4
+		elif effect_id.contains("tiger") or effect_id.contains("ginseng") or effect_id.contains("shortblade") or effect_id.contains("seal"):
+			pressure += 5
+		else:
+			pressure += 2
+	if _has_equipped("wolf_pelt_complete"):
+		pressure = maxi(pressure - 2, 0)
+	return clampi(pressure, 0, 30)
+
+func _pack_gain_text(delta: int) -> String:
+	if delta >= 18:
+		return "这东西压手得很，包袱明显沉了一截。"
+	if delta >= 10:
+		return "你把东西塞进包里，肩上重量又实了几分。"
+	return "包袱多了一点分量。"
 
 func _rarity_color(rarity_id: String) -> Color:
 	match rarity_id:

@@ -51,6 +51,42 @@
     {
       "id": "graveyard_follow_clue",
       "unlocked": false
+    },
+    {
+      "id": "meet_jade_buyer",
+      "unlocked": true
+    },
+    {
+      "id": "trace_soldier_relic",
+      "unlocked": true
+    },
+    {
+      "id": "set_hunter_trap",
+      "unlocked": true
+    },
+    {
+      "id": "villager_mutual_aid",
+      "unlocked": true
+    },
+    {
+      "id": "grocer_hidden_grain",
+      "unlocked": true
+    },
+    {
+      "id": "doctor_medicine_run",
+      "unlocked": true
+    },
+    {
+      "id": "peddler_old_goods_deal",
+      "unlocked": true
+    },
+    {
+      "id": "tea_debt_tip",
+      "unlocked": true
+    },
+    {
+      "id": "porter_ferry_job",
+      "unlocked": true
     }
   ]
 }

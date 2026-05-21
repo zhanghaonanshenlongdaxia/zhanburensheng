@@ -10,6 +10,7 @@ const SceneServiceScript := preload("res://scripts/service/SceneService.gd")
 const SaveServiceScript := preload("res://scripts/service/SaveService.gd")
 const UIServiceScript := preload("res://scripts/service/UIService.gd")
 const AudioServiceScript := preload("res://scripts/service/AudioService.gd")
+const RelationModelScript := preload("res://scripts/model/RelationModel.gd")
 
 const CONFIG_PRELOAD_PATHS: Array[String] = [
 	"res://configs/tables/stat_table.json",
@@ -92,6 +93,7 @@ func _register_models() -> void:
 	architecture.register_model(&"day_cycle", day_cycle_model)
 	architecture.register_model(&"weather", WeatherModel.new())
 	architecture.register_model(&"fortune", FortuneSelectionModel.new())
+	architecture.register_model(&"relation", RelationModelScript.new())
 
 func _register_systems() -> void:
 	architecture.register_system(&"weather", WeatherSystem.new(self))
