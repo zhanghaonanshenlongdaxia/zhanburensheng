@@ -106,6 +106,111 @@
 	  "default": false
     },
 	{
+	  "id": "grocer_opened_hidden_granary",
+	  "name": "沈守仓打开暗粮仓",
+	  "default": false
+    },
+	{
+	  "id": "doctor_spent_last_medicine",
+	  "name": "周郎中送出救命药",
+	  "default": false
+    },
+	{
+	  "id": "peddler_bought_escape_route",
+	  "name": "陆算盘买下逃路",
+	  "default": false
+    },
+	{
+	  "id": "peddler_sold_you_out",
+	  "name": "陆算盘卖出你的口风",
+	  "default": false
+    },
+	{
+	  "id": "tea_oldman_read_full_ledger",
+	  "name": "韩半盏公开完整债簿",
+	  "default": false
+    },
+	{
+	  "id": "porter_crossed_debt_ferry",
+	  "name": "石二橹顶风撑船",
+	  "default": false
+    },
+	{
+	  "id": "jia_sanpo_false_tip",
+	  "name": "贾三坡卖出假消息",
+	  "default": false
+    },
+	{
+	  "id": "jia_sanpo_became_informer",
+	  "name": "贾三坡告密",
+	  "default": false
+    },
+	{
+	  "id": "land_grab_started",
+	  "name": "里正开始夺地",
+	  "default": false
+    },
+	{
+	  "id": "land_deed_clue",
+	  "name": "发现地契疑点",
+	  "default": false
+    },
+	{
+	  "id": "villager_work_crew",
+	  "name": "组织村民做工",
+	  "default": false
+    },
+	{
+	  "id": "fake_seed_proof",
+	  "name": "查到假种子证据",
+	  "default": false
+    },
+	{
+	  "id": "villagers_rallied",
+	  "name": "村民被鼓动起来",
+	  "default": false
+    },
+	{
+	  "id": "lizheng_son_pressure",
+	  "name": "王大虎盯上你",
+	  "default": false
+    },
+	{
+	  "id": "lizheng_son_neutralized",
+	  "name": "摆平王大虎",
+	  "default": false
+    },
+	{
+	  "id": "yamen_bribed",
+	  "name": "重金打点衙役",
+	  "default": false
+    },
+	{
+	  "id": "constable_protection",
+	  "name": "捕头愿意压案",
+	  "default": false
+    },
+	{
+	  "id": "yamen_arrested",
+	  "name": "被衙役抓走",
+	  "default": false
+    },
+	{
+	  "id": "lizheng_plot_exposed",
+	  "name": "揭开里正夺地局",
+	  "default": false
+    },
+	{
+	  "id": "lizheng_killed",
+	  "name": "击杀里正",
+	  "default": false
+    },
+	{
+	  "id": "lizheng_assassinated",
+	  "name": "暗杀里正",
+	  "default": false
+    },
+	{
 	  "id": "old_well_clue",
 	  "name": "知道旧井暗藏",
 	  "default": false

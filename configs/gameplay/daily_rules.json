@@ -7,6 +7,36 @@
       "effects": ["clear_cold_treated_today"]
     },
     {
+      "id": "land_grab_after_debt_repaid",
+      "name": "里正夺地局浮出水面",
+      "conditions": [
+        {
+          "type": "all_of",
+          "conditions": [
+            {
+              "type": "debt_compare",
+              "target_id": "current",
+              "operator": "<=",
+              "value": 0
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "repaid_debt_once",
+              "operator": "==",
+              "value": true
+            },
+            {
+              "type": "flag_compare",
+              "target_id": "land_grab_started",
+              "operator": "==",
+              "value": false
+            }
+          ]
+        }
+      ],
+      "effects": ["mark_land_grab_started", "mark_land_deed_clue", "gain_attention_medium", "gain_suspicion_small"]
+    },
+    {
       "id": "fed_recover_stamina",
       "name": "有粮恢复体力",
       "conditions": [

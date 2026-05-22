@@ -60,12 +60,12 @@
           "value": true
         }
       ],
-      "result_text": "有人提起催债跑腿时，茶棚老人把话头转到粮价上，你少被追问几句。",
+      "result_text": "有人提起催债跑腿时，韩半盏把话头转到粮价上，你少被追问几句。",
       "effects": ["lose_suspicion_small"]
     },
     {
       "id": "grocer_extends_credit",
-      "name": "粮铺掌柜赊一小袋粮",
+      "name": "沈守仓赊一小袋粮",
       "weight": 6,
       "conditions": [
         {
@@ -81,7 +81,7 @@
           "value": 1
         }
       ],
-      "result_text": "粮铺掌柜让伙计从后门塞来一小袋粗粮，只说账先记着，别在前街提。",
+      "result_text": "沈守仓让伙计从后门塞来一小袋粗粮，只说账先记着，别在前街提。",
       "effects": ["gain_food_small", "gain_relation_grocer"]
     },
     {
@@ -118,7 +118,7 @@
     },
     {
       "id": "peddler_finds_private_buyer",
-      "name": "游货郎找到暗买家",
+      "name": "陆算盘找到暗买家",
       "weight": 6,
       "conditions": [
         {
@@ -140,12 +140,12 @@
           "value": true
         }
       ],
-      "result_text": "游货郎让人带来一句暗号：残玉买家明日会在茶摊后桌等，不问价，只问来路。",
+      "result_text": "陆算盘让人带来一句暗号：残玉买家明日会在茶摊后桌等，不问价，只问来路。",
       "effects": ["mark_met_jade_buyer", "gain_money_tiny", "gain_relation_peddler"]
     },
     {
       "id": "tea_oldman_misdirects_collector",
-      "name": "茶棚老人误导催债人",
+      "name": "韩半盏误导催债人",
       "weight": 7,
       "conditions": [
         {
@@ -167,12 +167,12 @@
           "value": true
         }
       ],
-      "result_text": "茶棚老人把催债人的路引向旧桥，说你今日在河边做短活。等他们折回来时，天已经黑了。",
+      "result_text": "韩半盏把催债人的路引向旧桥，说你今日在河边做短活。等他们折回来时，天已经黑了。",
       "effects": ["lose_attention_small", "clear_met_collector", "gain_relation_tea_oldman"]
     },
     {
       "id": "porter_leaves_short_job",
-      "name": "码头脚夫留了短活",
+      "name": "石二橹留了短活",
       "weight": 5,
       "conditions": [
         {
@@ -194,7 +194,7 @@
           "value": 4
         }
       ],
-      "result_text": "码头脚夫让人捎来半日短活的钱，说你若还跑得动，明日再去渡口找他。",
+      "result_text": "石二橹让人捎来半日短活的钱，说你若还跑得动，明日再去渡口找他。",
       "effects": ["gain_money_small", "gain_relation_porter"]
     },
     {
@@ -366,7 +366,7 @@
           "value": 1
         }
       ],
-      "result_text": "粮铺掌柜看懂你递来的暗话，把粗粮袋往柜下推了推，价钱没明说，却比前街便宜。",
+      "result_text": "沈守仓看懂你递来的暗话，把粗粮袋往柜下推了推，价钱没明说，却比前街便宜。",
       "effects": ["gain_food_small", "gain_relation_grocer"]
     },
     {
@@ -387,12 +387,12 @@
           "value": 1
         }
       ],
-      "result_text": "游货郎把秤砣轻轻一磕，问你是不是懂了旧物暗价。你没接话，但他已经知道下回该怎么开价。",
+      "result_text": "陆算盘把秤砣轻轻一磕，问你是不是懂了旧物暗价。你没接话，但他已经知道下回该怎么开价。",
       "effects": ["gain_relation_peddler", "gain_suspicion_small"]
     },
     {
       "id": "tea_oldman_links_debt_route",
-      "name": "茶棚老人补上催债口风",
+      "name": "韩半盏补上催债口风",
       "weight": 7,
       "conditions": [
         {
@@ -414,12 +414,12 @@
           "value": 0
         }
       ],
-      "result_text": "茶棚老人没看你，只把茶碗转了半圈。你听懂了：催债跑腿明早先去渡口，再折回村口。",
+      "result_text": "韩半盏没看你，只把茶碗转了半圈。你听懂了：催债跑腿明早先去渡口，再折回村口。",
       "effects": ["lose_attention_small", "gain_relation_tea_oldman"]
     },
     {
       "id": "porter_keeps_errand_open",
-      "name": "码头脚夫留短活",
+      "name": "石二橹留短活",
       "weight": 6,
       "conditions": [
         {
@@ -435,8 +435,331 @@
           "value": 1
         }
       ],
-      "result_text": "码头脚夫托人带来口信：明日若还缺钱，渡口有短活，走后巷来，别让债主的人看见。",
+      "result_text": "石二橹托人带来口信：明日若还缺钱，渡口有短活，走后巷来，别让债主的人看见。",
       "effects": ["gain_money_tiny", "gain_relation_porter", "lose_attention_small"]
+    },
+    {
+      "id": "grocer_opens_hidden_granary",
+      "name": "沈守仓开暗粮仓",
+      "weight": 18,
+      "conditions": [
+        {"type": "day_compare", "target_id": "current_day", "operator": ">=", "value": 7},
+        {"type": "relation_compare", "target_id": "grocer", "operator": ">=", "value": 4},
+        {"type": "debt_compare", "target_id": "current", "operator": ">", "value": 0},
+        {"type": "flag_compare", "target_id": "grocer_opened_hidden_granary", "operator": "==", "value": false},
+        {
+          "type": "any_of",
+          "conditions": [
+            {"type": "item_compare", "target_id": "food", "operator": "<=", "value": 2},
+            {"type": "flag_compare", "target_id": "met_collector", "operator": "==", "value": true},
+            {"type": "flag_compare", "target_id": "deduced_support_network", "operator": "==", "value": true}
+          ]
+        }
+      ],
+      "result_text": "沈守仓半夜开了后院暗粮仓。铁算盘挂在门栓上，他把粮袋推给你和几户断炊的人，只说：账本我自己认，债主若来，先找我。",
+      "cinematic": {
+        "id": "grocer_hidden_granary",
+        "title": "沈守仓 · 暗仓开锁",
+        "subtitle": "铁算盘第一次没有落在账上。",
+        "image_path": "res://assets/generated/cinematics/grocer_hidden_granary.jpg",
+        "music_path": "res://assets/audio/reversal_qiansixi_dj.ogg",
+        "dialogue": [
+          {"speaker": "沈守仓", "text": "走吧，这次不用那么累了。", "voice_path": "res://assets/audio/voice/grocer_hidden_granary_01.ogg"},
+          {"speaker": "你", "text": "老家伙，保重！", "voice_path": "res://assets/audio/voice/player_grocer_hidden_granary_01.ogg"}
+        ]
+      },
+      "effects": ["gain_food_medium", "gain_food_medium", "lose_attention_medium", "mark_support_network_built", "mark_grocer_opened_hidden_granary", "gain_relation_grocer"]
+    },
+    {
+      "id": "doctor_spends_last_medicine",
+      "name": "周郎中送出救命药",
+      "weight": 18,
+      "conditions": [
+        {"type": "relation_compare", "target_id": "doctor", "operator": ">=", "value": 4},
+        {"type": "flag_compare", "target_id": "doctor_spent_last_medicine", "operator": "==", "value": false},
+        {
+          "type": "any_of",
+          "conditions": [
+            {"type": "flag_compare", "target_id": "cold_worse", "operator": "==", "value": true},
+            {"type": "flag_compare", "target_id": "cold_severe", "operator": "==", "value": true},
+            {"type": "stat_compare", "target_id": "health", "operator": "<=", "value": 24}
+          ]
+        }
+      ],
+      "result_text": "周郎中把压在箱底的最后一包救命药递出来。你看见他指节发白，他却只说：药不是给死人浪费的，所以今晚先救还活着的人。",
+      "cinematic": {
+        "id": "doctor_last_medicine",
+        "title": "周郎中 · 救命药尽",
+        "subtitle": "冷话说了一辈子，最后还是把药递了出去。",
+        "image_path": "res://assets/generated/cinematics/doctor_last_medicine.jpg",
+        "music_path": "res://assets/audio/reversal_qiansixi_dj.ogg",
+        "dialogue": [
+          {"speaker": "周郎中", "text": "别问值不值得救，活下来再骂我。", "voice_path": "res://assets/audio/voice/doctor_last_medicine_01.ogg"},
+          {"speaker": "你", "text": "你这张嘴，还是一样难听。", "voice_path": "res://assets/audio/voice/player_doctor_last_medicine_01.ogg"}
+        ]
+      },
+      "effects": ["clear_cold_mild", "clear_cold_worse", "clear_cold_severe", "gain_health_small", "gain_stamina_tiny", "mark_doctor_spent_last_medicine", "gain_relation_doctor"]
+    },
+    {
+      "id": "peddler_buys_escape_route",
+      "name": "陆算盘买下退路",
+      "weight": 16,
+      "conditions": [
+        {"type": "relation_compare", "target_id": "peddler", "operator": ">=", "value": 4},
+        {"type": "flag_compare", "target_id": "peddler_bought_escape_route", "operator": "==", "value": false},
+        {
+          "type": "any_of",
+          "conditions": [
+            {"type": "flag_compare", "target_id": "met_collector", "operator": "==", "value": true},
+            {"type": "stat_compare", "target_id": "suspicion", "operator": ">=", "value": 35},
+            {"type": "stat_compare", "target_id": "village_attention", "operator": ">=", "value": 35}
+          ]
+        }
+      ],
+      "result_text": "陆算盘当着外人收了卖你口风的钱。入夜后，他却把三条退路、两个假名字和一张空车票塞到你门缝里：这次亏本，别让我白亏。",
+      "cinematic": {
+        "id": "peddler_escape_route",
+        "title": "陆算盘 · 亏本买卖",
+        "subtitle": "他收下卖人的钱，买回一条活路。",
+        "image_path": "res://assets/generated/cinematics/peddler_escape_route.jpg",
+        "music_path": "res://assets/audio/reversal_qiansixi_dj.ogg",
+        "dialogue": [
+          {"speaker": "陆算盘", "text": "价钱够了，买你一条命也不算太亏。", "voice_path": "res://assets/audio/voice/peddler_escape_route_01.ogg"},
+          {"speaker": "你", "text": "陆算盘，你这账我记一辈子。", "voice_path": "res://assets/audio/voice/player_peddler_escape_route_01.ogg"}
+        ]
+      },
+      "effects": ["lose_suspicion_small", "lose_suspicion_small", "lose_attention_small", "clear_met_collector", "mark_market_heat_cooled", "mark_peddler_bought_escape_route", "gain_relation_peddler"]
+    },
+    {
+      "id": "peddler_sells_you_out",
+      "name": "陆算盘卖出口风",
+      "weight": 8,
+      "conditions": [
+        {"type": "relation_compare", "target_id": "peddler", "operator": "<=", "value": 1},
+        {"type": "stat_compare", "target_id": "suspicion", "operator": ">=", "value": 35},
+        {"type": "flag_compare", "target_id": "peddler_sold_you_out", "operator": "==", "value": false},
+        {"type": "flag_compare", "target_id": "peddler_bought_escape_route", "operator": "==", "value": false}
+      ],
+      "result_text": "夜里有人在货郎摊边提起你的包袱、旧物和来路。陆算盘没有亲口点名，可他那杆秤从不白响。",
+      "effects": ["gain_suspicion_small", "gain_attention_small", "mark_met_collector", "mark_peddler_sold_you_out", "lose_relation_peddler"]
+    },
+    {
+      "id": "tea_oldman_reads_full_ledger",
+      "name": "韩半盏念完整债簿",
+      "weight": 17,
+      "conditions": [
+        {"type": "relation_compare", "target_id": "tea_oldman", "operator": ">=", "value": 4},
+        {"type": "flag_compare", "target_id": "tea_oldman_read_full_ledger", "operator": "==", "value": false},
+        {
+          "type": "any_of",
+          "conditions": [
+            {"type": "flag_compare", "target_id": "deduced_debt_timing", "operator": "==", "value": true},
+            {"type": "flag_compare", "target_id": "tea_debt_contact", "operator": "==", "value": true}
+          ]
+        },
+        {
+          "type": "any_of",
+          "conditions": [
+            {"type": "flag_compare", "target_id": "met_collector", "operator": "==", "value": true},
+            {"type": "day_compare", "target_id": "current_day", "operator": ">=", "value": 9}
+          ]
+        }
+      ],
+      "result_text": "茶棚忽然静下来。韩半盏把一册旧债簿从茶炉底下抽出，当众念完整本名册，连自己当年替王怀安藏下的半句假话也念了进去。",
+      "cinematic": {
+        "id": "tea_full_ledger",
+        "title": "韩半盏 · 完整债簿",
+        "subtitle": "他说完了那半句，也把自己钉在了众目里。",
+        "image_path": "res://assets/generated/cinematics/tea_full_ledger.jpg",
+        "music_path": "res://assets/audio/reversal_qiansixi_dj.ogg",
+        "dialogue": [
+          {"speaker": "韩半盏", "text": "今日这账，我从头念到尾。", "voice_path": "res://assets/audio/voice/tea_full_ledger_01.ogg"},
+          {"speaker": "你", "text": "老韩，你终于不说半句了。", "voice_path": "res://assets/audio/voice/player_tea_full_ledger_01.ogg"}
+        ]
+      },
+      "effects": ["lose_attention_medium", "clear_met_collector", "mark_tea_oldman_read_full_ledger", "gain_relation_tea_oldman"]
+    },
+    {
+      "id": "porter_crosses_debt_ferry",
+      "name": "石二橹顶风撑船",
+      "weight": 16,
+      "conditions": [
+        {"type": "relation_compare", "target_id": "porter", "operator": ">=", "value": 4},
+        {"type": "flag_compare", "target_id": "porter_crossed_debt_ferry", "operator": "==", "value": false},
+        {
+          "type": "any_of",
+          "conditions": [
+            {"type": "flag_compare", "target_id": "met_collector", "operator": "==", "value": true},
+            {"type": "stat_compare", "target_id": "village_attention", "operator": ">=", "value": 35},
+            {"type": "flag_compare", "target_id": "deduced_debt_timing", "operator": "==", "value": true}
+          ]
+        }
+      ],
+      "result_text": "石二橹听见追债人的脚步后，脸色白得像河雾。他还是解了船绳，把你推上船：我弟那晚没过去，今日你得过去。",
+      "cinematic": {
+        "id": "porter_debt_ferry",
+        "title": "石二橹 · 顶风撑船",
+        "subtitle": "怕了一辈子的河，终于被他亲手划开。",
+        "image_path": "res://assets/generated/cinematics/porter_debt_ferry.jpg",
+        "music_path": "res://assets/audio/reversal_qiansixi_dj.ogg",
+        "dialogue": [
+          {"speaker": "石二橹", "text": "坐稳。今夜这条河，我送你过去。", "voice_path": "res://assets/audio/voice/porter_debt_ferry_01.ogg"},
+          {"speaker": "你", "text": "石二橹，别回头！", "voice_path": "res://assets/audio/voice/player_porter_debt_ferry_01.ogg"}
+        ]
+      },
+      "effects": ["lose_attention_small", "lose_suspicion_small", "clear_met_collector", "mark_porter_crossed_debt_ferry", "gain_relation_porter"]
+    },
+    {
+      "id": "jia_sanpo_false_tip",
+      "name": "贾三坡卖假消息",
+      "weight": 14,
+      "conditions": [
+        {"type": "relation_compare", "target_id": "jia_sanpo", "operator": ">=", "value": 2},
+        {"type": "flag_compare", "target_id": "jia_sanpo_false_tip", "operator": "==", "value": false},
+        {
+          "type": "any_of",
+          "conditions": [
+            {"type": "flag_compare", "target_id": "met_collector", "operator": "==", "value": true},
+            {"type": "stat_compare", "target_id": "village_attention", "operator": ">=", "value": 35}
+          ]
+        }
+      ],
+      "result_text": "贾三坡在茶棚门口把一个假消息卖给债主跑腿，说你已经绕去旧桥。等人全追错路，他才揉着青肿嘴角嘟囔：我娘当年要是也有人肯装糊涂就好了。",
+      "cinematic": {
+        "id": "jia_false_tip",
+        "title": "贾三坡 · 假话挡刀",
+        "subtitle": "最脏的一张嘴，卖出了最干净的一次谎。",
+        "image_path": "res://assets/generated/cinematics/jia_false_tip.jpg",
+        "music_path": "res://assets/audio/reversal_qiansixi_dj.ogg",
+        "dialogue": [
+          {"speaker": "贾三坡", "text": "我说的是假话，可这回你得信我。", "voice_path": "res://assets/audio/voice/jia_false_tip_01.ogg"},
+          {"speaker": "你", "text": "贾三坡，活着回来喝茶。", "voice_path": "res://assets/audio/voice/player_jia_false_tip_01.ogg"}
+        ]
+      },
+      "effects": ["lose_attention_medium", "clear_met_collector", "mark_jia_sanpo_false_tip", "gain_relation_jia_sanpo"]
+    },
+    {
+      "id": "jia_sanpo_informs_collector",
+      "name": "贾三坡告密",
+      "weight": 8,
+      "conditions": [
+        {"type": "relation_compare", "target_id": "jia_sanpo", "operator": "<=", "value": 0},
+        {"type": "stat_compare", "target_id": "village_attention", "operator": ">=", "value": 30},
+        {"type": "flag_compare", "target_id": "jia_sanpo_became_informer", "operator": "==", "value": false},
+        {"type": "flag_compare", "target_id": "jia_sanpo_false_tip", "operator": "==", "value": false}
+      ],
+      "result_text": "贾三坡把你白日的去向添油加醋说给债主跑腿听。他笑得讨嫌，可那笑后面像是怕极了下一顿打落到自己身上。",
+      "effects": ["gain_attention_medium", "mark_met_collector", "mark_jia_sanpo_became_informer", "lose_relation_jia_sanpo"]
+    },
+    {
+      "id": "lizheng_starts_land_grab",
+      "name": "里正盯上地契",
+      "weight": 30,
+      "conditions": [
+        {"type": "flag_compare", "target_id": "land_grab_started", "operator": "==", "value": true},
+        {"type": "flag_compare", "target_id": "lizheng_son_pressure", "operator": "==", "value": false}
+      ],
+      "result_text": "债清以后，王怀安反倒盯得更紧。他让人翻你家的地契和钱路，话里话外都在问：一个穷到还债的人，凭什么忽然有了来钱手段？",
+      "effects": ["mark_lizheng_son_pressure", "gain_attention_medium", "gain_suspicion_small"]
+    },
+    {
+      "id": "fake_seed_rumor_spreads",
+      "name": "假种子风声",
+      "weight": 12,
+      "conditions": [
+        {"type": "flag_compare", "target_id": "land_grab_started", "operator": "==", "value": true},
+        {"type": "flag_compare", "target_id": "fake_seed_proof", "operator": "==", "value": false},
+        {"type": "stat_compare", "target_id": "villager_gratitude", "operator": ">=", "value": 24}
+      ],
+      "result_text": "几个村民领过你的工钱后，终于有人低声提起王怀安今年借给大家的种子：袋口新，籽却瘪得像陈年烂谷。镇上种市也许能查到来路。",
+      "effects": ["mark_land_deed_clue", "gain_villager_gratitude_small"]
+    },
+    {
+      "id": "wang_dahu_yamen_warning",
+      "name": "王大虎递黑状",
+      "weight": 14,
+      "conditions": [
+        {"type": "flag_compare", "target_id": "lizheng_son_pressure", "operator": "==", "value": true},
+        {"type": "flag_compare", "target_id": "lizheng_son_neutralized", "operator": "==", "value": false},
+        {"type": "flag_compare", "target_id": "yamen_bribed", "operator": "==", "value": false},
+        {"type": "flag_compare", "target_id": "constable_protection", "operator": "==", "value": false},
+        {
+          "type": "any_of",
+          "conditions": [
+            {"type": "flag_compare", "target_id": "fake_seed_proof", "operator": "==", "value": true},
+            {"type": "stat_compare", "target_id": "villager_gratitude", "operator": ">=", "value": 40}
+          ]
+        }
+      ],
+      "result_text": "镇上酒馆传来风声：王大虎请衙役喝了酒，说你还债太快，必有赃路。若不打点衙门或结交刘捕头，他下一步就要拿人。",
+      "effects": ["gain_attention_medium", "gain_suspicion_small"]
+    },
+    {
+      "id": "wang_dahu_yamen_arrest",
+      "name": "衙役拿人",
+      "weight": 18,
+      "conditions": [
+        {"type": "flag_compare", "target_id": "lizheng_son_pressure", "operator": "==", "value": true},
+        {"type": "flag_compare", "target_id": "lizheng_son_neutralized", "operator": "==", "value": false},
+        {"type": "flag_compare", "target_id": "yamen_bribed", "operator": "==", "value": false},
+        {"type": "flag_compare", "target_id": "constable_protection", "operator": "==", "value": false},
+        {"type": "stat_compare", "target_id": "suspicion", "operator": ">=", "value": 65}
+      ],
+      "result_text": "王大虎终于把黑状递进衙门。两个衙役天未亮就堵到门口，你没法杀他们，也没人替你压案。",
+      "effects": ["mark_yamen_arrested"]
+    },
+    {
+      "id": "lizheng_threatens_tenants",
+      "name": "里正压佃户",
+      "weight": 10,
+      "conditions": [
+        {"type": "flag_compare", "target_id": "land_grab_started", "operator": "==", "value": true},
+        {"type": "flag_compare", "target_id": "lizheng_killed", "operator": "==", "value": false},
+        {"type": "stat_compare", "target_id": "tenant_support", "operator": ">=", "value": 18},
+        {"type": "flag_compare", "target_id": "fake_seed_proof", "operator": "==", "value": false}
+      ],
+      "result_text": "王怀安把几户佃户叫去祠后，说谁再替你做工，明年地租就照欠账翻。有人不敢再直视你，修沟的人少了一截。",
+      "effects": ["lose_tenant_support_small", "lose_villager_gratitude_small", "gain_attention_small"]
+    },
+    {
+      "id": "lizheng_slanders_hunters",
+      "name": "猎户被扣脏名",
+      "weight": 9,
+      "conditions": [
+        {"type": "flag_compare", "target_id": "land_grab_started", "operator": "==", "value": true},
+        {"type": "flag_compare", "target_id": "lizheng_killed", "operator": "==", "value": false},
+        {"type": "stat_compare", "target_id": "hunter_support", "operator": ">=", "value": 18},
+        {"type": "flag_compare", "target_id": "constable_protection", "operator": "==", "value": false}
+      ],
+      "result_text": "里正家的人在镇口放话，说猎户夜巡是替你藏赃。几个猎户收了弓，怕衙门顺着山货和刀口查到自己身上。",
+      "effects": ["lose_hunter_support_small", "gain_suspicion_small"]
+    },
+    {
+      "id": "lizheng_frames_refugees",
+      "name": "流民被栽赃",
+      "weight": 9,
+      "conditions": [
+        {"type": "flag_compare", "target_id": "land_grab_started", "operator": "==", "value": true},
+        {"type": "flag_compare", "target_id": "lizheng_killed", "operator": "==", "value": false},
+        {"type": "stat_compare", "target_id": "refugee_support", "operator": ">=", "value": 18},
+        {"type": "stat_compare", "target_id": "village_attention", "operator": ">=", "value": 30}
+      ],
+      "result_text": "夜里有人往流民棚边丢了半袋霉粮，第二天就传成他们偷了种子。你雇来的那批人被村里指指点点，声音低了不少。",
+      "effects": ["lose_refugee_support_small", "lose_villager_gratitude_small", "gain_attention_small"]
+    },
+    {
+      "id": "worksite_holds_under_pressure",
+      "name": "工地顶住反扑",
+      "weight": 8,
+      "conditions": [
+        {"type": "flag_compare", "target_id": "land_grab_started", "operator": "==", "value": true},
+        {"type": "flag_compare", "target_id": "villager_work_crew", "operator": "==", "value": true},
+        {"type": "stat_compare", "target_id": "tenant_support", "operator": ">=", "value": 18},
+        {"type": "stat_compare", "target_id": "hunter_support", "operator": ">=", "value": 18},
+        {"type": "stat_compare", "target_id": "refugee_support", "operator": ">=", "value": 18}
+      ],
+      "result_text": "王怀安派人到村场搅事，佃户先把账摊开，猎户守在路口，流民把修好的路让出来给众人看。那人没找到下嘴的口子，只能灰着脸退走。",
+      "effects": ["gain_villager_gratitude_small", "lose_suspicion_small", "lose_attention_small"]
     }
   ]
 }

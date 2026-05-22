@@ -921,6 +921,7 @@ func _scene_event_candidates(cell_data: Dictionary) -> Array[Dictionary]:
 			})
 		_:
 			pass
+	_append_route_scene_events(candidates, option_id, location_id, scene_type)
 	if cell_data.get("enemies", []).size() > 0:
 		candidates.append({
 			"id": "animal_warning",
@@ -935,6 +936,86 @@ func _scene_event_candidates(cell_data: Dictionary) -> Array[Dictionary]:
 			]
 		})
 	return candidates
+
+func _append_route_scene_events(candidates: Array[Dictionary], option_id: String, location_id: String, scene_type: String) -> void:
+	if _has_flag("deduced_old_well_route") or option_id in ["old_well_cache", "deduced_old_well_descent"]:
+		candidates.append({
+			"id": "well_rope_signal",
+			"name": "井绳三结",
+			"verb": "解结",
+			"hint": "旧绳结在石缝里磨出三道痕，像是有人用它传过暗号",
+			"tone": "good",
+			"outcomes": [
+				{"chance": 36, "effects": ["mark_old_well_line", "unlock_old_well_cache"], "pressure": [3, -5, 1], "text": "你看懂三结井绳的方向，旧井夜路更清楚了，踪迹也被墙影压住。"},
+				{"chance": 28, "effects": ["gain_old_coin_string"], "pressure": [4, 2, 2], "text": "井绳暗号旁压着一串旧钱，像给懂行人的路费。"},
+				{"chance": 36, "effects": ["gain_attention_small"], "pressure": [5, 7, 2], "text": "你解绳太久，墙外有人咳了一声，未必看清你，却记住了这处动静。"}
+			]
+		})
+	if _has_flag("deduced_old_goods_line") or option_id in ["peddler_old_goods_deal", "deduced_old_goods_run", "meet_jade_buyer", "night_market_fence"]:
+		candidates.append({
+			"id": "old_goods_countermark",
+			"name": "暗秤刻痕",
+			"verb": "对暗价",
+			"hint": "旧秤边缘有一枚浅刻，像货郎说过的暗价记号",
+			"tone": "risk",
+			"outcomes": [
+				{"chance": 34, "effects": ["gain_money_small", "mark_jade_buyer_clue"], "pressure": [4, 3, 2], "text": "你按刻痕对上暗价，换到一点实钱，也确认残玉买家这条线还活着。"},
+				{"chance": 26, "effects": ["mark_black_market_fence_line"], "pressure": [5, 2, 2], "text": "刻痕接上夜市暗线，往后旧物可走黑灯巷，但来路要更小心。"},
+				{"chance": 40, "effects": ["gain_suspicion_small"], "pressure": [5, 7, 3], "text": "你盯着秤痕看得太细，被暗处的人反套了半句来路。"}
+			]
+		})
+	if _has_flag("deduced_support_network") or option_id in ["villager_mutual_aid", "village_support_network", "grocer_hidden_grain", "doctor_medicine_run"]:
+		candidates.append({
+			"id": "support_backdoor_mark",
+			"name": "后门柴记",
+			"verb": "认门",
+			"hint": "柴门旁斜插一根湿枝，是互助线里才用的记号",
+			"tone": "good",
+			"outcomes": [
+				{"chance": 34, "effects": ["gain_food_small", "mark_support_network_built"], "pressure": [3, -4, -2], "text": "你认出湿枝记号，从后门分到一小包粗粮，没惊动前街。"},
+				{"chance": 30, "effects": ["gain_herb_small", "gain_relation_doctor"], "pressure": [3, -2, 0], "text": "门后留着一包救急草药，郎中的人情线又稳了一点。"},
+				{"chance": 36, "effects": ["gain_attention_small"], "pressure": [4, 6, 2], "text": "你找错了柴记，邻家窗缝里有人看了你一眼。"}
+			]
+		})
+	if _has_flag("deduced_debt_timing") or option_id in ["tea_debt_tip", "deduced_debt_timing_run", "porter_ferry_job", "run_errand"]:
+		candidates.append({
+			"id": "debt_runner_timing",
+			"name": "催债脚程",
+			"verb": "掐时辰",
+			"hint": "泥印一深一浅，正是王怀安跑腿常走的步子",
+			"tone": "risk",
+			"outcomes": [
+				{"chance": 38, "effects": ["lose_attention_small", "clear_met_collector"], "pressure": [4, -5, 1], "text": "你按脚程掐准时辰，绕开催债人会折回的路口，今夜少惹一次眼。"},
+				{"chance": 26, "effects": ["mark_tea_debt_contact"], "pressure": [3, 1, 1], "text": "脚印转向茶棚，你记下这段时辰，往后能接上茶棚口风。"},
+				{"chance": 36, "effects": ["gain_attention_small"], "pressure": [5, 8, 3], "text": "你刚要绕开，跑腿的人从岔口露头，虽没堵住你，却记住你从这边走过。"}
+			]
+		})
+	if _has_flag("deduced_grave_cache") or option_id in ["graveyard_follow_clue", "deduced_grave_cache_deep", "trace_soldier_relic"] or location_id == "graveyard":
+		candidates.append({
+			"id": "grave_cache_marker",
+			"name": "坟土暗标",
+			"verb": "辨土",
+			"hint": "新旧坟土颜色错了一层，像有人故意盖过旧标",
+			"tone": "danger",
+			"outcomes": [
+				{"chance": 30, "effects": ["mark_found_hidden_stash", "gain_old_coin_string"], "pressure": [6, 4, 3], "text": "你从土色里辨出旧藏边界，翻出一串旧钱，也确认此处曾被人动过。"},
+				{"chance": 22, "effects": ["mark_soldier_relic_clue"], "pressure": [6, 5, 3], "text": "坟土下有半截军布暗记，荒坟和旧营遗物这条线接得更紧了。"},
+				{"chance": 48, "effects": ["gain_suspicion_small", "gain_attention_small"], "pressure": [7, 8, 4], "text": "你刚拨开土层，远处便有人停步，荒坟新土的闲话恐怕压不住。"}
+			]
+		})
+	if _has_flag("deduced_hunter_route") or option_id in ["set_hunter_trap", "deduced_hunter_patrol", "deep_hunt", "hunt_rabbit"] or location_id in ["forest", "mountain"]:
+		candidates.append({
+			"id": "hunter_wind_line",
+			"name": "猎户风口",
+			"verb": "借风",
+			"hint": "草叶倒向和兽径不合，像猎户故意留下的借风点",
+			"tone": "good",
+			"outcomes": [
+				{"chance": 34, "effects": ["mark_hunter_trap_line", "lose_suspicion_small"], "pressure": [4, -4, -2], "text": "你借风口压低气味，兽径判断更准，回路也不容易被人看出。"},
+				{"chance": 28, "effects": ["gain_meat_small"], "pressure": [5, 2, 3], "text": "你顺风口绕到小兽旧巢，得了一点肉食，没有惊动更大的东西。"},
+				{"chance": 38, "effects": ["lose_stamina_small"], "pressure": [6, 5, 6], "spawn_enemy": scene_type in ["thicket", "cave", "slope"], "text": "风向忽然乱了，你退慢半步，附近草木也跟着动了起来。"}
+			]
+		})
 
 func _scene_event_cell_key(cell: Vector2i) -> String:
 	return "%d,%d" % [cell.x, cell.y]

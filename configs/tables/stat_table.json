@@ -31,6 +31,38 @@
       "min": 0,
       "max": 100,
       "group": "player"
+    },
+    {
+      "id": "villager_gratitude",
+      "name": "民心",
+      "default": 0,
+      "min": 0,
+      "max": 100,
+      "group": "player"
+    },
+    {
+      "id": "tenant_support",
+      "name": "佃户",
+      "default": 0,
+      "min": 0,
+      "max": 100,
+      "group": "player"
+    },
+    {
+      "id": "hunter_support",
+      "name": "猎户",
+      "default": 0,
+      "min": 0,
+      "max": 100,
+      "group": "player"
+    },
+    {
+      "id": "refugee_support",
+      "name": "流民",
+      "default": 0,
+      "min": 0,
+      "max": 100,
+      "group": "player"
     }
   ]
 }

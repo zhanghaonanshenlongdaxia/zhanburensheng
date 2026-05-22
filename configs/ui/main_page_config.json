@@ -3,7 +3,11 @@
     "stamina",
     "health",
     "suspicion",
-    "village_attention"
+    "village_attention",
+    "villager_gratitude",
+    "tenant_support",
+    "hunter_support",
+    "refugee_support"
   ],
   "inventory_item_order": [
     "food",

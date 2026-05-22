@@ -43,6 +43,12 @@
       "value": -3
     },
     {
+      "id": "lose_money_large",
+      "type": "item_delta",
+      "target_id": "money",
+      "value": -18
+    },
+    {
       "id": "gain_food_small",
       "type": "item_delta",
       "target_id": "food",
@@ -319,6 +325,132 @@
       "value": true
     },
     {
+      "id": "mark_grocer_opened_hidden_granary",
+      "type": "set_flag",
+      "target_id": "grocer_opened_hidden_granary",
+      "value": true
+    },
+    {
+      "id": "mark_doctor_spent_last_medicine",
+      "type": "set_flag",
+      "target_id": "doctor_spent_last_medicine",
+      "value": true
+    },
+    {
+      "id": "mark_peddler_bought_escape_route",
+      "type": "set_flag",
+      "target_id": "peddler_bought_escape_route",
+      "value": true
+    },
+    {
+      "id": "mark_peddler_sold_you_out",
+      "type": "set_flag",
+      "target_id": "peddler_sold_you_out",
+      "value": true
+    },
+    {
+      "id": "mark_tea_oldman_read_full_ledger",
+      "type": "set_flag",
+      "target_id": "tea_oldman_read_full_ledger",
+      "value": true
+    },
+    {
+      "id": "mark_porter_crossed_debt_ferry",
+      "type": "set_flag",
+      "target_id": "porter_crossed_debt_ferry",
+      "value": true
+    },
+    {
+      "id": "mark_jia_sanpo_false_tip",
+      "type": "set_flag",
+      "target_id": "jia_sanpo_false_tip",
+      "value": true
+    },
+    {
+      "id": "mark_jia_sanpo_became_informer",
+      "type": "set_flag",
+      "target_id": "jia_sanpo_became_informer",
+      "value": true
+    },
+    {
+      "id": "mark_land_grab_started",
+      "type": "set_flag",
+      "target_id": "land_grab_started",
+      "value": true
+    },
+    {
+      "id": "mark_land_deed_clue",
+      "type": "set_flag",
+      "target_id": "land_deed_clue",
+      "value": true
+    },
+    {
+      "id": "mark_villager_work_crew",
+      "type": "set_flag",
+      "target_id": "villager_work_crew",
+      "value": true
+    },
+    {
+      "id": "mark_fake_seed_proof",
+      "type": "set_flag",
+      "target_id": "fake_seed_proof",
+      "value": true
+    },
+    {
+      "id": "mark_villagers_rallied",
+      "type": "set_flag",
+      "target_id": "villagers_rallied",
+      "value": true
+    },
+    {
+      "id": "mark_lizheng_son_pressure",
+      "type": "set_flag",
+      "target_id": "lizheng_son_pressure",
+      "value": true
+    },
+    {
+      "id": "mark_lizheng_son_neutralized",
+      "type": "set_flag",
+      "target_id": "lizheng_son_neutralized",
+      "value": true
+    },
+    {
+      "id": "mark_yamen_bribed",
+      "type": "set_flag",
+      "target_id": "yamen_bribed",
+      "value": true
+    },
+    {
+      "id": "mark_constable_protection",
+      "type": "set_flag",
+      "target_id": "constable_protection",
+      "value": true
+    },
+    {
+      "id": "mark_yamen_arrested",
+      "type": "set_flag",
+      "target_id": "yamen_arrested",
+      "value": true
+    },
+    {
+      "id": "mark_lizheng_plot_exposed",
+      "type": "set_flag",
+      "target_id": "lizheng_plot_exposed",
+      "value": true
+    },
+    {
+      "id": "mark_lizheng_killed",
+      "type": "set_flag",
+      "target_id": "lizheng_killed",
+      "value": true
+    },
+    {
+      "id": "mark_lizheng_assassinated",
+      "type": "set_flag",
+      "target_id": "lizheng_assassinated",
+      "value": true
+    },
+    {
       "id": "mark_old_well_clue",
       "type": "set_flag",
       "target_id": "old_well_clue",
@@ -448,6 +580,36 @@
       "id": "lose_relation_porter",
       "type": "relation_delta",
       "target_id": "porter",
+      "value": -1
+    },
+    {
+      "id": "gain_relation_jia_sanpo",
+      "type": "relation_delta",
+      "target_id": "jia_sanpo",
+      "value": 1
+    },
+    {
+      "id": "lose_relation_jia_sanpo",
+      "type": "relation_delta",
+      "target_id": "jia_sanpo",
+      "value": -1
+    },
+    {
+      "id": "gain_relation_constable",
+      "type": "relation_delta",
+      "target_id": "constable",
+      "value": 1
+    },
+    {
+      "id": "gain_relation_wang_dahu",
+      "type": "relation_delta",
+      "target_id": "wang_dahu",
+      "value": 1
+    },
+    {
+      "id": "lose_relation_wang_dahu",
+      "type": "relation_delta",
+      "target_id": "wang_dahu",
       "value": -1
     },
     {
@@ -593,6 +755,66 @@
       "type": "stat_delta",
       "target_id": "village_attention",
       "value": 7
+    },
+    {
+      "id": "gain_villager_gratitude_small",
+      "type": "stat_delta",
+      "target_id": "villager_gratitude",
+      "value": 8
+    },
+    {
+      "id": "gain_villager_gratitude_medium",
+      "type": "stat_delta",
+      "target_id": "villager_gratitude",
+      "value": 16
+    },
+    {
+      "id": "gain_villager_gratitude_large",
+      "type": "stat_delta",
+      "target_id": "villager_gratitude",
+      "value": 26
+    },
+    {
+      "id": "lose_villager_gratitude_small",
+      "type": "stat_delta",
+      "target_id": "villager_gratitude",
+      "value": -8
+    },
+    {
+      "id": "gain_tenant_support_medium",
+      "type": "stat_delta",
+      "target_id": "tenant_support",
+      "value": 18
+    },
+    {
+      "id": "gain_hunter_support_medium",
+      "type": "stat_delta",
+      "target_id": "hunter_support",
+      "value": 18
+    },
+    {
+      "id": "gain_refugee_support_medium",
+      "type": "stat_delta",
+      "target_id": "refugee_support",
+      "value": 18
+    },
+    {
+      "id": "lose_tenant_support_small",
+      "type": "stat_delta",
+      "target_id": "tenant_support",
+      "value": -8
+    },
+    {
+      "id": "lose_hunter_support_small",
+      "type": "stat_delta",
+      "target_id": "hunter_support",
+      "value": -8
+    },
+    {
+      "id": "lose_refugee_support_small",
+      "type": "stat_delta",
+      "target_id": "refugee_support",
+      "value": -8
     },
     {
       "id": "unlock_graveyard_follow_clue",

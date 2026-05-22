@@ -7,6 +7,7 @@ const OptionCardBackdropScript := preload("res://scripts/ui/OptionCardBackdrop.g
 const ClueBoardScript := preload("res://scripts/ui/ClueBoard.gd")
 const FortuneChoiceEffectLayerScript := preload("res://scripts/ui/FortuneChoiceEffectLayer.gd")
 const FortuneSlipTokenButtonScript := preload("res://scripts/ui/FortuneSlipTokenButton.gd")
+const ReversalCinematicLayerScript := preload("res://scripts/ui/ReversalCinematicLayer.gd")
 
 @onready var day_label: Label = $MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/TopRow/DayLabel
 @onready var weather_label: Label = $MainMargin/RootColumn/TopLayout/Sidebar/SidebarStack/HeaderPanel/MarginContainer/HeaderVBox/TopRow/WeatherLabel
@@ -79,6 +80,8 @@ var _omen_token_button: Button
 var _omen_token_tween: Tween
 var _omen_detail_overlay: PanelContainer
 var _omen_detail_text: RichTextLabel
+var _reversal_cinematic_layer: Control
+var _reversal_cinematic_queue: Array[Dictionary] = []
 
 func _ready() -> void:
 	_ensure_scroll_viewport()
@@ -88,6 +91,7 @@ func _ready() -> void:
 	_ensure_clue_overlay()
 	_ensure_sidebar_buttons()
 	_ensure_feedback_layer()
+	_ensure_reversal_cinematic_layer()
 	_ensure_fortune_choice_ui()
 	_ensure_option_backdrops()
 	_ensure_sidebar_result_layout()
@@ -491,6 +495,15 @@ func _ensure_feedback_layer() -> void:
 	_feedback_layer.z_index = 80
 	add_child(_feedback_layer)
 	move_child(_feedback_layer, get_child_count() - 1)
+
+func _ensure_reversal_cinematic_layer() -> void:
+	if _reversal_cinematic_layer != null:
+		return
+	_reversal_cinematic_layer = ReversalCinematicLayerScript.new()
+	_reversal_cinematic_layer.name = "ReversalCinematicLayer"
+	_reversal_cinematic_layer.finished.connect(_on_reversal_cinematic_finished)
+	add_child(_reversal_cinematic_layer)
+	move_child(_reversal_cinematic_layer, get_child_count() - 1)
 
 func _ensure_fortune_choice_ui() -> void:
 	_ensure_option_confirm_controls()
@@ -1169,15 +1182,21 @@ func _feedback_from_effect(effect: Dictionary) -> Dictionary:
 func _relation_display_name(npc_id: String) -> String:
 	match npc_id:
 		"grocer":
-			return "粮铺掌柜"
+			return "沈守仓"
 		"doctor":
 			return "周郎中"
 		"peddler":
-			return "游货郎"
+			return "陆算盘"
 		"tea_oldman":
-			return "茶棚老人"
+			return "韩半盏"
 		"porter":
-			return "码头脚夫"
+			return "石二橹"
+		"jia_sanpo":
+			return "贾三坡"
+		"constable":
+			return "刘捕头"
+		"wang_dahu":
+			return "王大虎"
 		_:
 			return npc_id
 
@@ -1418,6 +1437,14 @@ func _stat_feedback_color(stat_id: String, positive: bool) -> Color:
 			return Color(0.55, 0.76, 0.86, 1.0)
 		"suspicion", "village_attention":
 			return Color(0.72, 0.52, 0.92, 1.0)
+		"villager_gratitude":
+			return Color(0.90, 0.72, 0.38, 1.0)
+		"tenant_support":
+			return Color(0.74, 0.82, 0.46, 1.0)
+		"hunter_support":
+			return Color(0.58, 0.76, 0.54, 1.0)
+		"refugee_support":
+			return Color(0.78, 0.67, 0.50, 1.0)
 		_:
 			return Color(0.90, 0.80, 0.58, 1.0)
 
@@ -2075,7 +2102,8 @@ func _show_town_board(selected: Dictionary) -> void:
 	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
 	var relation_model: RefCounted = _app.architecture.get_model(&"relation")
 	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
-	_town_board.configure(selected, inventory_model.item_defs, inventory_model.items, relation_model, flag_model.flags)
+	var player_model: PlayerModel = _app.architecture.get_model(&"player")
+	_town_board.configure(selected, inventory_model.item_defs, inventory_model.items, relation_model, flag_model.flags, player_model.stats)
 	scene_illustration.set_context(
 		str(_current_weather.get("id", "clear")),
 		"daytime",
@@ -2152,6 +2180,11 @@ func _on_town_sell_requested(item_id: String, value: int, summary: String) -> vo
 
 func _on_town_contact_unlocked(effect_ids: Array, summary: String) -> void:
 	_apply_exploration_effects(effect_ids)
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	var player_model: PlayerModel = _app.architecture.get_model(&"player")
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	if _town_board != null:
+		_town_board.update_runtime_state(flag_model.flags, player_model.stats, inventory_model.items)
 	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
 	_refresh_status()
 
@@ -2161,6 +2194,11 @@ func _on_town_task_started(_task_id: String, summary: String) -> void:
 
 func _on_town_task_completed(_task_id: String, effect_ids: Array, summary: String) -> void:
 	_apply_exploration_effects(effect_ids)
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	var player_model: PlayerModel = _app.architecture.get_model(&"player")
+	var inventory_model: InventoryModel = _app.architecture.get_model(&"inventory")
+	if _town_board != null:
+		_town_board.update_runtime_state(flag_model.flags, player_model.stats, inventory_model.items)
 	_set_selection_text("%s\n%s" % [summary, _get_progress_summary()])
 	_refresh_status()
 
@@ -2202,10 +2240,12 @@ func _on_day_resolved(payload: Dictionary) -> void:
 	if not night_action.is_empty():
 		lines.append("夜间行动：%s" % str(night_action.get("result_text", "")))
 		_play_effect_feedback(night_action.get("effects", []))
+		_queue_reversal_cinematic(night_action)
 	var npc_event: Dictionary = payload.get("npc_event", {})
 	if not npc_event.is_empty():
 		lines.append("夜间事件：%s" % str(npc_event.get("result_text", "")))
 		_play_effect_feedback(npc_event.get("effects", []))
+		_queue_reversal_cinematic(npc_event)
 	var ending: Dictionary = payload.get("ending", {})
 	if not ending.is_empty():
 		lines.append("结局触发：%s" % str(ending.get("title", "未知结局")))
@@ -2220,6 +2260,29 @@ func _on_day_resolved(payload: Dictionary) -> void:
 	if not lines.is_empty():
 		_set_selection_text("\n".join(lines))
 	_refresh_status()
+	_play_next_reversal_cinematic()
+
+func _queue_reversal_cinematic(event_payload: Dictionary) -> void:
+	var cinematic: Dictionary = event_payload.get("cinematic", {})
+	if cinematic.is_empty():
+		return
+	if not cinematic.has("title"):
+		cinematic["title"] = str(event_payload.get("name", "人心反转"))
+	if not cinematic.has("subtitle"):
+		cinematic["subtitle"] = str(event_payload.get("result_text", ""))
+	_reversal_cinematic_queue.append(cinematic)
+
+func _play_next_reversal_cinematic() -> void:
+	if _reversal_cinematic_layer == null or _reversal_cinematic_layer.visible:
+		return
+	if _reversal_cinematic_queue.is_empty():
+		return
+	var cinematic: Dictionary = _reversal_cinematic_queue.pop_front()
+	move_child(_reversal_cinematic_layer, get_child_count() - 1)
+	_reversal_cinematic_layer.play(cinematic)
+
+func _on_reversal_cinematic_finished() -> void:
+	_play_next_reversal_cinematic()
 
 func _on_game_ended(payload: Dictionary) -> void:
 	_interaction_mode = "ended"
@@ -2294,6 +2357,30 @@ func _get_route_hint() -> String:
 	if _app == null:
 		return "路线未定"
 	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
+	if flag_model.get_flag("villagers_rallied") and flag_model.get_flag("lizheng_killed"):
+		return "当前路线：民心已起，里正夺地局被村民合力掀翻"
+	if flag_model.get_flag("lizheng_assassinated"):
+		return "当前路线：暗杀里正已成，能留地但会进入带血的低阶结局"
+	if flag_model.get_flag("land_grab_started"):
+		if flag_model.get_flag("fake_seed_proof") and flag_model.get_flag("lizheng_son_neutralized"):
+			return "当前路线：假种子和王大虎都已处理，可在村场用民心发动终局"
+		if flag_model.get_flag("fake_seed_proof"):
+			return "当前路线：假种子证据在手，下一步处理王大虎和衙门"
+		if flag_model.get_flag("villager_work_crew"):
+			return "当前路线：村民做工线已起，继续涨民心并查假种子"
+		return "当前路线：还债后进入夺地主线，王怀安正在查你的钱路和地契"
+	if flag_model.get_flag("grocer_opened_hidden_granary") and flag_model.get_flag("doctor_spent_last_medicine") and (flag_model.get_flag("tea_oldman_read_full_ledger") or flag_model.get_flag("porter_crossed_debt_ferry") or flag_model.get_flag("jia_sanpo_false_tip")):
+		return "当前路线：多名熟人已完成反转，还清债后可能进入人心终局"
+	if flag_model.get_flag("peddler_bought_escape_route") and flag_model.get_flag("black_market_fence_line"):
+		return "当前路线：陆算盘已替你断尾，黑市线有机会脱身而不是被反咬"
+	if flag_model.get_flag("tea_oldman_read_full_ledger"):
+		return "当前路线：韩半盏公开债簿，还清债后可能撬动王怀安的账局"
+	if flag_model.get_flag("porter_crossed_debt_ferry"):
+		return "当前路线：石二橹已顶风撑船，还清债后可能从渡口离乡"
+	if flag_model.get_flag("grocer_opened_hidden_granary") or flag_model.get_flag("doctor_spent_last_medicine"):
+		return "当前路线：暗仓和药灯已把互助线推向更高结局"
+	if flag_model.get_flag("jia_sanpo_false_tip"):
+		return "当前路线：贾三坡卖过假消息，还清债后这份人情会留下痕迹"
 	if flag_model.get_flag("deduced_old_goods_line"):
 		return "当前路线：旧物暗价已推断清楚，搜旧物和卖战利品更稳"
 	if flag_model.get_flag("deduced_old_well_route"):
@@ -2403,6 +2490,22 @@ func _get_consequence_echoes() -> Array[String]:
 		echoes.append("村人信任能转成低风险粮钱")
 	if flag_model.get_flag("support_network_built"):
 		echoes.append("村镇互助网能稳定补粮药")
+	if flag_model.get_flag("grocer_opened_hidden_granary"):
+		echoes.append("沈守仓已开暗粮仓，粮铺会暂时稳住饥荒")
+	if flag_model.get_flag("doctor_spent_last_medicine"):
+		echoes.append("周郎中送出了救命药，寒症压力已被强行压下")
+	if flag_model.get_flag("peddler_bought_escape_route"):
+		echoes.append("陆算盘买下退路，追逼和怀疑被转移过一次")
+	if flag_model.get_flag("peddler_sold_you_out"):
+		echoes.append("陆算盘卖出过你的口风，旧物暗线变得危险")
+	if flag_model.get_flag("tea_oldman_read_full_ledger"):
+		echoes.append("韩半盏公开债簿，催债人的一部分口风被反咬")
+	if flag_model.get_flag("porter_crossed_debt_ferry"):
+		echoes.append("石二橹顶风撑船，渡口成为紧急脱身线")
+	if flag_model.get_flag("jia_sanpo_false_tip"):
+		echoes.append("贾三坡替你卖过假消息，债主眼线被引偏")
+	if flag_model.get_flag("jia_sanpo_became_informer"):
+		echoes.append("贾三坡告过密，茶棚闲话会更快变成麻烦")
 	if flag_model.get_flag("grocer_grain_contact"):
 		echoes.append("粮铺后门能稳定补粮")
 	if flag_model.get_flag("doctor_medicine_contact"):
@@ -2434,6 +2537,22 @@ func _get_consequence_echoes() -> Array[String]:
 		echoes.append("荒坟旧藏已推断，坟地深挖更容易控住风险")
 	if flag_model.get_flag("deduced_hunter_route"):
 		echoes.append("猎户伏兽路已推断，山林遇兽有更多处理办法")
+	if flag_model.get_flag("land_grab_started"):
+		echoes.append("王怀安开始查地契和钱路，还债已进入夺地主线")
+	if flag_model.get_flag("villager_work_crew"):
+		echoes.append("村场工钱正在换来民心，不是简单撒钱")
+	if player_model.get_stat("tenant_support") >= 18:
+		echoes.append("佃户愿意替你说地契和假种子的事")
+	if player_model.get_stat("hunter_support") >= 18:
+		echoes.append("猎户愿意巡夜护村场，压住王怀安的人")
+	if player_model.get_stat("refugee_support") >= 18:
+		echoes.append("流民拿到工钱后，愿意在人群里替你喊第一声")
+	if flag_model.get_flag("fake_seed_proof"):
+		echoes.append("假种子证据可作为鼓动村民的导火索")
+	if flag_model.get_flag("lizheng_son_pressure") and not flag_model.get_flag("lizheng_son_neutralized"):
+		echoes.append("王大虎正试图借衙门拿人")
+	if flag_model.get_flag("constable_protection"):
+		echoes.append("刘捕头愿意压案，王大虎的黑状暂时走不通")
 	var strong_contacts := _strong_contact_summary(relation_model)
 	if not strong_contacts.is_empty():
 		echoes.append("可信人脉：%s" % strong_contacts)
@@ -2449,7 +2568,7 @@ func _strong_contact_summary(relation_model: RefCounted) -> String:
 	if relation_model == null:
 		return ""
 	var names: Array[String] = []
-	for npc_id in ["grocer", "doctor", "peddler", "tea_oldman", "porter"]:
+	for npc_id in ["grocer", "doctor", "peddler", "tea_oldman", "porter", "jia_sanpo", "constable"]:
 		if relation_model.get_score(npc_id) >= 3:
 			names.append(_relation_display_name(npc_id))
 	return "、".join(names)
@@ -2464,7 +2583,25 @@ func _get_stage_goal() -> String:
 	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
 	var relation_model: RefCounted = _app.architecture.get_model(&"relation")
 	if debt_model.get_value("current") <= 0:
-		return "债务已清，等待最终收束"
+		if not flag_model.get_flag("land_grab_started"):
+			return "债务已清：今晚风声会变，王怀安不会真让你轻易保住地"
+		if flag_model.get_flag("lizheng_killed"):
+			return "夺地主线已收束，等待终局判定"
+		if not flag_model.get_flag("villager_work_crew") or player_model.get_stat("villager_gratitude") < 70:
+			return "第二阶段：去城镇村场分派工钱，把民心推到 70"
+		if player_model.get_stat("tenant_support") < 18:
+			return "第二阶段：雇佃户修沟，让被地契压住的人先站到你这边"
+		if player_model.get_stat("hunter_support") < 18:
+			return "第二阶段：请猎户巡夜，让王怀安的人不敢随便进村场"
+		if player_model.get_stat("refugee_support") < 18:
+			return "第二阶段：雇流民补路，让无地的人也有理由站出来"
+		if not flag_model.get_flag("fake_seed_proof"):
+			return "第二阶段：去种市后棚查假种子，拿到鼓动村民的导火索"
+		if not flag_model.get_flag("yamen_bribed") and not flag_model.get_flag("constable_protection"):
+			return "第二阶段：去酒馆/衙门处理王大虎，不能杀衙役，只能重金打点或结交刘捕头"
+		if not flag_model.get_flag("lizheng_son_neutralized"):
+			return "第二阶段：衙门风险已压住，去酒馆后屋截断王大虎这条线"
+		return "第二阶段：条件已齐，回村场借假种子鼓动村民冲杀里正"
 	var active_task := _active_town_task_summary(relation_model)
 	if not active_task.is_empty():
 		return active_task
@@ -2566,7 +2703,7 @@ func _has_sellable_loot(inventory_model: InventoryModel) -> bool:
 func _active_town_task_summary(relation_model: RefCounted) -> String:
 	if relation_model == null:
 		return ""
-	for task_id in ["grocer_supply", "doctor_delivery", "peddler_appraisal", "tea_warning", "porter_ferry_note", "watchman_hush"]:
+	for task_id in ["grocer_supply", "doctor_delivery", "peddler_appraisal", "tea_warning", "porter_ferry_note", "watchman_hush", "tenant_work_crew", "hunter_patrol_crew", "refugee_road_crew", "fake_seed_probe", "bribe_yamen", "constable_pressure", "neutralize_wang_dahu", "villager_uprising"]:
 		if relation_model.is_task_active(task_id):
 			return "城镇委托待交：%s" % _town_task_goal_name(task_id)
 	return ""
@@ -2585,6 +2722,22 @@ func _town_task_goal_name(task_id: String) -> String:
 			return "去河渡口送脚夫口信"
 		"watchman_hush":
 			return "去旧桥压住旧井守夜人口风"
+		"tenant_work_crew":
+			return "去田边水口盯完佃户修沟"
+		"hunter_patrol_crew":
+			return "去林边巡点安排猎户守夜"
+		"refugee_road_crew":
+			return "去流民棚路压住补路工序"
+		"fake_seed_probe":
+			return "去种市后仓翻出假种子证据"
+		"bribe_yamen":
+			return "去衙门案房打点黑状"
+		"constable_pressure":
+			return "去衙门案房把证据交给刘捕头"
+		"neutralize_wang_dahu":
+			return "去酒馆后屋截断王大虎的衙门路"
+		"villager_uprising":
+			return "去祠前摊开证据发动村民"
 		_:
 			return "回城镇交委托"
 
@@ -2605,6 +2758,12 @@ func _get_warning_summary(player_model: PlayerModel, inventory_model: InventoryM
 		warnings.append("染寒未治")
 	if debt_model.get_value("current") > 0 and day_model.current_day >= debt_model.get_value("due_day") - 2:
 		warnings.append(_get_debt_warning_text(debt_model, day_model))
+	if flag_model.get_flag("land_grab_started") and not flag_model.get_flag("lizheng_killed"):
+		warnings.append("里正夺地")
+	if flag_model.get_flag("lizheng_son_pressure") and not flag_model.get_flag("lizheng_son_neutralized"):
+		warnings.append("王大虎递黑状")
+	if flag_model.get_flag("fake_seed_proof") and not flag_model.get_flag("constable_protection") and not flag_model.get_flag("yamen_bribed"):
+		warnings.append("衙门风险")
 	if player_model.get_stat("village_attention") >= 45:
 		warnings.append("村中关注过高")
 	if player_model.get_stat("suspicion") >= 45:
@@ -2683,7 +2842,27 @@ func _is_route_flag(flag_id: String) -> bool:
 		"earned_villager_trust",
 		"unlocked_errand_route",
 		"saw_graveyard_cache",
-		"found_hidden_stash"
+		"found_hidden_stash",
+		"grocer_opened_hidden_granary",
+		"doctor_spent_last_medicine",
+		"peddler_bought_escape_route",
+		"peddler_sold_you_out",
+		"tea_oldman_read_full_ledger",
+		"porter_crossed_debt_ferry",
+		"jia_sanpo_false_tip",
+		"jia_sanpo_became_informer",
+		"land_grab_started",
+		"land_deed_clue",
+		"villager_work_crew",
+		"fake_seed_proof",
+		"villagers_rallied",
+		"lizheng_son_pressure",
+		"lizheng_son_neutralized",
+		"yamen_bribed",
+		"constable_protection",
+		"lizheng_plot_exposed",
+		"lizheng_killed",
+		"lizheng_assassinated"
 	]
 
 func _get_end_of_day_outlook() -> String:
@@ -2691,8 +2870,11 @@ func _get_end_of_day_outlook() -> String:
 		return ""
 	var debt_model: DebtModel = _app.architecture.get_model(&"debt")
 	var day_model: DayCycleModel = _app.architecture.get_model(&"day_cycle")
+	var flag_model: FlagModel = _app.architecture.get_model(&"flag")
 	if debt_model.get_value("current") <= 0:
-		return "今夜总结：债已经清了，只等一个收束结局。"
+		if flag_model.get_flag("land_grab_started") and not flag_model.get_flag("lizheng_killed"):
+			return "今夜总结：债已清，但真正的局面刚开始。明天要围绕民心、假种子和衙门推进。"
+		return "今夜总结：债已经清了，王怀安夺地的风声会很快浮上来。"
 	if day_model.current_day >= debt_model.get_value("due_day") - 1:
 		return "今夜总结：离催债只差临门一脚，接下来要优先保住还债能力。"
 	if _get_route_hint().contains("夜市暗线"):

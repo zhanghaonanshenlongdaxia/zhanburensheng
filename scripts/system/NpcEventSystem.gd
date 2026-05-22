@@ -25,6 +25,7 @@ func trigger_random_event() -> Dictionary:
 		"event_id": picked.get("id", ""),
 		"name": picked.get("name", ""),
 		"result_text": picked.get("result_text", ""),
+		"cinematic": picked.get("cinematic", {}),
 		"effects": applied_effects
 	}
 

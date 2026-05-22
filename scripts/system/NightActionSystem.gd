@@ -27,6 +27,7 @@ func resolve_night_action() -> Dictionary:
 		"event_id": picked.get("id", ""),
 		"name": picked.get("name", ""),
 		"result_text": picked.get("result_text", ""),
+		"cinematic": picked.get("cinematic", {}),
 		"effects": applied_effects,
 		"phase": day_model.current_phase
 	}

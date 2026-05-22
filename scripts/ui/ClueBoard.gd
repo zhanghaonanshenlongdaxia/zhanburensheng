@@ -25,7 +25,7 @@ var branches: Array[Dictionary] = [
 		"nodes": [
 			{"id": "jade_buyer_clue", "name": "残玉买家", "hidden": "玉扣去向？", "text": "有人愿意收残玉，价格比村口明面买卖更高。"},
 			{"id": "met_jade_buyer", "name": "见过买家", "hidden": "买家身份？", "text": "买家不是普通货郎，见面地点和时辰都避人。"},
-			{"id": "peddler_old_goods_contact", "name": "货郎暗线", "hidden": "旧物中人？", "text": "游货郎能挡闲话，也能帮旧物问暗价。"}
+			{"id": "peddler_old_goods_contact", "name": "货郎暗线", "hidden": "旧物中人？", "text": "陆算盘能挡闲话，也能帮旧物问暗价。"}
 		]
 	},
 	{
@@ -76,7 +76,7 @@ var branches: Array[Dictionary] = [
 		"deduction_effects": ["mark_tea_debt_contact", "mark_deduced_debt_timing"],
 		"nodes": [
 			{"id": "met_collector", "name": "见过催债人", "hidden": "催债眼线？", "text": "债主的人已经露过面，拖久会更难躲。"},
-			{"id": "tea_debt_contact", "name": "茶棚债讯", "hidden": "债主动向？", "text": "茶棚老人知道债主先问谁、何时上门。"},
+			{"id": "tea_debt_contact", "name": "茶棚债讯", "hidden": "债主动向？", "text": "韩半盏知道债主先问谁、何时上门。"},
 			{"id": "porter_ferry_contact", "name": "渡口零活", "hidden": "渡口人脉？", "text": "脚夫能给稳定小钱，也可能带来河对岸消息。"},
 			{"id": "repaid_debt_once", "name": "还过一笔", "hidden": "还债节奏？", "text": "还过一笔后，债主口风会变，但期限仍在。"}
 		]
@@ -110,6 +110,25 @@ var branches: Array[Dictionary] = [
 		"nodes": [
 			{"id": "studied_bow_manual", "name": "残弓册", "hidden": "旧猎册？", "text": "读过残弓册后，山林痕迹更容易辨认。"},
 			{"id": "hunter_trap_line", "name": "猎户设伏", "hidden": "设伏门路？", "text": "密林肉食线更稳，遇兽时多一条处理办法。"}
+		]
+	},
+	{
+		"title": "人心反转",
+		"hint": "越到债压深处，熟人的软肋越可能变成真正的代价。",
+		"angle": 205.0,
+		"color": Color(0.82, 0.48, 0.42, 1.0),
+		"deduction_flag": "",
+		"deduction_required": 6,
+		"deduction_title": "等待人心落子",
+		"deduction_text": "这些不是能推出来的路，而是你曾经给过谁一条活路，最后由谁还给你。",
+		"deduction_effects": [],
+		"nodes": [
+			{"id": "grocer_opened_hidden_granary", "name": "暗仓开锁", "hidden": "铁算盘？", "text": "沈守仓在最怕重演旧事时打开暗粮仓，把粮先给活人。"},
+			{"id": "doctor_spent_last_medicine", "name": "救命药尽", "hidden": "冷郎中？", "text": "周郎中把原本留给自己的救命药送出，重新承担救人的后果。"},
+			{"id": "peddler_bought_escape_route", "name": "买下退路", "hidden": "卖人口风？", "text": "陆算盘收了卖人的钱，却拿它买下逃路，并把脏名背回自己身上。"},
+			{"id": "tea_oldman_read_full_ledger", "name": "完整债簿", "hidden": "半句话？", "text": "韩半盏当众念完整债簿，也把自己当年的半句谎话念进去。"},
+			{"id": "porter_crossed_debt_ferry", "name": "顶风撑船", "hidden": "怕水脚夫？", "text": "石二橹在追逼中亲自撑船，把没能渡过弟弟的河再渡一次。"},
+			{"id": "jia_sanpo_false_tip", "name": "假话挡刀", "hidden": "小人告密？", "text": "贾三坡若被当人看过，最后可能用最脏的嘴卖出一个救人的假消息。"}
 		]
 	}
 ]

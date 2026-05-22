@@ -50,15 +50,21 @@ func get_display_entries() -> Array:
 func _npc_name(npc_id: String) -> String:
 	match npc_id:
 		"grocer":
-			return "粮铺掌柜"
+			return "沈守仓"
 		"doctor":
 			return "周郎中"
 		"peddler":
-			return "游货郎"
+			return "陆算盘"
 		"tea_oldman":
-			return "茶棚老人"
+			return "韩半盏"
 		"porter":
-			return "码头脚夫"
+			return "石二橹"
+		"jia_sanpo":
+			return "贾三坡"
+		"constable":
+			return "刘捕头"
+		"wang_dahu":
+			return "王大虎"
 		_:
 			return npc_id
 
